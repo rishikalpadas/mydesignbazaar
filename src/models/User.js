@@ -1,0 +1,165 @@
+import mongoose from 'mongoose';
+
+// Base User Schema
+const userSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+  },
+  password: {
+    type: String,
+    required: true,
+  },
+  userType: {
+    type: String,
+    required: true,
+    enum: ['designer', 'buyer'],
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+  isApproved: {
+    type: Boolean,
+    default: false, // For designers, needs admin approval
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+// Designer Schema
+const designerSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  // Personal Information
+  fullName: {
+    type: String,
+    required: true,
+  },
+  displayName: String,
+  mobileNumber: {
+    type: String,
+    required: true,
+  },
+  alternativeContact: String,
+  
+  // Address
+  address: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true },
+  },
+  
+  // Identity & Tax
+  governmentId: String, // File path
+  panNumber: String,
+  gstNumber: String,
+  
+  // Bank Details
+  bankDetails: {
+    accountHolderName: String,
+    accountNumber: String,
+    bankName: String,
+    ifscCode: String,
+    upiId: String,
+    paypalId: String,
+  },
+  
+  // Portfolio
+  sampleDesigns: [String], // File paths
+  portfolioLink: String,
+  specializations: [String],
+  otherSpecialization: String,
+  
+  // Agreement flags
+  agreements: {
+    originalWork: { type: Boolean, required: true },
+    noResponsibility: { type: Boolean, required: true },
+    monetizationPolicy: { type: Boolean, required: true },
+    platformPricing: { type: Boolean, required: true },
+    designRemoval: { type: Boolean, required: true },
+    minimumUploads: { type: Boolean, required: true },
+  },
+  
+  // Stats
+  totalDesigns: { type: Number, default: 0 },
+  approvedDesigns: { type: Number, default: 0 },
+  totalEarnings: { type: Number, default: 0 },
+});
+
+// Buyer Schema
+const buyerSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  // Business Information
+  fullName: {
+    type: String,
+    required: true,
+  },
+  mobileNumber: {
+    type: String,
+    required: true,
+  },
+  businessType: {
+    type: String,
+    required: true,
+    enum: ['manufacturer', 'exporter', 'boutique', 'freelancer', 'fashion-brand', 'student', 'other'],
+  },
+  
+  // Address
+  address: {
+    street: { type: String, required: true },
+    city: { type: String, required: true },
+    state: { type: String, required: true },
+    postalCode: { type: String, required: true },
+    country: { type: String, required: true },
+    gstNumber: String,
+  },
+  
+  // Payment Preferences
+  paymentMethods: [String],
+  billingCurrency: {
+    type: String,
+    default: 'INR',
+    enum: ['INR', 'USD', 'EUR', 'GBP'],
+  },
+  
+  // Design Requirements
+  interestedCategories: [String],
+  purchaseFrequency: {
+    type: String,
+    enum: ['weekly', 'monthly', 'quarterly', 'occasionally'],
+  },
+  
+  // Agreement flags
+  agreements: {
+    licensedUse: { type: Boolean, required: true },
+    noCopyright: { type: Boolean, required: true },
+    refundPolicy: { type: Boolean, required: true },
+    noIllegalDesigns: { type: Boolean, required: true },
+    compliance: { type: Boolean, required: true },
+  },
+  
+  // Stats
+  totalPurchases: { type: Number, default: 0 },
+  totalSpent: { type: Number, default: 0 },
+});
+
+// Create models
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+const Designer = mongoose.models.Designer || mongoose.model('Designer', designerSchema);
+const Buyer = mongoose.models.Buyer || mongoose.model('Buyer', buyerSchema);
+
+export { User, Designer, Buyer };
