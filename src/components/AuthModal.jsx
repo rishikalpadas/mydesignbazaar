@@ -1,18 +1,24 @@
-import React from 'react';
-import { X } from 'lucide-react';
-import AuthPage from './AuthPage'; // Import your auth page component
+"use client"
+import { X } from "lucide-react"
+import AuthPage from "./AuthPage" // Import your auth page component
 
-const AuthModal = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
+  if (!isOpen) return null
+
+  const handleAuthSuccess = (userData) => {
+    // Call the parent's success handler
+    if (onAuthSuccess) {
+      onAuthSuccess(userData)
+    }
+    // Close the modal
+    onClose()
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
         {/* Header with close button */}
@@ -24,14 +30,14 @@ const AuthModal = ({ isOpen, onClose }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <AuthPage />
+          <AuthPage onAuthSuccess={handleAuthSuccess} />
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AuthModal;
+export default AuthModal

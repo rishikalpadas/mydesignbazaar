@@ -1,5 +1,6 @@
-"use client";
-import { useState, useEffect, useRef } from "react";
+"use client"
+import { useState, useEffect, useRef } from "react"
+import { useRouter } from "next/navigation"
 import {
   Menu,
   X,
@@ -11,84 +12,143 @@ import {
   LogOut,
   Settings,
   Package,
-} from "lucide-react";
+  LayoutDashboard,
+  UserCircle,
+} from "lucide-react"
 
-const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const router = useRouter()
 
-  const mobileSearchRef = useRef(null);
-  const userDropdownRef = useRef(null);
+  const mobileSearchRef = useRef(null)
+  const userDropdownRef = useRef(null)
 
   useEffect(() => {
     if (mobileMenuOpen && mobileSearchRef.current) {
       setTimeout(() => {
-        mobileSearchRef.current.focus();
-      }, 100);
+        mobileSearchRef.current.focus()
+      }, 100)
     }
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen])
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
-        setUserDropdownOpen(false);
+        setUserDropdownOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
 
   const toggleMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+    setMobileMenuOpen(!mobileMenuOpen)
+  }
 
   const handleUserClick = () => {
     if (isAuthenticated) {
-      setUserDropdownOpen(!userDropdownOpen);
+      setUserDropdownOpen(!userDropdownOpen)
     } else {
-      onAuthClick(); // This will open the auth modal/page
+      onAuthClick()
     }
-  };
+  }
 
-  const categories = [
-    "Kidswear",
-    "Menswear",
-    "Womenswear",
-    "Typography",
-    "Floral",
-    "AI-Generated",
-  ];
+  const handleDashboardClick = () => {
+    setUserDropdownOpen(false)
+    router.push("/dashboard")
+  }
+
+  const handleLogoutClick = async () => {
+    setUserDropdownOpen(false)
+    await onLogout()
+  }
+
+  const getUserDisplayName = () => {
+    if (!user) return "User"
+    return user.profile?.fullName || user.name || user.email?.split("@")[0] || "User"
+  }
+
+  const getUserRole = () => {
+    if (!user) return ""
+    if (user.isAdmin) {
+      switch (user.role) {
+        case "super_admin":
+          return "Super Admin"
+        case "designer_admin":
+          return "Designer Admin"
+        case "buyer_admin":
+          return "Buyer Admin"
+        default:
+          return "Admin"
+      }
+    }
+    return user.userType === "designer" ? "Designer" : "Buyer"
+  }
+
+  const categories = ["Kidswear", "Menswear", "Womenswear", "Typography", "Floral", "AI-Generated"]
 
   const UserDropdown = () => (
-    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-      <div className="px-4 py-2 border-b border-gray-100">
-        <p className="text-sm font-medium text-gray-900">{user?.name || 'User'}</p>
-        <p className="text-xs text-gray-500">{user?.email || 'user@email.com'}</p>
+    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+      {/* User Info Header */}
+      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
+        <div className="flex items-center gap-3">
+          <img
+            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+            alt="Profile"
+            className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+          />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
+            <p className="text-xs text-orange-600">{getUserRole()}</p>
+            <p className="text-xs text-gray-500">{user?.email}</p>
+          </div>
+        </div>
       </div>
-      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <User className="w-4 h-4 mr-2" />
-        My Profile
-      </button>
-      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <Package className="w-4 h-4 mr-2" />
-        My Orders
-      </button>
-      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <Settings className="w-4 h-4 mr-2" />
-        Settings
-      </button>
-      <hr className="my-1" />
-      <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
-        <LogOut className="w-4 h-4 mr-2" />
-        Logout
-      </button>
+
+      {/* Menu Items */}
+      <div className="py-2">
+        <button
+          onClick={handleDashboardClick}
+          className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors"
+        >
+          <LayoutDashboard className="w-4 h-4" />
+          Dashboard
+        </button>
+
+        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
+          <UserCircle className="w-4 h-4" />
+          My Profile
+        </button>
+
+        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
+          <Package className="w-4 h-4" />
+          {user?.userType === "designer" ? "My Designs" : "My Orders"}
+        </button>
+
+        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
+          <Settings className="w-4 h-4" />
+          Settings
+        </button>
+      </div>
+
+      {/* Logout */}
+      <div className="border-t border-gray-100 pt-2">
+        <button
+          onClick={handleLogoutClick}
+          className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
+      </div>
     </div>
-  );
+  )
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
@@ -119,8 +179,8 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
                     alt="MyDesignBazaar Logo"
                     className="h-14 w-auto sm:h-16 lg:h-14 object-contain"
                     onError={(e) => {
-                      e.target.style.display = "none";
-                      e.target.nextSibling.style.display = "flex";
+                      e.target.style.display = "none"
+                      e.target.nextSibling.style.display = "flex"
                     }}
                   />
                 </div>
@@ -130,11 +190,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
 
           {/* Center: Enhanced Search */}
           <div className="flex-1 max-w-2xl mx-6 hidden lg:block">
-            <div
-              className={`relative transition-all duration-300 ${
-                searchFocused ? "transform scale-105" : ""
-              }`}
-            >
+            <div className={`relative transition-all duration-300 ${searchFocused ? "transform scale-105" : ""}`}>
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
@@ -151,10 +207,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
           {/* Right: Action buttons */}
           <div className="flex items-center gap-2 lg:gap-4">
             {/* Search icon for mobile */}
-            <button
-              onClick={toggleMenu}
-              className="lg:hidden text-gray-700 hover:text-amber-500 transition-colors p-2"
-            >
+            <button onClick={toggleMenu} className="lg:hidden text-gray-700 hover:text-amber-500 transition-colors p-2">
               <Search size={20} />
             </button>
 
@@ -166,14 +219,29 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
               </span>
             </button>
 
-            {/* User account - Updated with dropdown */}
+            {/* User account with dropdown */}
             <div className="relative" ref={userDropdownRef}>
-              <button 
+              <button
                 onClick={handleUserClick}
-                className="text-gray-700 hover:text-amber-500 transition-colors p-2 flex items-center gap-1"
+                className={`text-gray-700 hover:text-amber-500 transition-colors p-2 flex items-center gap-1 rounded-lg ${
+                  isAuthenticated ? "hover:bg-orange-50" : ""
+                }`}
               >
-                <User size={20} />
-                <ChevronDown size={14} className="hidden sm:block" />
+                {isAuthenticated ? (
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full ring-2 ring-orange-200"
+                    />
+                    <ChevronDown size={14} className="hidden sm:block" />
+                  </div>
+                ) : (
+                  <>
+                    <User size={20} />
+                    <ChevronDown size={14} className="hidden sm:block" />
+                  </>
+                )}
               </button>
               {isAuthenticated && userDropdownOpen && <UserDropdown />}
             </div>
@@ -237,36 +305,64 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null }) => {
 
           {/* Mobile account actions */}
           <div className="p-4 border-t border-gray-100 bg-gray-50">
-            <div className="flex items-center justify-around">
-              <button 
-                onClick={handleUserClick}
-                className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors"
-              >
-                <User size={20} />
-                <span className="text-xs font-medium">
-                  {isAuthenticated ? 'Account' : 'Login'}
-                </span>
-              </button>
-              <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
-                <Heart size={20} />
-                <span className="text-xs font-medium">Wishlist</span>
-                <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                  3
-                </span>
-              </button>
-              <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
-                <ShoppingCart size={20} />
-                <span className="text-xs font-medium">Cart</span>
-                <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                  2
-                </span>
-              </button>
-            </div>
+            {isAuthenticated ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
+                  <img
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
+                    <p className="text-xs text-orange-600">{getUserRole()}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleDashboardClick}
+                  className="w-full text-left p-3 text-gray-700 hover:bg-white rounded-lg transition-colors flex items-center gap-3"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                  Dashboard
+                </button>
+                <button
+                  onClick={handleLogoutClick}
+                  className="w-full text-left p-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-3"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-around">
+                <button
+                  onClick={handleUserClick}
+                  className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors"
+                >
+                  <User size={20} />
+                  <span className="text-xs font-medium">Login</span>
+                </button>
+                <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
+                  <Heart size={20} />
+                  <span className="text-xs font-medium">Wishlist</span>
+                  <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                    3
+                  </span>
+                </button>
+                <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
+                  <ShoppingCart size={20} />
+                  <span className="text-xs font-medium">Cart</span>
+                  <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                    2
+                  </span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
     </header>
-  );
-};
+  )
+}
 
-export default Navbar;
+export default Navbar
