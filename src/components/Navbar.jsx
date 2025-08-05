@@ -227,21 +227,8 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
                   isAuthenticated ? "hover:bg-orange-50" : ""
                 }`}
               >
-                {isAuthenticated ? (
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
-                      alt="Profile"
-                      className="w-8 h-8 rounded-full ring-2 ring-orange-200"
-                    />
+                <User size={20} />
                     <ChevronDown size={14} className="hidden sm:block" />
-                  </div>
-                ) : (
-                  <>
-                    <User size={20} />
-                    <ChevronDown size={14} className="hidden sm:block" />
-                  </>
-                )}
               </button>
               {isAuthenticated && userDropdownOpen && <UserDropdown />}
             </div>
