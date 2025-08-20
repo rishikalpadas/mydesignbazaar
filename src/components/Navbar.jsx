@@ -59,6 +59,22 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
     }
   }
 
+  const handleWishlistClick = () => {
+    if (isAuthenticated) {
+      router.push("/wishlist")
+    } else {
+      onAuthClick()
+    }
+  }
+
+  const handleCartClick = () => {
+    if (isAuthenticated) {
+      router.push("/cart")
+    } else {
+      onAuthClick()
+    }
+  }
+
   const handleDashboardClick = () => {
     setUserDropdownOpen(false)
     router.push("/dashboard")
@@ -212,7 +228,10 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
             </button>
 
             {/* Wishlist */}
-            <button className="hidden sm:flex text-gray-700 hover:text-amber-500 transition-colors p-2 relative">
+            <button
+              onClick={handleWishlistClick}
+              className="hidden sm:flex text-gray-700 hover:text-amber-500 transition-colors p-2 relative"
+            >
               <Heart size={20} />
               <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
                 3
@@ -228,13 +247,16 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
                 }`}
               >
                 <User size={20} />
-                    <ChevronDown size={14} className="hidden sm:block" />
+                <ChevronDown size={14} className="hidden sm:block" />
               </button>
               {isAuthenticated && userDropdownOpen && <UserDropdown />}
             </div>
 
             {/* Shopping cart */}
-            <button className="relative text-gray-700 hover:text-amber-500 transition-colors p-2 group">
+            <button
+              onClick={handleCartClick}
+              className="relative text-gray-700 hover:text-amber-500 transition-colors p-2 group"
+            >
               <ShoppingCart size={20} />
               <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
                 2
@@ -329,19 +351,25 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
                   <User size={20} />
                   <span className="text-xs font-medium">Login</span>
                 </button>
-                <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
+                <button
+                  onClick={handleWishlistClick}
+                  className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative"
+                >
                   <Heart size={20} />
                   <span className="text-xs font-medium">Wishlist</span>
-                  <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                  {/* <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
                     3
-                  </span>
+                  </span> */}
                 </button>
-                <button className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative">
+                <button
+                  onClick={handleCartClick}
+                  className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative"
+                >
                   <ShoppingCart size={20} />
                   <span className="text-xs font-medium">Cart</span>
-                  <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                  {/* <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
                     2
-                  </span>
+                  </span> */}
                 </button>
               </div>
             )}

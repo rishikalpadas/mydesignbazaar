@@ -155,7 +155,7 @@ const CTABanners = () => {
                   className="group/btn flex-1 bg-white text-indigo-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    Start Selling Designs
+                    Sell Designs
                     <ArrowRight
                       className={`w-5 h-5 transition-transform duration-300 ${
                         hoveredCard === "designer" ? "translate-x-1" : ""
@@ -237,7 +237,7 @@ const CTABanners = () => {
                   className="group/btn flex-1 bg-white text-orange-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
                 >
                   <div className="flex items-center justify-center gap-2">
-                    Start Exploring
+                    Start Shopping
                     <ArrowRight
                       className={`w-5 h-5 transition-transform duration-300 ${
                         hoveredCard === "buyer" ? "translate-x-1" : ""

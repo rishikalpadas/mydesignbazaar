@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+"use client"
+
+import { useState } from "react"
 import {
   User,
   Mail,
-  Phone,
   Lock,
   Eye,
   EyeOff,
-  Upload,
   MapPin,
   Building,
   CreditCard,
@@ -15,9 +15,8 @@ import {
   Palette,
   ShoppingBag,
   FileText,
-  Globe,
   Loader2,
-} from "lucide-react";
+} from "lucide-react"
 
 const LoginForm = ({
   formData,
@@ -36,28 +35,18 @@ const LoginForm = ({
         <User className="w-8 h-8 text-white" />
       </div>
       <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
-      <p className="text-gray-600 mt-2">
-        Sign in to your MyDesignBazaar account
-      </p>
+      <p className="text-gray-600 mt-2">Sign in to your MyDesignBazaar account</p>
     </div>
 
-    {error && (
-      <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-        {error}
-      </div>
-    )}
+    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
 
     {success && (
-      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-        {success}
-      </div>
+      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
     )}
 
     <form onSubmit={handleLogin} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Email Address
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -72,9 +61,7 @@ const LoginForm = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Password
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
@@ -90,21 +77,14 @@ const LoginForm = ({
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
           >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       <div className="flex items-center justify-between">
         <label className="flex items-center">
-          <input
-            type="checkbox"
-            className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
-          />
+          <input type="checkbox" className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" />
           <span className="ml-2 text-sm text-gray-600">Remember me</span>
         </label>
         <a href="#" className="text-sm text-amber-600 hover:text-amber-700">
@@ -141,11 +121,15 @@ const LoginForm = ({
       </div>
     </form>
   </div>
-);
+)
 const DesignerSignupForm = ({
   formData,
   handleInputChange,
   handleDesignerSignup,
+  showPassword,
+  setShowPassword,
+  showConfirmPassword,
+  setShowConfirmPassword,
   loading,
   error,
   success,
@@ -161,21 +145,13 @@ const DesignerSignupForm = ({
         Back to Account Type
       </button>
       <h2 className="text-2xl font-bold text-gray-900">Designer Application</h2>
-      <p className="text-gray-600 mt-2">
-        Join our creative community and start monetizing your designs
-      </p>
+      <p className="text-gray-600 mt-2">Join our creative community and start monetizing your designs</p>
     </div>
 
-    {error && (
-      <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-        {error}
-      </div>
-    )}
+    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
 
     {success && (
-      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-        {success}
-      </div>
+      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
     )}
 
     <form onSubmit={handleDesignerSignup} className="space-y-8">
@@ -187,9 +163,7 @@ const DesignerSignupForm = ({
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name (as per ID proof) *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name (as per ID proof) *</label>
             <input
               type="text"
               value={formData.fullName || ""}
@@ -200,9 +174,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Display Name / Brand Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Display Name / Brand Name</label>
             <input
               type="text"
               value={formData.displayName || ""}
@@ -212,9 +184,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
             <input
               type="email"
               value={formData.email || ""}
@@ -225,30 +195,62 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mobile Number (with WhatsApp) *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
             <input
               type="tel"
               value={formData.mobileNumber || ""}
-              onChange={(e) =>
-                handleInputChange("mobileNumber", e.target.value)
-              }
+              onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               placeholder="Enter mobile number"
               required
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={formData.password || ""}
+                onChange={(e) => handleInputChange("password", e.target.value)}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={formData.confirmPassword || ""}
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Confirm your password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              >
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Alternative Contact
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Alternative Contact</label>
             <input
               type="text"
               value={formData.alternativeContact || ""}
-              onChange={(e) =>
-                handleInputChange("alternativeContact", e.target.value)
-              }
+              onChange={(e) => handleInputChange("alternativeContact", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               placeholder="Optional alternative contact"
             />
@@ -264,14 +266,10 @@ const DesignerSignupForm = ({
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Street Address *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Street Address *</label>
             <textarea
               value={formData.streetAddress || ""}
-              onChange={(e) =>
-                handleInputChange("streetAddress", e.target.value)
-              }
+              onChange={(e) => handleInputChange("streetAddress", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               rows="2"
               placeholder="Enter your street address"
@@ -279,9 +277,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              City *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
             <input
               type="text"
               value={formData.city || ""}
@@ -291,9 +287,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              State/Province *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">State/Province *</label>
             <input
               type="text"
               value={formData.state || ""}
@@ -303,9 +297,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Postal/ZIP Code *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Postal/ZIP Code *</label>
             <input
               type="text"
               value={formData.postalCode || ""}
@@ -315,9 +307,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
             <select
               value={formData.country || ""}
               onChange={(e) => handleInputChange("country", e.target.value)}
@@ -342,9 +332,7 @@ const DesignerSignupForm = ({
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              PAN Card Number *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card Number *</label>
             <input
               type="text"
               value={formData.panNumber || ""}
@@ -355,9 +343,7 @@ const DesignerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              GST Number
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">GST Number</label>
             <input
               type="text"
               value={formData.gstNumber || ""}
@@ -370,40 +356,28 @@ const DesignerSignupForm = ({
 
         {/* Bank Details */}
         <div className="mt-6">
-          <h4 className="font-medium text-gray-900 mb-3">
-            Bank Details (for payout)
-          </h4>
+          <h4 className="font-medium text-gray-900 mb-3">Bank Details (for payout)</h4>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Holder Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
               <input
                 type="text"
                 value={formData.accountHolderName || ""}
-                onChange={(e) =>
-                  handleInputChange("accountHolderName", e.target.value)
-                }
+                onChange={(e) => handleInputChange("accountHolderName", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
               <input
                 type="text"
                 value={formData.accountNumber || ""}
-                onChange={(e) =>
-                  handleInputChange("accountNumber", e.target.value)
-                }
+                onChange={(e) => handleInputChange("accountNumber", e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bank Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
               <input
                 type="text"
                 value={formData.bankName || ""}
@@ -412,9 +386,7 @@ const DesignerSignupForm = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                IFSC/SWIFT Code
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">IFSC/SWIFT Code</label>
               <input
                 type="text"
                 value={formData.ifscCode || ""}
@@ -423,9 +395,7 @@ const DesignerSignupForm = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                UPI ID (India)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">UPI ID (India)</label>
               <input
                 type="text"
                 value={formData.upiId || ""}
@@ -435,9 +405,7 @@ const DesignerSignupForm = ({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                PayPal ID (International)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">PayPal ID (International)</label>
               <input
                 type="email"
                 value={formData.paypalId || ""}
@@ -458,15 +426,11 @@ const DesignerSignupForm = ({
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Link to Online Portfolio
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Link to Online Portfolio</label>
             <input
               type="url"
               value={formData.portfolioLink || ""}
-              onChange={(e) =>
-                handleInputChange("portfolioLink", e.target.value)
-              }
+              onChange={(e) => handleInputChange("portfolioLink", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               placeholder="Behance, Instagram, etc. (Optional)"
             />
@@ -492,17 +456,14 @@ const DesignerSignupForm = ({
                     type="checkbox"
                     checked={formData.specializations?.includes(spec) || false}
                     onChange={(e) => {
-                      const current = formData.specializations || [];
+                      const current = formData.specializations || []
                       if (e.target.checked) {
-                        handleInputChange("specializations", [
-                          ...current,
-                          spec,
-                        ]);
+                        handleInputChange("specializations", [...current, spec])
                       } else {
                         handleInputChange(
                           "specializations",
-                          current.filter((s) => s !== spec)
-                        );
+                          current.filter((s) => s !== spec),
+                        )
                       }
                     }}
                     className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
@@ -514,9 +475,7 @@ const DesignerSignupForm = ({
             <input
               type="text"
               value={formData.otherSpecialization || ""}
-              onChange={(e) =>
-                handleInputChange("otherSpecialization", e.target.value)
-              }
+              onChange={(e) => handleInputChange("otherSpecialization", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent mt-3"
               placeholder="If others, please specify"
             />
@@ -526,9 +485,7 @@ const DesignerSignupForm = ({
 
       {/* Terms & Agreements */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Terms & Agreements
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Agreements</h3>
         <div className="space-y-3">
           {[
             {
@@ -560,9 +517,7 @@ const DesignerSignupForm = ({
               <input
                 type="checkbox"
                 checked={formData[`agreement_${key}`] || false}
-                onChange={(e) =>
-                  handleInputChange(`agreement_${key}`, e.target.checked)
-                }
+                onChange={(e) => handleInputChange(`agreement_${key}`, e.target.checked)}
                 className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 mt-0.5"
                 required
               />
@@ -593,7 +548,7 @@ const DesignerSignupForm = ({
       </div>
     </form>
   </div>
-);
+)
 
 const BuyerSignupForm = ({
   formData,
@@ -618,21 +573,13 @@ const BuyerSignupForm = ({
         Back to Account Type
       </button>
       <h2 className="text-2xl font-bold text-gray-900">Buyer Registration</h2>
-      <p className="text-gray-600 mt-2">
-        Access thousands of unique, production-ready garment designs
-      </p>
+      <p className="text-gray-600 mt-2">Access thousands of unique, production-ready garment designs</p>
     </div>
 
-    {error && (
-      <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
-        {error}
-      </div>
-    )}
+    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
 
     {success && (
-      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
-        {success}
-      </div>
+      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">{success}</div>
     )}
 
     <form onSubmit={handleBuyerSignup} className="space-y-8">
@@ -644,9 +591,7 @@ const BuyerSignupForm = ({
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Full Name / Company Name *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Full Name / Company Name *</label>
             <input
               type="text"
               value={formData.fullName || ""}
@@ -656,9 +601,7 @@ const BuyerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email Address *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
             <input
               type="email"
               value={formData.email || ""}
@@ -668,28 +611,20 @@ const BuyerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mobile Number (with WhatsApp) *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
             <input
               type="tel"
               value={formData.mobileNumber || ""}
-              onChange={(e) =>
-                handleInputChange("mobileNumber", e.target.value)
-              }
+              onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Business Type *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Business Type *</label>
             <select
               value={formData.businessType || ""}
-              onChange={(e) =>
-                handleInputChange("businessType", e.target.value)
-              }
+              onChange={(e) => handleInputChange("businessType", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               required
             >
@@ -704,9 +639,7 @@ const BuyerSignupForm = ({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -720,25 +653,17 @@ const BuyerSignupForm = ({
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? "text" : "password"}
                 value={formData.confirmPassword || ""}
-                onChange={(e) =>
-                  handleInputChange("confirmPassword", e.target.value)
-                }
+                onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
                 className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                 required
               />
@@ -747,11 +672,7 @@ const BuyerSignupForm = ({
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -766,23 +687,17 @@ const BuyerSignupForm = ({
         </h3>
         <div className="grid md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Street Address *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Street Address *</label>
             <textarea
               value={formData.streetAddress || ""}
-              onChange={(e) =>
-                handleInputChange("streetAddress", e.target.value)
-              }
+              onChange={(e) => handleInputChange("streetAddress", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               rows="2"
               required
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              City / Town *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">City / Town *</label>
             <input
               type="text"
               value={formData.city || ""}
@@ -792,9 +707,7 @@ const BuyerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              State / Province *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">State / Province *</label>
             <input
               type="text"
               value={formData.state || ""}
@@ -804,9 +717,7 @@ const BuyerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Postal / ZIP Code *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Postal / ZIP Code *</label>
             <input
               type="text"
               value={formData.postalCode || ""}
@@ -816,9 +727,7 @@ const BuyerSignupForm = ({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Country *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
             <select
               value={formData.country || ""}
               onChange={(e) => handleInputChange("country", e.target.value)}
@@ -833,9 +742,7 @@ const BuyerSignupForm = ({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              GST Number (India)
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">GST Number (India)</label>
             <input
               type="text"
               value={formData.gstNumber || ""}
@@ -859,30 +766,20 @@ const BuyerSignupForm = ({
               Preferred Payment Method (select multiple)
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {[
-                "UPI",
-                "Razorpay",
-                "PayPal",
-                "Credit Card",
-                "Debit Card",
-                "Net Banking",
-              ].map((method) => (
+              {["UPI", "Razorpay", "PayPal", "Credit Card", "Debit Card", "Net Banking"].map((method) => (
                 <label key={method} className="flex items-center">
                   <input
                     type="checkbox"
                     checked={formData.paymentMethods?.includes(method) || false}
                     onChange={(e) => {
-                      const current = formData.paymentMethods || [];
+                      const current = formData.paymentMethods || []
                       if (e.target.checked) {
-                        handleInputChange("paymentMethods", [
-                          ...current,
-                          method,
-                        ]);
+                        handleInputChange("paymentMethods", [...current, method])
                       } else {
                         handleInputChange(
                           "paymentMethods",
-                          current.filter((m) => m !== method)
-                        );
+                          current.filter((m) => m !== method),
+                        )
                       }
                     }}
                     className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
@@ -893,14 +790,10 @@ const BuyerSignupForm = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Billing Currency
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Billing Currency</label>
             <select
               value={formData.billingCurrency || "INR"}
-              onChange={(e) =>
-                handleInputChange("billingCurrency", e.target.value)
-              }
+              onChange={(e) => handleInputChange("billingCurrency", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
             >
               <option value="INR">INR (Indian Rupee)</option>
@@ -939,21 +832,16 @@ const BuyerSignupForm = ({
                 <label key={category} className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={
-                      formData.interestedCategories?.includes(category) || false
-                    }
+                    checked={formData.interestedCategories?.includes(category) || false}
                     onChange={(e) => {
-                      const current = formData.interestedCategories || [];
+                      const current = formData.interestedCategories || []
                       if (e.target.checked) {
-                        handleInputChange("interestedCategories", [
-                          ...current,
-                          category,
-                        ]);
+                        handleInputChange("interestedCategories", [...current, category])
                       } else {
                         handleInputChange(
                           "interestedCategories",
-                          current.filter((c) => c !== category)
-                        );
+                          current.filter((c) => c !== category),
+                        )
                       }
                     }}
                     className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
@@ -964,14 +852,10 @@ const BuyerSignupForm = ({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Frequency of Purchase
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Frequency of Purchase</label>
             <select
               value={formData.purchaseFrequency || ""}
-              onChange={(e) =>
-                handleInputChange("purchaseFrequency", e.target.value)
-              }
+              onChange={(e) => handleInputChange("purchaseFrequency", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
             >
               <option value="">Select Frequency</option>
@@ -986,9 +870,7 @@ const BuyerSignupForm = ({
 
       {/* Terms & Agreements */}
       <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Terms & Agreements
-        </h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Terms & Agreements</h3>
         <div className="space-y-3">
           {[
             {
@@ -1016,9 +898,7 @@ const BuyerSignupForm = ({
               <input
                 type="checkbox"
                 checked={formData[`agreement_${key}`] || false}
-                onChange={(e) =>
-                  handleInputChange(`agreement_${key}`, e.target.checked)
-                }
+                onChange={(e) => handleInputChange(`agreement_${key}`, e.target.checked)}
                 className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500 mt-0.5"
                 required
               />
@@ -1050,26 +930,26 @@ const BuyerSignupForm = ({
       </div>
     </form>
   </div>
-);
+)
 
-const AuthPage = ({ onAuthSuccess }) => {
-  const [currentView, setCurrentView] = useState("login");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
+  const [currentView, setCurrentView] = useState(initialView)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [formData, setFormData] = useState({})
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (error) setError(""); // Clear error when user starts typing
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (error) setError("") // Clear error when user starts typing
+  }
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
     try {
       const response = await fetch("/api/auth/login", {
@@ -1081,34 +961,41 @@ const AuthPage = ({ onAuthSuccess }) => {
           email: formData.email,
           password: formData.password,
         }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        setSuccess("Login successful!");
+        setSuccess("Login successful!")
         // Call the success callback if provided
         if (onAuthSuccess) {
-          onAuthSuccess(data.user);
+          onAuthSuccess(data.user)
         }
         // Redirect or close modal
         setTimeout(() => {
-          window.location.reload(); // Or handle navigation as needed
-        }, 1000);
+          window.location.reload() // Or handle navigation as needed
+        }, 1000)
       } else {
-        setError(data.error || "Login failed");
+        setError(data.error || "Login failed")
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleDesignerSignup = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
 
     // Validate required agreements
     const requiredAgreements = [
@@ -1118,13 +1005,13 @@ const AuthPage = ({ onAuthSuccess }) => {
       "platformPricing",
       "designRemoval",
       "minimumUploads",
-    ];
+    ]
 
-    for (let agreement of requiredAgreements) {
+    for (const agreement of requiredAgreements) {
       if (!formData[`agreement_${agreement}`]) {
-        setError("Please accept all terms and agreements");
-        setLoading(false);
-        return;
+        setError("Please accept all terms and agreements")
+        setLoading(false)
+        return
       }
     }
 
@@ -1165,7 +1052,7 @@ const AuthPage = ({ onAuthSuccess }) => {
           designRemoval: formData.agreement_designRemoval,
           minimumUploads: formData.agreement_minimumUploads,
         },
-      };
+      }
 
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -1173,51 +1060,45 @@ const AuthPage = ({ onAuthSuccess }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(signupData),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        setSuccess(data.message);
+        setSuccess(data.message)
         setTimeout(() => {
-          setCurrentView("login");
-        }, 3000);
+          setCurrentView("login")
+        }, 3000)
       } else {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Registration failed")
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleBuyerSignup = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+    e.preventDefault()
+    setLoading(true)
+    setError("")
 
     // Validate password confirmation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
+      setError("Passwords do not match")
+      setLoading(false)
+      return
     }
 
     // Validate required agreements
-    const requiredAgreements = [
-      "licensedUse",
-      "noCopyright",
-      "refundPolicy",
-      "noIllegalDesigns",
-      "compliance",
-    ];
+    const requiredAgreements = ["licensedUse", "noCopyright", "refundPolicy", "noIllegalDesigns", "compliance"]
 
-    for (let agreement of requiredAgreements) {
+    for (const agreement of requiredAgreements) {
       if (!formData[`agreement_${agreement}`]) {
-        setError("Please accept all terms and agreements");
-        setLoading(false);
-        return;
+        setError("Please accept all terms and agreements")
+        setLoading(false)
+        return
       }
     }
 
@@ -1248,7 +1129,7 @@ const AuthPage = ({ onAuthSuccess }) => {
           noIllegalDesigns: formData.agreement_noIllegalDesigns,
           compliance: formData.agreement_compliance,
         },
-      };
+      }
 
       const response = await fetch("/api/auth/register", {
         method: "POST",
@@ -1256,24 +1137,24 @@ const AuthPage = ({ onAuthSuccess }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(signupData),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        setSuccess(data.message);
+        setSuccess(data.message)
         setTimeout(() => {
-          setCurrentView("login");
-        }, 3000);
+          setCurrentView("login")
+        }, 3000)
       } else {
-        setError(data.error || "Registration failed");
+        setError(data.error || "Registration failed")
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setError("Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const SignupChoice = () => (
     <div className="max-w-2xl mx-auto">
@@ -1285,12 +1166,8 @@ const AuthPage = ({ onAuthSuccess }) => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Login
         </button>
-        <h2 className="text-3xl font-bold text-gray-900">
-          Join MyDesignBazaar
-        </h2>
-        <p className="text-gray-600 mt-2">
-          Choose your account type to get started
-        </p>
+        <h2 className="text-3xl font-bold text-gray-900">Join MyDesignBazaar</h2>
+        <p className="text-gray-600 mt-2">Choose your account type to get started</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -1304,9 +1181,7 @@ const AuthPage = ({ onAuthSuccess }) => {
               <Palette className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Designer</h3>
-            <p className="text-gray-600 mb-4">
-              Sell your unique designs and earn from your creativity
-            </p>
+            <p className="text-gray-600 mb-4">Sell your unique designs and earn from your creativity</p>
             <ul className="text-sm text-gray-500 space-y-2 text-left">
               <li className="flex items-center">
                 <Check className="w-4 h-4 text-green-500 mr-2" />
@@ -1334,9 +1209,7 @@ const AuthPage = ({ onAuthSuccess }) => {
               <ShoppingBag className="w-8 h-8 text-white" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">Buyer</h3>
-            <p className="text-gray-600 mb-4">
-              Access thousands of unique, production-ready designs
-            </p>
+            <p className="text-gray-600 mb-4">Access thousands of unique, production-ready designs</p>
             <ul className="text-sm text-gray-500 space-y-2 text-left">
               <li className="flex items-center">
                 <Check className="w-4 h-4 text-green-500 mr-2" />
@@ -1355,7 +1228,7 @@ const AuthPage = ({ onAuthSuccess }) => {
         </div>
       </div>
     </div>
-  );
+  )
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
@@ -1379,6 +1252,10 @@ const AuthPage = ({ onAuthSuccess }) => {
             formData={formData}
             handleInputChange={handleInputChange}
             handleDesignerSignup={handleDesignerSignup}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            showConfirmPassword={showConfirmPassword}
+            setShowConfirmPassword={setShowConfirmPassword}
             loading={loading}
             error={error}
             success={success}
@@ -1402,7 +1279,7 @@ const AuthPage = ({ onAuthSuccess }) => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AuthPage;
+export default AuthPage

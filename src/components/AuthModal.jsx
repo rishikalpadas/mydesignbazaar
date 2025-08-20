@@ -2,7 +2,7 @@
 import { X } from "lucide-react"
 import AuthPage from "./AuthPage" // Import your auth page component
 
-const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
+const AuthModal = ({ isOpen, onClose, onAuthSuccess, initialView = "login" }) => {
   if (!isOpen) return null
 
   const handleAuthSuccess = (userData) => {
@@ -33,7 +33,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto px-6 pb-6">
-          <AuthPage onAuthSuccess={handleAuthSuccess} />
+          <AuthPage onAuthSuccess={handleAuthSuccess} initialView={initialView} />
         </div>
       </div>
     </div>
