@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Palette, 
@@ -24,6 +24,7 @@ import {
   Share2,
   AlertCircle
 } from 'lucide-react'
+import Image from "next/image"
 
 const MyDesignsPage = () => {
   const router = useRouter()
@@ -53,11 +54,9 @@ const MyDesignsPage = () => {
   const [selectedDesign, setSelectedDesign] = useState(null)
   const [showActions, setShowActions] = useState(null)
 
-  useEffect(() => {
-    fetchDesigns()
-  }, [filters, pagination.currentPage])
+  
 
-  const fetchDesigns = async () => {
+  const fetchDesigns = useCallback(async () => {
     try {
       setLoading(true)
       const queryParams = new URLSearchParams({
@@ -82,7 +81,11 @@ const MyDesignsPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, pagination.currentPage])
+
+  useEffect(() => {
+    fetchDesigns()
+  }, [fetchDesigns])
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -315,7 +318,7 @@ const MyDesignsPage = () => {
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 {design.previewImageUrl ? (
-                  <img
+                  <Image
                     src={design.previewImageUrl}
                     alt={design.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

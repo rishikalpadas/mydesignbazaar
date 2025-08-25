@@ -2,6 +2,7 @@
 import { useState } from "react"
 import { Heart, ShoppingCart, ArrowLeft, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 const WishlistPage = () => {
   const router = useRouter()
@@ -81,7 +82,7 @@ const WishlistPage = () => {
             {wishlistItems.map((item) => (
               <div key={item.id} className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow">
                 <div className="relative">
-                  <img
+                  <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
                     className="w-full h-48 object-cover rounded-t-xl"

@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
+
 
 const CartPage = () => {
   const router = useRouter()
@@ -83,11 +85,14 @@ const CartPage = () => {
                 <div className="divide-y">
                   {cartItems.map((item) => (
                     <div key={item.id} className="p-6 flex gap-4">
-                      <img
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
-                        className="w-20 h-20 rounded-lg object-cover"
-                      />
+                      <Image
+  src={item.image || "/placeholder.svg"}
+  alt={item.name}
+  width={80}
+  height={80}
+  className="w-20 h-20 rounded-lg object-cover"
+/>
+
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{item.name}</h3>
                         <p className="text-sm text-gray-600">by {item.designer}</p>

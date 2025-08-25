@@ -14,6 +14,7 @@ import {
   Type,
   FileImage
 } from 'lucide-react'
+import Image from "next/image"
 
 const CATEGORIES = [
   'Infantwear',
@@ -359,7 +360,7 @@ const UploadPage = () => {
               <div className="relative border-2 border-dashed border-orange-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-gradient-to-br from-orange-50 to-amber-50">
                 {previewImageUrl ? (
                   <div className="space-y-4">
-                    <img
+                    <Image
                       src={previewImageUrl}
                       alt="Preview"
                       className="max-w-full max-h-48 mx-auto rounded-lg shadow-md"
@@ -525,7 +526,7 @@ const UploadPage = () => {
         </div>
         <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg">
           <p className="text-sm text-gray-700">
-            <strong>Note:</strong> All designs go through an approval process. You'll be notified once your design is reviewed. 
+            <strong>Note:</strong> All designs go through an approval process. You&apos;ll be notified once your design is reviewed. 
             Make sure your design is original and follows our quality standards.
           </p>
         </div>
