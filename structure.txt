@@ -1,0 +1,144 @@
+Folder PATH listing for volume OS
+Volume serial number is 40BF-5937
+C:.
+|   .env
+|   .gitignore
+|   eslint.config.mjs
+|   jsconfig.json
+|   middleware.js
+|   next.config.mjs
+|   package-lock.json
+|   package.json
+|   postcss.config.mjs
+|   README.md
+|   structure.txt
+|   
++---public
+|   |   contemporary-abstract-design.png
+|   |   elegant-floral-mandala.png
+|   |   favicon.ico
+|   |   logo.png
+|   |   modern-geometric-pattern.png
+|   |   traditional-paisley.png
+|   |   vintage-typography.png
+|   |   
+|   \---uploads
+|       \---designs
+|           +---68ac92d950a0ab9073cf983a
+|           |   +---preview
+|           |   |       0c1756b5-7d1b-465f-8ba3-54f53bc8c991.jpg
+|           |   |       
+|           |   \---raw
+|           |           e2fe1420-ff9e-4b45-95fe-73d375ea455f.psd
+|           |           
+|           \---68acb9f65d43c67d72c3f871
+|               +---preview
+|               |       604c223b-87a0-4583-8be4-77960b440c1f.jpg
+|               |       
+|               \---raw
+|                       40362c0f-cbb5-4aa3-a32e-bed384c5e7d6.psd
+|                       
+\---src
+    +---app
+    |   |   globals.css
+    |   |   layout.js
+    |   |   page.js
+    |   |   
+    |   +---about
+    |   |       page.js
+    |   |       
+    |   +---api
+    |   |   +---auth
+    |   |   |   +---login
+    |   |   |   |       route.js
+    |   |   |   |       
+    |   |   |   +---logout
+    |   |   |   |       route.js
+    |   |   |   |       
+    |   |   |   \---register
+    |   |   |           route.js
+    |   |   |           
+    |   |   +---designs
+    |   |   |   +---my-designs
+    |   |   |   |       route.js
+    |   |   |   |       
+    |   |   |   \---upload
+    |   |   |           route.js
+    |   |   |           
+    |   |   +---setup
+    |   |   |   \---database
+    |   |   |           route.js
+    |   |   |           
+    |   |   \---user
+    |   |       \---profile
+    |   |               route.js
+    |   |               
+    |   +---cart
+    |   |       page.js
+    |   |       
+    |   +---copyright
+    |   |       page.js
+    |   |       
+    |   +---dashboard
+    |   |   |   page.js
+    |   |   |   
+    |   |   +---my-designs
+    |   |   |       page.js
+    |   |   |       
+    |   |   \---upload
+    |   |           page.js
+    |   |           
+    |   +---licensing
+    |   |       page.js
+    |   |       
+    |   +---privacy
+    |   |       page.js
+    |   |       
+    |   +---setup
+    |   |       page.jsx
+    |   |       
+    |   +---terms
+    |   |       page.js
+    |   |       
+    |   \---wishlist
+    |           page.js
+    |           
+    +---components
+    |   |   AppPromo.jsx
+    |   |   AuthModal.jsx
+    |   |   AuthPage.jsx
+    |   |   CategoriesSection.jsx
+    |   |   CTABanners.jsx
+    |   |   FeaturedDesigners.jsx
+    |   |   FeaturedDesigns.jsx
+    |   |   Footer.jsx
+    |   |   HeroSlider.jsx
+    |   |   HowItWorks.jsx
+    |   |   Navbar.jsx
+    |   |   Newsletter.jsx
+    |   |   Testimonials.jsx
+    |   |   
+    |   +---dashboard
+    |   |       AdminDashboard.jsx
+    |   |       BuyerDashboard.jsx
+    |   |       DashboardLayout.jsx
+    |   |       DesignerDashboard.jsx
+    |   |       Sidebar.jsx
+    |   |       
+    |   \---ui
+    |           LoadingSpinner.jsx
+    |           
+    +---context
+    |       AuthContext.js
+    |       
+    +---lib
+    |       fileUtils.js
+    |       mongodb.js
+    |       
+    +---middleware
+    |       auth.js
+    |       
+    \---models
+            Design.js
+            User.js
+            

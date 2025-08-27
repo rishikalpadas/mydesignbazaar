@@ -10,14 +10,12 @@ const Footer = () => {
   };
 
   const quickLinks = [
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'Licensing', href: '/licensing' },
-    { name: 'Terms of Use', href: '/terms' },
-    { name: 'Privacy Policy', href: '/privacy' },
-    { name: 'FAQs', href: '/faqs' },
-    { name: 'Support', href: '/support' },
-    { name: 'About Us', href: '/about' },
-    { name: 'Contact Us', href: '/contact' }
+    { name: 'About Us', href: '/about-us' },
+    { name: 'Brand Guidelines', href: '/brand-guidelines' },
+    { name: 'Copyright Terms', href: '/copyright-terms' },
+    { name: 'Privacy Policy', href: '/privacy-policy' },
+    { name: 'Licensing Policy', href: '/licensing-policy' },
+    { name: 'Monetization Policy', href: '/monetization-policy' },
   ];
 
   const socialLinks = [
@@ -120,10 +118,10 @@ const Footer = () => {
                     <div className="p-2 bg-gray-800 rounded-lg group-hover:bg-green-600 transition-colors duration-300">
                       <PhoneCall className="w-4 h-4" />
                     </div>
-                    <span>Toll-free: 1800-123-4567</span>
+                    <span>Call or WhatsApp: +919831147445</span>
                   </a>
                 </li>
-                <li className="group">
+                {/* <li className="group">
                   <a
                     href="https://wa.me/919876543210"
                     className="flex items-center gap-3 text-sm hover:text-white transition-colors duration-300"
@@ -133,7 +131,7 @@ const Footer = () => {
                     </div>
                     <span>WhatsApp: +91 98765 43210</span>
                   </a>
-                </li>
+                </li> */}
               </ul>
             </div>
 
@@ -206,18 +204,18 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="relative border-t border-gray-700 bg-gray-900/50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-16 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4">
             <div className="text-xs text-gray-500 flex items-center gap-2">
               © {new Date().getFullYear()} MyDesignBazaar. All rights reserved.
               <span className="flex items-center gap-1">
                 Made with <Heart className="w-3 h-3 text-red-500 animate-pulse" /> in India
               </span>
             </div>
-            <div className="flex items-center gap-6 text-xs text-gray-500">
+            {/* <div className="flex items-center gap-6 text-xs text-gray-500">
               <a href="/sitemap" className="hover:text-white transition-colors">Sitemap</a>
               <a href="/careers" className="hover:text-white transition-colors">Careers</a>
               <a href="/press" className="hover:text-white transition-colors">Press</a>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
