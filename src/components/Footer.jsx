@@ -107,7 +107,7 @@ const Footer = () => {
                     <div className="p-2 bg-gray-800 rounded-lg group-hover:bg-indigo-600 transition-colors duration-300">
                       <Mail className="w-4 h-4" />
                     </div>
-                    <span>info@mydesignbazaar.com</span>
+                    <span>Email: info@mydesignbazaar.com</span>
                   </a>
                 </li>
                 <li className="group">

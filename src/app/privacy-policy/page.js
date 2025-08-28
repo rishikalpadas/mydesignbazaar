@@ -340,7 +340,7 @@ export default function PrivacyPolicyPage() {
               <div className="bg-white rounded-2xl p-8 shadow-sm">
                 <h3 className="text-xl font-bold text-gray-800 mb-4">⚙️ Cookie Control</h3>
                 <p className="text-gray-600 mb-4">
-                  You may disable cookies in your browser settings; however, this may affect the website's full functionality.
+                  You may disable cookies in your browser settings; however, this may affect the website&apos;s full functionality.
                 </p>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <p className="text-sm text-yellow-800">
@@ -417,14 +417,14 @@ export default function PrivacyPolicyPage() {
         <section className="py-20 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 px-4">
           <div className="container mx-auto max-w-4xl">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">🧑‍🎨 Designers' Privacy Consideration</h2>
+              <h2 className="text-3xl font-bold text-gray-800 mb-4">🧑‍🎨 Designers&apos; Privacy Consideration</h2>
               <p className="text-xl text-gray-600">Special privacy protections for our creative community</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
-                  <h3 className="text-xl font-bold text-green-600 mb-4">✅ What's Visible to Buyers</h3>
+                  <h3 className="text-xl font-bold text-green-600 mb-4">✅ What&apos;s Visible to Buyers</h3>
                   <ul className="space-y-3">
                     <li className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
@@ -620,7 +620,7 @@ export default function PrivacyPolicyPage() {
                   📅
                 </div>
                 <h3 className="font-bold text-gray-800 mb-3">Effective Date</h3>
-                <p className="text-gray-600 text-sm">The "Effective Date" at the top will be updated</p>
+                <p className="text-gray-600 text-sm">The &quot;Effective Date&quot; at the top will be updated</p>
               </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-sm">

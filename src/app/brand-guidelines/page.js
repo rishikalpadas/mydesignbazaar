@@ -34,7 +34,7 @@ export default function BrandGuidelinesPage() {
           <div className="container mx-auto max-w-4xl text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome to MY DESIGN BAZAAR™</h2>
             <p className="text-xl text-gray-600 leading-relaxed mb-8">
-              India's pioneering platform for downloadable, ready-to-use, premium garment design files. These guidelines serve as the cornerstone of our visual identity, tone of voice, and brand consistency.
+              India&apos;s pioneering platform for downloadable, ready-to-use, premium garment design files. These guidelines serve as the cornerstone of our visual identity, tone of voice, and brand consistency.
             </p>
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6">
               <p className="text-lg text-gray-700 font-medium">
@@ -63,7 +63,7 @@ export default function BrandGuidelinesPage() {
                 <div className="space-y-4">
                   <div className="bg-blue-50 rounded-lg p-4">
                     <h4 className="font-bold text-2xl text-blue-600 mb-2">MY DESIGN BAZAAR™</h4>
-                    <p className="text-gray-600">Use in full. Avoid abbreviations (e.g., "MDB") in public-facing communication unless officially stylized.</p>
+                    <p className="text-gray-600">Use in full. Avoid abbreviations (e.g., &quot;MDB&quot;) in public-facing communication unless officially stylized.</p>
                   </div>
                 </div>
               </div>
@@ -78,11 +78,11 @@ export default function BrandGuidelinesPage() {
                 <div className="space-y-4">
                   <div className="bg-orange-50 rounded-lg p-4">
                     <h4 className="font-bold text-lg text-orange-600 mb-2">Primary Tagline</h4>
-                    <p className="text-gray-700 font-medium">"Designs that Inspire. Creativity that Converts."</p>
+                    <p className="text-gray-700 font-medium">&quot;Designs that Inspire. Creativity that Converts.&quot;</p>
                   </div>
                   <div className="bg-pink-50 rounded-lg p-4">
                     <h4 className="font-bold text-lg text-pink-600 mb-2">Alternate</h4>
-                    <p className="text-gray-700 font-medium">"Your One-Stop Digital Market for Garment Designs."</p>
+                    <p className="text-gray-700 font-medium">&quot;Your One-Stop Digital Market for Garment Designs.&quot;</p>
                   </div>
                 </div>
               </div>
@@ -286,7 +286,7 @@ export default function BrandGuidelinesPage() {
                     <h4 className="font-bold text-orange-600 mb-2">Font: Playfair Display Italic</h4>
                     <p className="text-gray-600">Use: Testimonials, promotional banners</p>
                     <div className="mt-3">
-                      <p className="italic text-xl text-gray-800">"Sample quote text"</p>
+                      <p className="italic text-xl text-gray-800">&quot;Sample quote text&quot;</p>
                     </div>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ export default function BrandGuidelinesPage() {
               </div>
 
               <div className="bg-red-50 rounded-2xl p-8">
-                <h3 className="text-2xl font-bold text-red-600 mb-6">DON'T:</h3>
+                <h3 className="text-2xl font-bold text-red-600 mb-6">DON&apos;T:</h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
@@ -356,7 +356,7 @@ export default function BrandGuidelinesPage() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <span className="text-gray-700">Mimic or copy other brands' tonality</span>
+                    <span className="text-gray-700">Mimic or copy other brands&apos; tonality</span>
                   </div>
                 </div>
               </div>
@@ -585,7 +585,7 @@ export default function BrandGuidelinesPage() {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-700">Maintain clear space equivalent to the height of letter "M"</span>
+                    <span className="text-gray-700">Maintain clear space equivalent to the height of letter &quot;M&quot;</span>
                   </div>
                 </div>
                 <div className="bg-green-50 rounded-lg p-6">
@@ -668,8 +668,8 @@ export default function BrandGuidelinesPage() {
               <div className="mt-12 bg-white/15 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto">
                 <h3 className="text-2xl font-bold mb-4">Ready to Collaborate?</h3>
                 <p className="opacity-90 mb-6">
-                  Whether you're looking to partner with us or need clarification on brand usage, 
-                  we're committed to maintaining the integrity and consistency of MY DESIGN BAZAAR™.
+                  Whether you&apos;re looking to partner with us or need clarification on brand usage, 
+                  we&apos;re committed to maintaining the integrity and consistency of MY DESIGN BAZAAR™.
                 </p>
                 <button className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                   Get Brand Support

@@ -77,9 +77,9 @@ export default function CopyrightTermsPage() {
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-2xl mb-6 group-hover:scale-110 transition-transform">
                   🎨
                 </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">Designer's Original Work</h3>
+                <h3 className="text-xl font-bold text-gray-800 mb-3">Designer&apos;s Original Work</h3>
                 <p className="text-gray-600 leading-relaxed">
-                  All designers uploading artwork or design files to <strong className="text-blue-600">www.mydesignbazaar.com</strong> (the "Platform") affirm and warrant that the submitted content is their own original creation, or that they hold all necessary rights, licenses, and permissions to submit and commercially distribute such content.
+                  All designers uploading artwork or design files to <strong className="text-blue-600">www.mydesignbazaar.com</strong> (the &quot;Platform&quot;) affirm and warrant that the submitted content is their own original creation, or that they hold all necessary rights, licenses, and permissions to submit and commercially distribute such content.
                 </p>
               </div>
 
@@ -360,7 +360,7 @@ export default function CopyrightTermsPage() {
           <div className="container mx-auto text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">🚀 Ready to Join the Design Revolution?</h2>
             <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-              Now that you understand our copyright and licensing terms, start your journey with India's premier design marketplace
+              Now that you understand our copyright and licensing terms, start your journey with India&apos;s premier design marketplace
             </p>
 
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">

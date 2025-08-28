@@ -18,7 +18,7 @@ export default function AboutPage() {
                 Elevating Fashion.
               </h1>
               <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
-                We're not just another digital marketplace — we're a revolutionary bridge between visionary garment designers and ambitious fashion manufacturers.
+                We&apos;re not just another digital marketplace — we&apos;re a revolutionary bridge between visionary garment designers and ambitious fashion manufacturers.
               </p>
               <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -318,7 +318,7 @@ export default function AboutPage() {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl font-bold mb-6">🔗 Our Ecosystem</h2>
               <p className="text-xl opacity-90 mb-12 leading-relaxed">
-                We're more than a marketplace. We're building a <strong>community</strong> of creators, innovators, and entrepreneurs. Whether you're a fashion startup, a mass production unit, or an independent illustrator, My Design Bazaar offers the digital tools, exposure, and ecosystem to elevate your fashion business.
+                We&apos;re more than a marketplace. We&apos;re building a <strong>community</strong> of creators, innovators, and entrepreneurs. Whether you&apos;re a fashion startup, a mass production unit, or an independent illustrator, My Design Bazaar offers the digital tools, exposure, and ecosystem to elevate your fashion business.
               </p>
 
               <div className="grid md:grid-cols-3 gap-8 mb-12">

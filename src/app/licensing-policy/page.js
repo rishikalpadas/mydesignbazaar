@@ -32,7 +32,7 @@ export default function LicensingPage() {
         {/* Introduction */}
         <section className="py-16 bg-white px-4">
           <div className="container mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome to India's Premier Digital Marketplace</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-6">Welcome to India&apos;s Premier Digital Marketplace</h2>
             <p className="text-xl text-gray-600 leading-relaxed mb-8">
               As a platform driven by innovation and artistic integrity, we are committed to maintaining a legally sound ecosystem for both design creators and design buyers. This Licensing Policy outlines the terms under which designs are uploaded, sold, licensed, and used.
             </p>
@@ -240,7 +240,7 @@ export default function LicensingPage() {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-800">Important Restrictions</h3>
                     <p className="text-gray-600 max-w-sm mx-auto">
-                      Protect the integrity of our marketplace and respect designers' rights
+                      Protect the integrity of our marketplace and respect designers&apos; rights
                     </p>
                   </div>
                 </div>
@@ -345,7 +345,7 @@ export default function LicensingPage() {
                     🔒
                   </div>
                   <h4 className="font-semibold mb-2">Account Suspension</h4>
-                  <p className="text-sm opacity-80">Uploader's account suspended pending investigation</p>
+                  <p className="text-sm opacity-80">Uploader&apos;s account suspended pending investigation</p>
                 </div>
                 <div className="text-center">
                   <div className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-4 flex items-center justify-center text-2xl">

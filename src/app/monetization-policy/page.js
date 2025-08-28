@@ -121,7 +121,7 @@ export default function MonetizationTermsPage() {
                     </div>
                     <h3 className="text-2xl font-bold text-gray-800">Start Earning</h3>
                     <p className="text-gray-600 max-w-sm">
-                      Meet our requirements and begin monetizing your creative talent on India's fastest-growing design marketplace
+                      Meet our requirements and begin monetizing your creative talent on India&apos;s fastest-growing design marketplace
                     </p>
                   </div>
                 </div>
@@ -517,7 +517,7 @@ export default function MonetizationTermsPage() {
 
             <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm rounded-2xl p-8 border border-white/10 text-center max-w-2xl mx-auto">
               <h3 className="text-2xl font-bold mb-4">Ready to Start Monetizing?</h3>
-              <p className="mb-6 opacity-90">Join thousands of designers already earning from their creativity on India's premier design marketplace.</p>
+              <p className="mb-6 opacity-90">Join thousands of designers already earning from their creativity on India&apos;s premier design marketplace.</p>
               <div className="flex flex-wrap justify-center gap-4">
                 <button className="bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
                   Apply as Designer
@@ -657,7 +657,7 @@ export default function MonetizationTermsPage() {
                     <div className="space-y-3 text-gray-700">
                       <p className="flex items-start space-x-2">
                         <span className="text-blue-500 mt-1">•</span>
-                        <span>All design files include <strong>licensing watermark:</strong> "© Design licensed by MY DESIGN BAZAAR™"</span>
+                        <span>All design files include <strong>licensing watermark:</strong> &quot;© Design licensed by MY DESIGN BAZAAR™&quot;</span>
                       </p>
                       <p className="flex items-start space-x-2">
                         <span className="text-blue-500 mt-1">•</span>
@@ -719,7 +719,7 @@ export default function MonetizationTermsPage() {
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl p-8 max-w-3xl mx-auto">
               <h3 className="text-2xl font-bold mb-4">🚀 Ready to Transform Your Creative Passion into Profit?</h3>
               <p className="mb-6 opacity-90 leading-relaxed">
-                Join MY DESIGN BAZAAR™ today and become part of India's fastest-growing community of successful design entrepreneurs. 
+                Join MY DESIGN BAZAAR™ today and become part of India&apos;s fastest-growing community of successful design entrepreneurs. 
                 With our transparent monetization model, comprehensive support, and commitment to designer success, your creative journey starts here.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
