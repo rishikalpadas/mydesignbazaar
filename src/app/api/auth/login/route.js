@@ -159,13 +159,12 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    // Check if account is approved (for designers)
-    // if (user.userType === "designer" && !user.isApproved) {
-    //   return NextResponse.json(
-    //     { error: "Your designer application is under review. Please wait for admin approval." },
-    //     { status: 403 },
-    //   )
-    // }
+    if (user.userType === "designer" && !user.isApproved) {
+      return NextResponse.json(
+        { error: "Your designer application is under review. Please wait for admin approval." },
+        { status: 403 },
+      )
+    }
 
     // Get profile data for regular users
     let profile

@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Users, Palette, ShoppingBag, TrendingUp, DollarSign, FileText, UserCheck, AlertCircle } from "lucide-react"
 
 const AdminDashboard = ({ user }) => {
@@ -65,6 +66,8 @@ const AdminDashboard = ({ user }) => {
 
   const relevantStats = getRelevantStats()
 
+  const router = useRouter()
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
@@ -107,7 +110,10 @@ const AdminDashboard = ({ user }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {getAdminType() === "Super Admin" && (
               <>
-                <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg">
+                <button
+                  onClick={() => router.push("/dashboard/designers/pending")}
+                  className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg"
+                >
                   <UserCheck className="h-8 w-8 text-orange-500 mb-2" />
                   <h3 className="font-semibold text-gray-900">Approve Designers</h3>
                   <p className="text-sm text-gray-500">Review pending designer applications</p>
@@ -117,7 +123,10 @@ const AdminDashboard = ({ user }) => {
                   <h3 className="font-semibold text-gray-900">Manage Users</h3>
                   <p className="text-sm text-gray-500">View and manage all users</p>
                 </button>
-                <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg">
+                <button
+                  onClick={() => router.push("/dashboard/designs/pending")}
+                  className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg"
+                >
                   <TrendingUp className="h-8 w-8 text-purple-500 mb-2" />
                   <h3 className="font-semibold text-gray-900">View Analytics</h3>
                   <p className="text-sm text-gray-500">Platform performance metrics</p>
@@ -127,12 +136,18 @@ const AdminDashboard = ({ user }) => {
 
             {getAdminType() === "Designer Admin" && (
               <>
-                <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg">
+                <button
+                  onClick={() => router.push("/dashboard/designers/pending")}
+                  className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg"
+                >
                   <UserCheck className="h-8 w-8 text-orange-500 mb-2" />
                   <h3 className="font-semibold text-gray-900">Approve Designers</h3>
                   <p className="text-sm text-gray-500">Review pending designer applications</p>
                 </button>
-                <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg">
+                <button
+                  onClick={() => router.push("/dashboard/designs/pending")}
+                  className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg"
+                >
                   <Palette className="h-8 w-8 text-purple-500 mb-2" />
                   <h3 className="font-semibold text-gray-900">Manage Designs</h3>
                   <p className="text-sm text-gray-500">Review and approve designs</p>

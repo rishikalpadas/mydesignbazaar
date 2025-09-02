@@ -15,6 +15,8 @@ import {
   LayoutDashboard,
   UserCircle,
 } from "lucide-react"
+import { getSlugFromCategory } from "@/lib/category-map"
+import NoContextMenu from "@/components/NoContextMenu"
 
 const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -107,7 +109,9 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
     return user.userType === "designer" ? "Designer" : "Buyer"
   }
 
-  const categories = ["Kidswear", "Menswear", "Womenswear", "Typography", "Floral", "AI-Generated"]
+  const categories = ["Infantwear", "Kidswear", "Menswear", "Womenswear", "Typography", "Floral", "AI-Generated"]
+
+  const titleToSlug = (title) => getSlugFromCategory(title)
 
   const UserDropdown = () => (
     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
@@ -168,6 +172,8 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
+      {/* Mount no-context-menu listener once via navbar (client component) */}
+      <NoContextMenu />
       {/* Top announcement bar */}
       <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-center py-2 text-sm font-medium">
         Made in India, Loved Worldwide
@@ -271,7 +277,13 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
             <ul className="flex items-center justify-center gap-8">
               {categories.map((category, index) => (
                 <li key={index}>
-                  <button className="text-gray-700 hover:text-amber-500 font-medium text-sm transition-colors duration-200 py-2 px-3 rounded-md hover:bg-amber-50">
+                  <button
+                    onClick={() => {
+                      const slug = titleToSlug(category)
+                      if (slug) router.push(`/category/${slug}`)
+                    }}
+                    className="text-gray-700 hover:text-amber-500 font-medium text-sm transition-colors duration-200 py-2 px-3 rounded-md hover:bg-amber-50"
+                  >
                     {category}
                   </button>
                 </li>
@@ -304,7 +316,16 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
             <ul className="space-y-1">
               {categories.map((category, index) => (
                 <li key={index}>
-                  <button className="w-full text-left px-3 py-3 text-gray-700 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors duration-200 font-medium text-sm">
+                  <button
+                    onClick={() => {
+                      const slug = titleToSlug(category)
+                      if (slug) {
+                        router.push(`/category/${slug}`)
+                        setMobileMenuOpen(false)
+                      }
+                    }}
+                    className="w-full text-left px-3 py-3 text-gray-700 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors duration-200 font-medium text-sm"
+                  >
                     {category}
                   </button>
                 </li>
