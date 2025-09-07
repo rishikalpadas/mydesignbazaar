@@ -68,7 +68,7 @@ export default function WhyChoosePage() {
                 <span className="text-orange-300">MyDesignBazaar?</span>
               </h1>
               <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-4xl mx-auto leading-relaxed">
-                In the fast-paced fashion industry, time, cost-efficiency, and creativity at scale aren't luxuries—they're necessities. We're revolutionizing how you source garment designs.
+                In the fast-paced fashion industry, time, cost-efficiency, and creativity at scale aren&apos;t luxuries—they&apos;re necessities. We&apos;re revolutionizing how you source garment designs.
               </p>
               <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 mb-8">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -260,7 +260,7 @@ export default function WhyChoosePage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-3">Flexible Options</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  Monthly subscriptions, pay-per-download, or exclusive purchases. Whether you're a boutique or mass manufacturer—pay only for what you need.
+                  Monthly subscriptions, pay-per-download, or exclusive purchases. Whether you&apos;re a boutique or mass manufacturer—pay only for what you need.
                 </p>
                 <div className="text-sm text-teal-600 font-medium">
                   ✓ Plans for every business size
@@ -288,7 +288,7 @@ export default function WhyChoosePage() {
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-3">24/7 Support</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  Dedicated human support via email, WhatsApp, and ticketing. We're not a faceless platform—get help with downloads or design suggestions.
+                  Dedicated human support via email, WhatsApp, and ticketing. We&apos;re not a faceless platform—get help with downloads or design suggestions.
                 </p>
                 <div className="text-sm text-yellow-600 font-medium">
                   ✓ Always here to help
@@ -401,7 +401,7 @@ export default function WhyChoosePage() {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">Smart Business Tool for Fashion Creators</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                More than just a design library - we're your competitive advantage in the fashion industry
+                More than just a design library - we&apos;re your competitive advantage in the fashion industry
               </p>
             </div>
 
@@ -485,7 +485,7 @@ export default function WhyChoosePage() {
                 Ready to Transform Your Design Process?
               </h2>
               <p className="text-xl text-white/90 mb-12 leading-relaxed">
-                Join thousands of fashion businesses who've already discovered the MyDesignBazaar advantage. 
+                Join thousands of fashion businesses who&apos;ve already discovered the MyDesignBazaar advantage. 
                 Experience frictionless, affordable, scalable design sourcing.
               </p>
               

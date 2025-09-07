@@ -171,7 +171,7 @@ export default function TermsOfServicePage() {
                       </div>
                       <div className="flex items-start space-x-3">
                         <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                        <p className="text-gray-700">You're responsible for applicable taxes in your country</p>
+                        <p className="text-gray-700">You&apos;re responsible for applicable taxes in your country</p>
                       </div>
                     </div>
                   </div>

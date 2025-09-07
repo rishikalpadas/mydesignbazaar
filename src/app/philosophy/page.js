@@ -74,12 +74,12 @@ export default function AboutUsPage() {
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="text-center">
                     <div className="text-5xl mb-4">💸</div>
-                    <h4 className="font-semibold text-gray-800 mb-2">Buyers' Dilemma</h4>
+                    <h4 className="font-semibold text-gray-800 mb-2">Buyers&apos; Dilemma</h4>
                     <p className="text-gray-600">Customers hesitate to pay ₹500 or even ₹300 for quality designs, seeking affordability without compromising on excellence</p>
                   </div>
                   <div className="text-center">
                     <div className="text-5xl mb-4">😞</div>
-                    <h4 className="font-semibold text-gray-800 mb-2">Designers' Struggle</h4>
+                    <h4 className="font-semibold text-gray-800 mb-2">Designers&apos; Struggle</h4>
                     <p className="text-gray-600">Talented creators struggle to sustain themselves with unsustainably low prices of ₹50 per design</p>
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export default function AboutUsPage() {
                 <p className="text-gray-600 leading-relaxed">
                   To redefine the economics of garment design by creating a sustainable ecosystem where 
                   fashion businesses can access premium designs affordably while ensuring designers receive 
-                  fair compensation for their creative work. We're eliminating inefficiencies and building 
+                  fair compensation for their creative work. We&apos;re eliminating inefficiencies and building 
                   the future of fashion design accessibility.
                 </p>
               </div>
@@ -392,8 +392,8 @@ export default function AboutUsPage() {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl font-bold mb-6">Join the Design Revolution</h2>
               <p className="text-xl opacity-90 mb-12 leading-relaxed">
-                Be part of the transformation that's reshaping how the fashion industry approaches design, 
-                creativity, and commerce. Together, we're building a future where everyone wins.
+                Be part of the transformation that&apos;s reshaping how the fashion industry approaches design, 
+                creativity, and commerce. Together, we&apos;re building a future where everyone wins.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -417,7 +417,7 @@ export default function AboutUsPage() {
         {/* Contact Information */}
         <section className="py-20 bg-white px-4">
           <div className="container mx-auto text-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">🤝 Let's Connect</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">🤝 Let&apos;s Connect</h2>
             <p className="text-xl text-gray-600 mb-12">Ready to transform your fashion business?</p>
 
             <div className="max-w-2xl mx-auto">
@@ -435,7 +435,7 @@ export default function AboutUsPage() {
                       <strong>For Business Inquiries:</strong> partnerships@mydesignbazaar.com
                     </p>
                     <p className="text-xs text-gray-400">
-                      Whether you're a designer looking to join our platform or a business seeking custom solutions
+                      Whether you&apos;re a designer looking to join our platform or a business seeking custom solutions
                     </p>
                   </div>
                   <button 
@@ -451,7 +451,7 @@ export default function AboutUsPage() {
             <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 max-w-4xl mx-auto">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">🚀 The Future is Here</h3>
               <p className="text-gray-600 leading-relaxed">
-                MyDesignBazaar.com isn't just another marketplace – we're the catalyst for a fundamental shift 
+                MyDesignBazaar.com isn't just another marketplace – we&apos;re the catalyst for a fundamental shift 
                 in how the fashion industry operates. Where affordability meets excellence, and creativity is 
                 finally valued as it should be. Welcome to the future of fashion design accessibility.
               </p>

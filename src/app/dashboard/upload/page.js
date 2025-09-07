@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { 
   Upload, 
@@ -58,7 +58,7 @@ const UploadContent = () => {
   const [globalErrors, setGlobalErrors] = useState({})
 
   // Check if user is first-time uploader
-  const checkFirstTimeUpload = async () => {
+  const checkFirstTimeUpload = useCallback(async () => {
     try {
       const response = await fetch('/api/designs/my-designs?limit=1')
       const data = await response.json()
@@ -86,7 +86,7 @@ const UploadContent = () => {
     } catch (error) {
       console.error('Error checking first-time upload status:', error)
     }
-  }
+  }, [designs.length])
 
   const updateDesign = (index, field, value) => {
     setDesigns(prev => 
@@ -101,7 +101,7 @@ const UploadContent = () => {
   // Load first-time upload status on component mount
   useEffect(() => {
     checkFirstTimeUpload()
-  }, [])
+  }, [checkFirstTimeUpload])
 
   const addDesign = () => {
     if (designs.length >= MAX_DESIGNS) return

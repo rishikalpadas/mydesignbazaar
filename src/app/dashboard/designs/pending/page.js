@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import DashboardPageWrapper from '@/components/dashboard/DashboardPageWrapper'
 
 const PendingDesignsContent = () => {
@@ -63,9 +64,11 @@ const PendingDesignsContent = () => {
         {items.map((d) => (
           <li key={d.id} className="rounded-lg border p-4 space-y-3">
             {d.previewImageUrl ? (
-              <img
+              <Image
                 src={d.previewImageUrl || "/placeholder.svg"}
                 alt={d.title}
+                width={400}
+                height={160}
                 className="w-full h-40 object-cover rounded-md border"
               />
             ) : (
