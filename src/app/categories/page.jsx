@@ -1,4 +1,5 @@
 // pages/unique-designs.js
+import Navbar from "@/components/Navbar";
 import { Heart } from "lucide-react";
 
 const dummyDesigns = Array.from({ length: 18 },(_,i) => ({
@@ -11,6 +12,8 @@ const dummyDesigns = Array.from({ length: 18 },(_,i) => ({
 
 function DesignCard({ design }) {
   return (
+    <>
+
     <div className="relative group rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500">
       {/* Background Image */}
       <img
@@ -34,12 +37,17 @@ function DesignCard({ design }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 export default function UniqueDesignsPage() {
   return (
+    <>
+    <Navbar/>
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-purple-50 to-slate-200 p-6">
+
+
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
         Our Unique Designs
       </h1>
@@ -51,5 +59,6 @@ export default function UniqueDesignsPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }

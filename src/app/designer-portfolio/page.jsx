@@ -1,4 +1,5 @@
 // pages/profiles.js
+import Navbar from "@/components/Navbar";
 import { Star, Globe, MapPin } from "lucide-react";
 
 const dummyProfiles = Array.from({ length: 10 }).map((_, i) => ({
@@ -16,6 +17,7 @@ const dummyProfiles = Array.from({ length: 10 }).map((_, i) => ({
 
 function ProfileCard({ profile }) {
   return (
+    <>
     <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
       {/* Top Section */}
       <div className="p-5 flex flex-col items-center text-center relative">
@@ -85,11 +87,14 @@ function ProfileCard({ profile }) {
         </button>
       </div>
     </div>
+    </>
   );
 }
 
 export default function ProfilesPage() {
   return (
+    <>
+    <Navbar/>
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-purple-50 to-slate-200 p-6">
       <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-6 text-center">
         Featured Designers
@@ -102,5 +107,6 @@ export default function ProfilesPage() {
         ))}
       </div>
     </div>
+    </>
   );
 }
