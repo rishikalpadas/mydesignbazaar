@@ -451,7 +451,7 @@ export default function AboutUsPage() {
             <div className="mt-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-8 max-w-4xl mx-auto">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">🚀 The Future is Here</h3>
               <p className="text-gray-600 leading-relaxed">
-                MyDesignBazaar.com isn't just another marketplace – we&apos;re the catalyst for a fundamental shift 
+                MyDesignBazaar.com isn&apos;t just another marketplace – we&apos;re the catalyst for a fundamental shift 
                 in how the fashion industry operates. Where affordability meets excellence, and creativity is 
                 finally valued as it should be. Welcome to the future of fashion design accessibility.
               </p>
