@@ -4,12 +4,15 @@ import Link from "next/link"
 import CategoryFilters from "@/components/category/CategoryFilters.jsx"
 import DesignGrid from "@/components/category/DesignGrid.jsx"
 import { getCategoryFromSlug } from "@/lib/category-map"
+import Navbar from "@/components/Navbar"
+
 
 const PER_PAGE_DEFAULT = 12
 
 export default async function CategoryPage({ params, searchParams }) {
   const { slug } = params
-  const category = getCategoryFromSlug(slug)
+  const category = getCategoryFromSlug(slug);
+
 
   if (!category) {
     return (
@@ -57,7 +60,27 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const totalPages = Math.max(Math.ceil(total / perPage), 1)
 
+
+  const handleAuthClick = () => {
+    setIsAuthModalOpen(true)
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+
+      setIsAuthenticated(false)
+      setUser(null)
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
   return (
+    <>
+    <Navbar/>
     <main className="bg-gradient-to-b from-white to-gray-50">
       {/* Hero / Breadcrumb */}
       <section className="border-b border-gray-100">
@@ -177,6 +200,7 @@ export default async function CategoryPage({ params, searchParams }) {
         )}
       </section>
     </main>
+    </>
   )
 }
 

@@ -1,27 +1,55 @@
-"use client"
-import { useState } from 'react';
-import { Mail, PhoneCall, MessageCircle, Instagram, Linkedin, Globe, ArrowUp, ExternalLink, Heart, MapPin } from 'lucide-react';
+"use client";
+import { useState } from "react";
+import {
+  Mail,
+  PhoneCall,
+  MessageCircle,
+  Instagram,
+  Linkedin,
+  Globe,
+  ArrowUp,
+  ExternalLink,
+  Heart,
+  MapPin,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import AuthModal from "./AuthModal";
 
 const Footer = () => {
   const [hoveredSocial, setHoveredSocial] = useState(null);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const quickLinks = [
-    { name: 'About Us', href: '/about-us' },
-    { name: 'Brand Guidelines', href: '/brand-guidelines' },
-    { name: 'Copyright Terms', href: '/copyright-terms' },
-    { name: 'Privacy Policy', href: '/privacy-policy' },
-    { name: 'Licensing Policy', href: '/licensing-policy' },
-    { name: 'Monetization Policy', href: '/monetization-policy' },
+    { name: "About Us", href: "/about-us" },
+    { name: "Brand Guidelines", href: "/brand-guidelines" },
+    { name: "Copyright Terms", href: "/copyright-terms" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Licensing Policy", href: "/licensing-policy" },
+    { name: "Monetization Policy", href: "/monetization-policy" },
   ];
 
   const socialLinks = [
-    { name: 'Instagram', icon: Instagram, href: 'https://instagram.com', color: 'hover:text-pink-400' },
-    { name: 'LinkedIn', icon: Linkedin, href: 'https://linkedin.com', color: 'hover:text-blue-400' },
-    { name: 'Portfolio', icon: Globe, href: 'https://behance.net', color: 'hover:text-purple-400' }
+    {
+      name: "Instagram",
+      icon: Instagram,
+      href: "https://instagram.com",
+      color: "hover:text-pink-400",
+    },
+    {
+      name: "LinkedIn",
+      icon: Linkedin,
+      href: "https://linkedin.com",
+      color: "hover:text-blue-400",
+    },
+    {
+      name: "Portfolio",
+      icon: Globe,
+      href: "https://behance.net",
+      color: "hover:text-purple-400",
+    },
   ];
 
   return (
@@ -44,7 +72,6 @@ const Footer = () => {
       <div className="relative py-20 px-4 md:px-16">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-
             {/* Logo + Brand Section */}
             <div className="lg:col-span-1">
               <div className="group mb-8">
@@ -57,7 +84,7 @@ const Footer = () => {
               {/* <p className="text-gray-400 text-sm leading-relaxed mb-6">
                 Your Brand. Your Identity. Buy & sell unique textile and surface pattern designs with full licensing support.
               </p> */}
-              
+
               {/* Trust Indicators */}
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-2">
@@ -141,7 +168,7 @@ const Footer = () => {
                 Connect
                 <div className="w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
               </h3>
-              
+
               {/* Social Links */}
               <div className="flex gap-4 mb-8">
                 {socialLinks.map((social, index) => {
@@ -157,7 +184,9 @@ const Footer = () => {
                       onMouseLeave={() => setHoveredSocial(null)}
                     >
                       <IconComponent className="w-5 h-5" />
-                      <ExternalLink className={`w-3 h-3 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                      <ExternalLink
+                        className={`w-3 h-3 absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                      />
                     </a>
                   );
                 })}
@@ -166,13 +195,13 @@ const Footer = () => {
               {/* CTA Button */}
               <div className="space-y-4">
                 <a
-                  href="/signup?role=designer"
+                 
                   className="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   Become a Designer ✨
                 </a>
                 <a
-                  href="/browse"
+                  href="/categories"
                   className="block w-full border border-gray-600 text-gray-300 text-sm font-medium px-6 py-3 rounded-xl hover:border-indigo-500 hover:text-white transition-all duration-300 text-center"
                 >
                   Browse Designs
@@ -184,8 +213,12 @@ const Footer = () => {
           {/* Newsletter Section */}
           <div className="mt-16 pt-12 border-t border-gray-700">
             <div className="text-center max-w-2xl mx-auto">
-              <h3 className="text-xl font-bold text-white mb-3">Stay Updated</h3>
-              <p className="text-gray-400 text-sm mb-6">Get the latest design trends and marketplace updates</p>
+              <h3 className="text-xl font-bold text-white mb-3">
+                Stay Updated
+              </h3>
+              <p className="text-gray-400 text-sm mb-6">
+                Get the latest design trends and marketplace updates
+              </p>
               <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                 <input
                   type="email"
@@ -208,7 +241,9 @@ const Footer = () => {
             <div className="text-xs text-gray-500 flex items-center gap-2">
               © {new Date().getFullYear()} MyDesignBazaar. All rights reserved.
               <span className="flex items-center gap-1">
-                Made with <Heart className="w-3 h-3 text-red-500 animate-pulse" /> in India
+                Made with{" "}
+                <Heart className="w-3 h-3 text-red-500 animate-pulse" /> in
+                India
               </span>
             </div>
             {/* <div className="flex items-center gap-6 text-xs text-gray-500">

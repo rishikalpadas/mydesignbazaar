@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const featuredDesigns = [
   {
     id: 1,
@@ -229,6 +231,7 @@ const FeaturedDesigns = () => {
         {/* Bottom CTA */}
         <div className="text-center mt-8 sm:mt-12 lg:mt-16">
           <button className="group bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-900 hover:to-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm sm:text-base">
+            <Link href="/categories">
             <span className="flex items-center gap-2">
               Explore All Designs
               <svg
@@ -245,6 +248,7 @@ const FeaturedDesigns = () => {
                 />
               </svg>
             </span>
+            </Link>
           </button>
         </div>
       </div>

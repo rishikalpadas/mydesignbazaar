@@ -7,6 +7,7 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 
 import { Instagram, Globe, Star, MapPin, ArrowRight, Verified } from "lucide-react";
+import Link from "next/link";
 
 const featuredDesigners = [
   {
@@ -232,11 +233,15 @@ const FeaturedDesigners = () => {
           </div>
         </div>
 
+
         {/* **Call to Action** */}
+        
         <div className="text-center mt-12">
+          <Link href="/categories">
           <button className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             Explore All Designers
           </button>
+          </Link>
         </div>
       </div>
     </section>

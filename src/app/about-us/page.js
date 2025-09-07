@@ -1,8 +1,28 @@
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AboutPage() {
+
+  const { user } = useAuth();
+
+  const handleStartAsDesigner=()=>{
+    console.log("[v0] Button clicked, user:", user) // Added debug logging
+    if (!user) {
+      console.log("[v0] No user, opening auth modal")
+      setShowAuthModal(true)
+    } else if (user.userType === "designer") {
+      console.log("[v0] User is designer, redirecting to dashboard")
+      router.push("/dashboard")
+    } else if (user.userType === "buyer") {
+      console.log("[v0] User is buyer, showing role prompt")
+      setShowRolePrompt(true)
+    } else {
+      console.log("[v0] Unknown user type:", user.userType)
+    }
+  
+  }
   return (
     <>
       <Navbar />
@@ -361,7 +381,7 @@ export default function AboutPage() {
                 <div className="text-3xl mb-4">🛒</div>
                 <h3 className="font-bold text-gray-800 mb-2">Buyers</h3>
                 <p className="text-gray-600 text-sm mb-4">Subscribe or download as you go, with confidence</p>
-                <button className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors">
+                <button className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors" onClick={handleStartAsDesigner}>
                   Start Shopping
                 </button>
               </div>
