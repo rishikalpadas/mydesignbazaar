@@ -13,6 +13,7 @@ import { useState } from "react"
 import { useAuth } from "../context/AuthContext"
 import AuthModal from "./AuthModal"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 const steps = [
   {
@@ -249,9 +250,11 @@ const HowItWorks = () => {
               >
                 Start as Designer
               </button>
+             <Link href="/categories"> 
               <button className="bg-indigo-500 hover:bg-indigo-400 text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold text-base md:text-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl border-2 border-indigo-400">
                 Browse Designs
               </button>
+              </Link>
             </div>
           </div>
         </div>
