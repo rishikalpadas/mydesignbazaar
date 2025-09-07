@@ -22,7 +22,7 @@ export default function RootLayout({ children }) {
        
         <NoContextMenu />
         <AuthProvider>{children}</AuthProvider>
-        <Footer/>
+        {/* <Footer/> */}
       </body>
     </html>
   )

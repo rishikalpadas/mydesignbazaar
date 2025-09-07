@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useState } from "react"
+import DashboardPageWrapper from '@/components/dashboard/DashboardPageWrapper'
 
-export default function PendingDesignersPage() {
+const PendingDesignersContent = () => {
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])
   const [error, setError] = useState(null)
@@ -35,8 +36,13 @@ export default function PendingDesignersPage() {
   }
 
   return (
-    <main className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Pending Designers</h1>
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-md p-6 border border-orange-100">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Pending Designers</h1>
+        <p className="text-gray-600">Review and approve designer applications</p>
+      </div>
+      
+      <div className="bg-white rounded-xl shadow-md p-6 border border-orange-100">
       {loading && <p>Loading...</p>}
       {error && <p className="text-red-600">{error}</p>}
       {!loading && items.length === 0 && <p>No pending designers.</p>}
@@ -56,6 +62,17 @@ export default function PendingDesignersPage() {
           </li>
         ))}
       </ul>
-    </main>
+      </div>
+    </div>
   )
 }
+
+const PendingDesignersPage = () => {
+  return (
+    <DashboardPageWrapper requiredUserType="admin">
+      <PendingDesignersContent />
+    </DashboardPageWrapper>
+  )
+}
+
+export default PendingDesignersPage

@@ -25,8 +25,9 @@ import {
   AlertCircle
 } from 'lucide-react'
 import Image from "next/image"
+import DashboardPageWrapper from '@/components/dashboard/DashboardPageWrapper'
 
-const MyDesignsPage = () => {
+const MyDesignsContent = () => {
   const router = useRouter()
   const [designs, setDesigns] = useState([])
   const [stats, setStats] = useState({
@@ -216,9 +217,9 @@ const MyDesignsPage = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-md">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center">
@@ -242,7 +243,7 @@ const MyDesignsPage = () => {
         {statsCards.map((stat, index) => (
           <div
             key={index}
-            className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-orange-100 hover:shadow-xl transition-all duration-300"
+            className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md p-4 border border-orange-100 hover:shadow-lg transition-all duration-300"
           >
             <div className="flex items-center justify-between mb-3">
               <div className={`bg-gradient-to-r ${stat.color} rounded-xl p-2 shadow-lg`}>
@@ -259,7 +260,7 @@ const MyDesignsPage = () => {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-orange-100 p-6">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-4">
         <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
             {/* Search */}
@@ -321,7 +322,8 @@ const MyDesignsPage = () => {
                   <Image
                     src={design.previewImageUrl}
                     alt={design.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       // Fallback to a generic placeholder
                       e.target.style.display = 'none'
@@ -343,6 +345,16 @@ const MyDesignsPage = () => {
                 <div className="absolute top-3 left-3">
                   {getStatusBadge(design.status)}
                 </div>
+
+                {/* Multiple Images Indicator */}
+                {design.previewImageUrls && design.previewImageUrls.length > 1 && (
+                  <div className="absolute bottom-3 left-3 bg-blue-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                    {design.previewImageUrls.length}
+                  </div>
+                )}
 
                 {/* Actions Menu */}
                 <div className="absolute top-3 right-3">
@@ -514,6 +526,14 @@ const MyDesignsPage = () => {
         </div>
       )}
     </div>
+  )
+}
+
+const MyDesignsPage = () => {
+  return (
+    <DashboardPageWrapper requiredUserType="designer">
+      <MyDesignsContent />
+    </DashboardPageWrapper>
   )
 }
 

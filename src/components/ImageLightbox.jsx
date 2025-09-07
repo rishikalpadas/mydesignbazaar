@@ -1,8 +1,20 @@
 // Uses repeated SVG background for watermark; placed ABOVE the image with z-index.
+// Supports both single image and gallery mode
 "use client"
-import { useMemo, useEffect } from "react"
+import { useMemo, useEffect, useState } from "react"
 
-export default function ImageLightbox({ src, alt = "Preview", onClose }) {
+export default function ImageLightbox({ 
+  src, 
+  srcs = [], // Array of image URLs for gallery mode
+  alt = "Preview", 
+  onClose 
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  
+  // Determine if we're in gallery mode
+  const isGallery = srcs && srcs.length > 1
+  const images = isGallery ? srcs : [src].filter(Boolean)
+  const currentSrc = images[currentIndex] || src
   const istStamp = useMemo(() => {
     try {
       return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
@@ -34,11 +46,34 @@ export default function ImageLightbox({ src, alt = "Preview", onClose }) {
     return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
   }, [istStamp])
 
+  const goToPrevious = () => {
+    if (!isGallery) return
+    setCurrentIndex(prev => prev === 0 ? images.length - 1 : prev - 1)
+  }
+
+  const goToNext = () => {
+    if (!isGallery) return
+    setCurrentIndex(prev => prev === images.length - 1 ? 0 : prev + 1)
+  }
+
   useEffect(() => {
-    const esc = (e) => e.key === "Escape" && onClose?.()
-    window.addEventListener("keydown", esc)
-    return () => window.removeEventListener("keydown", esc)
-  }, [onClose])
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        onClose?.()
+      } else if (isGallery) {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault()
+          goToPrevious()
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault()
+          goToNext()
+        }
+      }
+    }
+    
+    window.addEventListener("keydown", handleKeydown)
+    return () => window.removeEventListener("keydown", handleKeydown)
+  }, [onClose, isGallery, images.length])
 
   return (
     <div
@@ -54,8 +89,8 @@ export default function ImageLightbox({ src, alt = "Preview", onClose }) {
       >
         {/* Image */}
         <img
-          src={src || "/placeholder.svg?height=800&width=1200&query=design%20preview"}
-          alt={alt}
+          src={currentSrc || "/placeholder.svg?height=800&width=1200&query=design%20preview"}
+          alt={`${alt} ${isGallery ? `(${currentIndex + 1}/${images.length})` : ''}`}
           className="absolute inset-0 h-full w-full object-contain select-none"
           draggable={false}
         />
@@ -73,10 +108,63 @@ export default function ImageLightbox({ src, alt = "Preview", onClose }) {
           }}
         />
 
-        {/* Controls */}
+        {/* Gallery Navigation */}
+        {isGallery && (
+          <>
+            {/* Previous Button */}
+            <button
+              onClick={goToPrevious}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-white/90 hover:bg-white text-gray-900 p-2 shadow-lg transition-all"
+              aria-label="Previous image"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Next Button */}
+            <button
+              onClick={goToNext}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 rounded-full bg-white/90 hover:bg-white text-gray-900 p-2 shadow-lg transition-all"
+              aria-label="Next image"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            {/* Image Counter */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 bg-white/90 text-gray-900 px-3 py-1.5 rounded-full text-sm shadow">
+              {currentIndex + 1} / {images.length}
+            </div>
+
+            {/* Thumbnail Strip */}
+            {images.length <= 10 && (
+              <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex space-x-2 bg-black/50 backdrop-blur-sm p-2 rounded-lg">
+                {images.map((imgSrc, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-12 h-8 rounded overflow-hidden border-2 transition-all ${
+                      index === currentIndex ? 'border-white' : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img
+                      src={imgSrc}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 rounded-full bg-white/90 hover:bg-white text-gray-900 px-3 py-1.5 text-sm shadow"
+          className="absolute top-3 right-3 z-20 rounded-full bg-white/90 hover:bg-white text-gray-900 px-3 py-1.5 text-sm shadow-lg transition-all"
         >
           Close
         </button>

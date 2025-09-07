@@ -26,10 +26,19 @@ const Footer = () => {
     { name: "About Us", href: "/about-us" },
     { name: "Brand Guidelines", href: "/brand-guidelines" },
     { name: "Copyright Terms", href: "/copyright-terms" },
-    { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Licensing Policy", href: "/licensing-policy" },
     { name: "Monetization Policy", href: "/monetization-policy" },
+    { name: "Philosophy", href: "/philosophy" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
+    { name: "Refund Policy", href: "/refund-policy" },
+    { name: "Terms of Service", href: "/terms-of-service" },
+    { name: "Why Choose Us", href: "/why-choose-us" },
   ];
+
+  // Split links into two columns
+  const midPoint = Math.ceil(quickLinks.length / 2);
+  const firstColumn = quickLinks.slice(0, midPoint);
+  const secondColumn = quickLinks.slice(midPoint);
 
   const socialLinks = [
     {
@@ -104,19 +113,37 @@ const Footer = () => {
                 Quick Links
                 <div className="w-8 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full"></div>
               </h3>
-              <ul className="space-y-3">
-                {quickLinks.map((link, index) => (
-                  <li key={index}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-gray-400 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center gap-2 group"
-                    >
-                      <span className="w-1 h-1 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                      {link.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <div className="grid grid-cols-2 gap-x-4">
+                {/* First Column */}
+                <ul className="space-y-3">
+                  {firstColumn.map((link, index) => (
+                    <li key={index}>
+                      <a
+                        href={link.href}
+                        className="text-sm text-gray-400 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center gap-2 group"
+                      >
+                        <span className="w-1 h-1 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        {link.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                
+                {/* Second Column */}
+                <ul className="space-y-3">
+                  {secondColumn.map((link, index) => (
+                    <li key={index + firstColumn.length}>
+                      <a
+                        href={link.href}
+                        className="text-sm text-gray-400 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center gap-2 group"
+                      >
+                        <span className="w-1 h-1 bg-indigo-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        {link.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
             {/* Contact Info */}
@@ -252,6 +279,10 @@ const Footer = () => {
               <a href="/press" className="hover:text-white transition-colors">Press</a>
             </div> */}
           </div>
+          <div className="flex flex-col md:flex-row justify-center items-center gap-4">
+              <p className="text-sm text-gray-500 flex items-center gap-2">A unit of PRINTING MADE EASY</p>
+              </div>
+
         </div>
       </div>
     </footer>

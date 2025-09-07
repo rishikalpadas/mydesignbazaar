@@ -81,11 +81,12 @@ const WishlistPage = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {wishlistItems.map((item) => (
               <div key={item.id} className="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow">
-                <div className="relative">
+                <div className="relative h-48">
                   <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
-                    className="w-full h-48 object-cover rounded-t-xl"
+                    fill
+                    className="object-cover rounded-t-xl"
                   />
                   {item.isOnSale && (
                     <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">

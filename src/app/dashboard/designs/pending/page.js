@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useState } from "react"
+import DashboardPageWrapper from '@/components/dashboard/DashboardPageWrapper'
 
-export default function PendingDesignsPage() {
+const PendingDesignsContent = () => {
   const [loading, setLoading] = useState(true)
   const [items, setItems] = useState([])
   const [error, setError] = useState(null)
@@ -48,12 +49,17 @@ export default function PendingDesignsPage() {
   }
 
   return (
-    <main className="p-6 space-y-4">
-      <h1 className="text-xl font-semibold">Pending Designs</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {!loading && items.length === 0 && <p>No pending designs.</p>}
-      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow-md p-6 border border-orange-100">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Pending Designs</h1>
+        <p className="text-gray-600">Review and approve design submissions</p>
+      </div>
+      
+      <div className="bg-white rounded-xl shadow-md p-6 border border-orange-100">
+        {loading && <p className="text-gray-600">Loading...</p>}
+        {error && <p className="text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
+        {!loading && items.length === 0 && <p className="text-gray-600">No pending designs.</p>}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
         {items.map((d) => (
           <li key={d.id} className="rounded-lg border p-4 space-y-3">
             {d.previewImageUrl ? (
@@ -91,7 +97,18 @@ export default function PendingDesignsPage() {
             </div>
           </li>
         ))}
-      </ul>
-    </main>
+        </div>
+      </div>
+    </div>
   )
 }
+
+const PendingDesignsPage = () => {
+  return (
+    <DashboardPageWrapper requiredUserType="admin">
+      <PendingDesignsContent />
+    </DashboardPageWrapper>
+  )
+}
+
+export default PendingDesignsPage
