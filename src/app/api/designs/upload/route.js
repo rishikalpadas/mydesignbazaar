@@ -134,40 +134,77 @@ export async function POST(request) {
           .filter((tag) => tag)
       : []
 
-    // Get files
-    const previewFile = formData.get("previewImage")
-    const rawFiles = formData.getAll("rawFiles")
-
-    // Validate preview file
-    if (!previewFile || previewFile.size === 0) {
-      return NextResponse.json({ error: "Preview image is required" }, { status: 400 })
-    }
-
-    if (previewFile.size > MAX_PREVIEW_SIZE) {
-      return NextResponse.json({ error: "Preview image must be less than 5MB" }, { status: 400 })
-    }
-
-    if (!validateFileType(previewFile, PREVIEW_TYPES)) {
-      return NextResponse.json({ error: "Preview image must be JPG, PNG, or WebP" }, { status: 400 })
-    }
-
-    // Validate raw files
-    if (!rawFiles || rawFiles.length === 0 || rawFiles[0].size === 0) {
-      return NextResponse.json({ error: "At least one raw file is required" }, { status: 400 })
-    }
-
-    for (const rawFile of rawFiles) {
-      if (rawFile.size > 0) {
-        // Skip empty files
-        if (rawFile.size > MAX_RAW_SIZE) {
-          return NextResponse.json({ error: `Raw file ${rawFile.name} must be less than 50MB` }, { status: 400 })
-        }
-
-        const fileType = getRawFileType(rawFile.type, rawFile.name)
-        if (!fileType) {
-          return NextResponse.json({ error: `Unsupported raw file type: ${rawFile.name}` }, { status: 400 })
-        }
+    // Get files - support both single and multiple preview images
+    const previewFiles = []
+    
+    // Try to get multiple preview images first
+    for (let i = 0; i < 5; i++) {
+      const previewFile = formData.get(`previewImage_${i}`)
+      if (previewFile && previewFile.size > 0) {
+        previewFiles.push(previewFile)
       }
+    }
+    
+    // Fallback to single preview image for backward compatibility
+    if (previewFiles.length === 0) {
+      const singlePreview = formData.get("previewImage")
+      if (singlePreview && singlePreview.size > 0) {
+        previewFiles.push(singlePreview)
+      }
+    }
+
+    // Validate preview files
+    if (previewFiles.length === 0) {
+      return NextResponse.json({ error: "At least one preview image is required" }, { status: 400 })
+    }
+
+    if (previewFiles.length > 5) {
+      return NextResponse.json({ error: "Maximum 5 preview images allowed" }, { status: 400 })
+    }
+
+    for (const [index, previewFile] of previewFiles.entries()) {
+      if (previewFile.size > MAX_PREVIEW_SIZE) {
+        return NextResponse.json({ error: `Preview image ${index + 1} must be less than 5MB` }, { status: 400 })
+      }
+
+      if (!validateFileType(previewFile, PREVIEW_TYPES)) {
+        return NextResponse.json({ error: `Preview image ${index + 1} must be JPG, PNG, or WebP` }, { status: 400 })
+      }
+    }
+
+    // Get raw files - support both single and multiple
+    const rawFiles = formData.getAll("rawFiles")
+    const singleRawFile = formData.get("rawFile")
+    
+    let rawFileToProcess = null
+    if (singleRawFile && singleRawFile.size > 0) {
+      rawFileToProcess = singleRawFile
+    } else if (rawFiles && rawFiles.length > 0 && rawFiles[0].size > 0) {
+      rawFileToProcess = rawFiles[0] // Take the first one for new single file approach
+    }
+
+    // Validate raw file
+    if (!rawFileToProcess) {
+      return NextResponse.json({ error: "Raw file is required" }, { status: 400 })
+    }
+
+    if (rawFileToProcess.size > MAX_RAW_SIZE) {
+      return NextResponse.json({ error: "Raw file must be less than 50MB" }, { status: 400 })
+    }
+
+    const fileType = getRawFileType(rawFileToProcess.type, rawFileToProcess.name)
+    if (!fileType) {
+      return NextResponse.json({ error: `Unsupported raw file type: ${rawFileToProcess.name}` }, { status: 400 })
+    }
+
+    // Check if this is a first-time upload and enforce minimum requirement
+    const existingDesignsCount = await Design.countDocuments({ uploadedBy: user._id })
+    const isFirstTimeUpload = existingDesignsCount === 0
+    
+    if (isFirstTimeUpload) {
+      return NextResponse.json({ 
+        error: "First-time uploaders must upload at least 10 designs. Please use the batch upload feature." 
+      }, { status: 400 })
     }
 
     // Create design document first to get ID
@@ -184,21 +221,27 @@ export async function POST(request) {
     const designId = design._id.toString()
 
     try {
-      // Save preview image
-      const previewImageData = await saveFile(previewFile, designId, "preview")
-      design.previewImage = previewImageData
-
-      // Save raw files
-      const rawFilesData = []
-      for (const rawFile of rawFiles) {
-        if (rawFile.size > 0) {
-          // Skip empty files
-          const rawFileData = await saveFile(rawFile, designId, "raw")
-          rawFileData.fileType = getRawFileType(rawFile.type, rawFile.name)
-          rawFilesData.push(rawFileData)
-        }
+      // Save preview images
+      const previewImagesData = []
+      for (const [index, previewFile] of previewFiles.entries()) {
+        const previewImageData = await saveFile(previewFile, designId, "preview")
+        previewImageData.isPrimary = index === 0 // First image is primary
+        previewImagesData.push(previewImageData)
       }
-      design.rawFiles = rawFilesData
+      design.previewImages = previewImagesData
+      
+      // For backward compatibility, set the first preview as the main previewImage
+      if (previewImagesData.length > 0) {
+        design.previewImage = previewImagesData[0]
+      }
+
+      // Save raw file
+      const rawFileData = await saveFile(rawFileToProcess, designId, "raw")
+      rawFileData.fileType = fileType
+      design.rawFile = rawFileData
+      
+      // For backward compatibility, also set rawFiles array
+      design.rawFiles = [rawFileData]
 
       // Save updated design
       await design.save()

@@ -98,7 +98,7 @@ export default function Home() {
       <Testimonials />
       <AppPromo />
       <Newsletter />
-      {/* <Footer /> */}
+      <Footer />
 
       {/* Auth Modal */}
       <AuthModal isOpen={isAuthModalOpen} onClose={handleAuthModalClose} onAuthSuccess={handleLoginSuccess} />
