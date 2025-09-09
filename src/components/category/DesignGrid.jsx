@@ -15,7 +15,7 @@ function getPreviewUrl(d) {
   
   // Fallback to old structure
   const filename = d?.previewImage?.filename
-  if (filename && d?._id) return `/uploads/designs/${d._id}/preview/${filename}`
+  if (filename && d?._id) return `/api/uploads/designs/${d._id}/preview/${filename}`
   
   return "/design-preview.svg"
 }

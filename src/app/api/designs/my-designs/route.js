@@ -118,17 +118,17 @@ export async function GET(request) {
       if (design.previewImages && design.previewImages.length > 0) {
         baseDesign.previewImageUrls = design.previewImages.map(img => ({
           ...img,
-          url: `/uploads/designs/${design._id}/preview/${img.filename}`
+          url: `/api/uploads/designs/${design._id}/preview/${img.filename}`
         }))
         // Primary preview image URL for backward compatibility
         const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
-        baseDesign.previewImageUrl = `/uploads/designs/${design._id}/preview/${primary.filename}`
+        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${primary.filename}`
       } else if (design.previewImage) {
         // Fallback to single preview image (old format)
-        baseDesign.previewImageUrl = `/uploads/designs/${design._id}/preview/${design.previewImage.filename}`
+        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`
         baseDesign.previewImageUrls = [{
           ...design.previewImage,
-          url: `/uploads/designs/${design._id}/preview/${design.previewImage.filename}`,
+          url: `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`,
           isPrimary: true
         }]
       } else {

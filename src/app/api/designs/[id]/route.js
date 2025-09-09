@@ -20,10 +20,10 @@ export async function GET(request, { params }) {
     if (design.previewImages && design.previewImages.length > 0) {
       design.previewImageUrls = design.previewImages.map((img) => ({
         ...img,
-        url: `/uploads/designs/${design._id}/preview/${img.filename}`,
+        url: `/api/uploads/designs/${design._id}/preview/${img.filename}`,
       }))
       const primary = design.previewImages.find((img) => img.isPrimary) || design.previewImages[0]
-      design.previewImageUrl = `/uploads/designs/${design._id}/preview/${primary.filename}`
+      design.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${primary.filename}`
     }
 
     return NextResponse.json({

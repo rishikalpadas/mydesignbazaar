@@ -329,7 +329,7 @@ const MyDesignsContent = () => {
                   // Fallback to previewImages array (direct from database)
                   else if (design.previewImages && design.previewImages.length > 0) {
                     const primaryImage = design.previewImages.find((img) => img.isPrimary) || design.previewImages[0]
-                    imageUrl = `/uploads/designs/${design._id}/preview/${primaryImage.filename}`
+                    imageUrl = `/api/uploads/designs/${design._id}/preview/${primaryImage.filename}`
                   }
 
                   return imageUrl ? (

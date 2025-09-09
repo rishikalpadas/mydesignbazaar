@@ -20,15 +20,7 @@ const nextConfig = {
     // Disable image optimization for static uploads in production
     unoptimized: process.env.NODE_ENV === 'production',
   },
-  // Ensure static files are served properly
-  async rewrites() {
-    return [
-      {
-        source: '/uploads/:path*',
-        destination: '/uploads/:path*',
-      },
-    ]
-  },
+  // Static file serving is handled by API route at /api/uploads/[...path]
 };
 
 export default nextConfig;

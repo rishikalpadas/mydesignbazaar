@@ -125,13 +125,13 @@ designSchema.virtual("previewImageUrls").get(function () {
   if (this.previewImages && this.previewImages.length > 0) {
     return this.previewImages.map((img) => ({
       ...img.toObject ? img.toObject() : img,
-      url: `/uploads/designs/${this._id}/preview/${img.filename}`,
+      url: `/api/uploads/designs/${this._id}/preview/${img.filename}`,
     }))
   }
   // Fallback to old single preview image for backward compatibility
   return this.previewImage ? [{
     ...this.previewImage,
-    url: `/uploads/designs/${this._id}/preview/${this.previewImage.filename}`,
+    url: `/api/uploads/designs/${this._id}/preview/${this.previewImage.filename}`,
     isPrimary: true
   }] : []
 })
@@ -140,9 +140,9 @@ designSchema.virtual("previewImageUrls").get(function () {
 designSchema.virtual("previewImageUrl").get(function () {
   if (this.previewImages && this.previewImages.length > 0) {
     const primary = this.previewImages.find(img => img.isPrimary) || this.previewImages[0]
-    return `/uploads/designs/${this._id}/preview/${primary.filename}`
+    return `/api/uploads/designs/${this._id}/preview/${primary.filename}`
   }
-  return this.previewImage ? `/uploads/designs/${this._id}/preview/${this.previewImage.filename}` : null
+  return this.previewImage ? `/api/uploads/designs/${this._id}/preview/${this.previewImage.filename}` : null
 })
 
 // Virtual for raw file URL (single file)
