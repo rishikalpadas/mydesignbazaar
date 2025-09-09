@@ -11,8 +11,6 @@ import {
   Edit3,
   Trash2,
   Search,
-  Plus,
-  Upload,
   TrendingUp,
   Star,
   Calendar,
@@ -20,11 +18,13 @@ import {
   ExternalLink,
   Share2,
   AlertCircle,
+  User,
+  Shield,
 } from "lucide-react"
 import Image from "next/image"
 import DashboardPageWrapper from "@/components/dashboard/DashboardPageWrapper"
 
-const MyDesignsContent = () => {
+const AdminDesignsContent = () => {
   const router = useRouter()
   const [designs, setDesigns] = useState([])
   const [stats, setStats] = useState({
@@ -44,7 +44,7 @@ const MyDesignsContent = () => {
     hasPrev: false,
   })
   const [filters, setFilters] = useState({
-    status: "all",
+    status: "approved",
     sortBy: "newest",
     search: "",
   })
@@ -60,9 +60,10 @@ const MyDesignsContent = () => {
         limit: "12",
         status: filters.status,
         sortBy: filters.sortBy,
+        search: filters.search,
       })
 
-      const response = await fetch(`/api/designs/my-designs?${queryParams}`)
+      const response = await fetch(`/api/admin/designs?${queryParams}`)
       const data = await response.json()
 
       if (data.success) {
@@ -146,7 +147,7 @@ const MyDesignsContent = () => {
       value: stats.totalDesigns,
       icon: Palette,
       color: "from-purple-500 to-pink-500",
-      description: "All uploaded designs",
+      description: "All designs in system",
     },
     {
       name: "Approved",
@@ -194,18 +195,92 @@ const MyDesignsContent = () => {
   ]
 
   const statusOptions = [
+    { value: "approved", label: "Approved Designs" },
     { value: "all", label: "All Designs" },
-    { value: "approved", label: "Approved" },
     { value: "pending", label: "Pending" },
     { value: "rejected", label: "Rejected" },
   ]
+
+  const handleViewDetails = (design) => {
+    // Open design details in a new tab or modal
+    window.open(`/design/${design._id}`, "_blank")
+  }
+
+  const handleEditDesign = (design) => {
+    // Navigate to edit page
+    router.push(`/dashboard/designs/edit/${design._id}`)
+  }
+
+  const handleShareDesign = async (design) => {
+    const shareUrl = `${window.location.origin}/design/${design._id}`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: design.title,
+          text: design.description,
+          url: shareUrl,
+        })
+      } catch (error) {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(shareUrl)
+        alert("Share link copied to clipboard!")
+      }
+    } else {
+      // Fallback to clipboard
+      await navigator.clipboard.writeText(shareUrl)
+      alert("Share link copied to clipboard!")
+    }
+  }
+
+  const handleViewOnStore = (design) => {
+    // Open design on public store
+    window.open(`/design/${design._id}`, "_blank")
+  }
+
+  const handleDeleteDesign = async (design) => {
+    if (!confirm(`Are you sure you want to delete "${design.title}"? This action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      const response = await fetch("/api/admin/designs/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ designId: design._id }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Remove design from local state
+        setDesigns((prev) => prev.filter((d) => d._id !== design._id))
+        // Update stats
+        setStats((prev) => ({
+          ...prev,
+          totalDesigns: prev.totalDesigns - 1,
+          [design.status + "Designs"]: Math.max(0, prev[design.status + "Designs"] - 1),
+        }))
+        alert("Design deleted successfully!")
+      } else {
+        throw new Error(data.error)
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      alert("Failed to delete design: " + error.message)
+    }
+
+    setShowActions(null)
+  }
 
   if (loading && designs.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your designs...</p>
+          <p className="text-gray-600">Loading designs...</p>
         </div>
       </div>
     )
@@ -218,17 +293,17 @@ const MyDesignsContent = () => {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center">
-              <Palette className="w-8 h-8 mr-3" />
-              My Designs
+              <Shield className="w-8 h-8 mr-3" />
+              All Designs
             </h1>
-            <p className="text-purple-100 mb-4">Manage and track your creative portfolio</p>
+            <p className="text-purple-100 mb-4">Manage and monitor all designs in the marketplace</p>
           </div>
           <button
-            onClick={() => router.push("/dashboard/upload")}
+            onClick={() => router.push("/dashboard/designs/pending")}
             className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg"
           >
-            <Plus className="w-5 h-5 mr-2" />
-            Upload New Design
+            <Clock className="w-5 h-5 mr-2" />
+            Pending Designs
           </button>
         </div>
       </div>
@@ -403,26 +478,53 @@ const MyDesignsContent = () => {
 
                     {showActions === design._id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-10">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                        <button
+                          onClick={() => {
+                            handleViewDetails(design)
+                            setShowActions(null)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                        >
                           <Eye className="w-4 h-4 mr-3" />
                           View Details
                         </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                        <button
+                          onClick={() => {
+                            handleEditDesign(design)
+                            setShowActions(null)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                        >
                           <Edit3 className="w-4 h-4 mr-3" />
                           Edit Design
                         </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                        <button
+                          onClick={() => {
+                            handleShareDesign(design)
+                            setShowActions(null)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                        >
                           <Share2 className="w-4 h-4 mr-3" />
                           Share
                         </button>
                         {design.status === "approved" && (
-                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                          <button
+                            onClick={() => {
+                              handleViewOnStore(design)
+                              setShowActions(null)
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          >
                             <ExternalLink className="w-4 h-4 mr-3" />
                             View on Store
                           </button>
                         )}
                         <hr className="my-2" />
-                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+                        <button
+                          onClick={() => handleDeleteDesign(design)}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                        >
                           <Trash2 className="w-4 h-4 mr-3" />
                           Delete Design
                         </button>
@@ -459,6 +561,13 @@ const MyDesignsContent = () => {
 
                 <p className="text-xs text-gray-600 mb-3 line-clamp-2">{design.description}</p>
 
+                {design.uploadedBy && (
+                  <div className="flex items-center mb-2 text-xs text-gray-500">
+                    <User className="w-3 h-3 mr-1" />
+                    <span>by {design.uploadedBy.profile?.fullName || design.uploadedBy.email}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center text-xs text-gray-500">
                   <span className="flex items-center">
                     <Calendar className="w-3 h-3 mr-1" />
@@ -492,15 +601,8 @@ const MyDesignsContent = () => {
             <p className="text-gray-600 mb-6">
               {filters.status !== "all" || filters.search
                 ? "Try adjusting your filters to see more designs."
-                : "You haven't uploaded any designs yet. Start by uploading your first creative work!"}
+                : "No designs have been uploaded yet."}
             </p>
-            <button
-              onClick={() => router.push("/dashboard/upload")}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg flex items-center mx-auto"
-            >
-              <Upload className="w-5 h-5 mr-2" />
-              Upload Your First Design
-            </button>
           </div>
         </div>
       )}
@@ -558,12 +660,12 @@ const MyDesignsContent = () => {
   )
 }
 
-const MyDesignsPage = () => {
+const AdminDesignsPage = () => {
   return (
-    <DashboardPageWrapper requiredUserType="designer">
-      <MyDesignsContent />
+    <DashboardPageWrapper requiredUserType="admin">
+      <AdminDesignsContent />
     </DashboardPageWrapper>
   )
 }
 
-export default MyDesignsPage
+export default AdminDesignsPage
