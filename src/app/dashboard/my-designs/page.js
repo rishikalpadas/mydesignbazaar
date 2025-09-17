@@ -225,7 +225,7 @@ const MyDesignsContent = () => {
           </div>
           <button
             onClick={() => router.push("/dashboard/upload")}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg"
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg cursor-pointer"
           >
             <Plus className="w-5 h-5 mr-2" />
             Upload New Design
@@ -396,34 +396,34 @@ const MyDesignsContent = () => {
                   <div className="relative">
                     <button
                       onClick={() => setShowActions(showActions === design._id ? null : design._id)}
-                      className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors cursor-pointer"
                     >
                       <MoreVertical className="w-4 h-4 text-gray-600" />
                     </button>
 
                     {showActions === design._id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-10">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer">
                           <Eye className="w-4 h-4 mr-3" />
                           View Details
                         </button>
                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                          <Edit3 className="w-4 h-4 mr-3" />
+                          <Edit3 className="w-4 h-4 mr-3 cursor-pointer" />
                           Edit Design
                         </button>
                         <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                          <Share2 className="w-4 h-4 mr-3" />
+                          <Share2 className="w-4 h-4 mr-3 cursor-pointer" />
                           Share
                         </button>
                         {design.status === "approved" && (
-                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                            <ExternalLink className="w-4 h-4 mr-3" />
+                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer">
+                            <ExternalLink className="w-4 h-4 mr-3 cursor-pointer" />
                             View on Store
                           </button>
                         )}
                         <hr className="my-2" />
-                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
-                          <Trash2 className="w-4 h-4 mr-3" />
+                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center cursor-pointer">
+                          <Trash2 className="w-4 h-4 mr-3 cursor-pointer" />
                           Delete Design
                         </button>
                       </div>
@@ -496,7 +496,7 @@ const MyDesignsContent = () => {
             </p>
             <button
               onClick={() => router.push("/dashboard/upload")}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg flex items-center mx-auto"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg flex items-center mx-auto cursor-pointer"
             >
               <Upload className="w-5 h-5 mr-2" />
               Upload Your First Design
@@ -516,7 +516,7 @@ const MyDesignsContent = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrev}
-                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Previous
               </button>
@@ -532,8 +532,8 @@ const MyDesignsContent = () => {
                         onClick={() => handlePageChange(pageNum)}
                         className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                           pageNum === pagination.currentPage
-                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-                            : "border border-orange-200 text-gray-700 hover:bg-orange-50"
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg cursor-pointer"
+                            : "border border-orange-200 text-gray-700 hover:bg-orange-50 cursor-pointer"
                         }`}
                       >
                         {pageNum}
@@ -546,7 +546,7 @@ const MyDesignsContent = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNext}
-                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
               </button>

@@ -178,7 +178,7 @@ const CTABanners = () => {
                   className="group/btn flex-1 bg-white text-indigo-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
                 >
                   <div
-                    className="flex items-center justify-center gap-2"
+                    className="flex items-center justify-center gap-2 cursor-pointer"
                     onClick={handleStartAsDesigner}
                   >
                     Sell Designs
@@ -262,7 +262,7 @@ const CTABanners = () => {
               <div className="flex flex-col gap-3 lg:gap-4">
                 <a
                   // href="/explore"
-                  className="group/btn flex-1 bg-white text-orange-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
+                  className="group/btn flex-1 bg-white text-orange-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1 cursor-pointer"
                 >
                   <div
                     className="flex items-center justify-center gap-2"
@@ -329,7 +329,7 @@ const CTABanners = () => {
         {/* **Final CTA Section** */}
         <div className="text-center">
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-6 lg:p-12 text-white">
-            <h3 className="text-3xl lg:text-4xl font-bold mb-4">
+            <h3 className="text-3xl lg:text-4xl font-bold mb-4 cursor-pointer">
               Ready to Get Started?
             </h3>
             <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
@@ -338,11 +338,11 @@ const CTABanners = () => {
             </p>
 
             <div className="flex flex-col gap-3 justify-center max-w-sm mx-auto lg:flex-row lg:gap-4 lg:max-w-md">
-              <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl" onClick={handleStartAsDesigner}>
+              <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer" onClick={handleStartAsDesigner}>
                 Join as Designer
               </button>
               <button
-                className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer"
                 onClick={handleStartAsDesigner}
               >
                 Start Shopping

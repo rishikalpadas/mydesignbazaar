@@ -492,13 +492,13 @@ export default function WhyChoosePage() {
               <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                 <button 
                   onClick={handleStartNow}
-                  className="bg-white text-purple-600 px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                  className="bg-white text-purple-600 px-10 py-4 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
                 >
                   Start Free Today
                 </button>
                 <a 
                   href="/browse-designs"
-                  className="border-2 border-white text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white hover:text-purple-600 transition-all duration-300"
+                  className="border-2 border-white text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-white hover:text-purple-600 transition-all duration-300 cursor-pointer"
                 >
                   Browse Designs
                 </a>

@@ -223,13 +223,13 @@ const Footer = () => {
               <div className="space-y-4">
                 <a
                  
-                  className="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                  className="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
                 >
                   Become a Designer ✨
                 </a>
                 <a
                   href="/categories"
-                  className="block w-full border border-gray-600 text-gray-300 text-sm font-medium px-6 py-3 rounded-xl hover:border-indigo-500 hover:text-white transition-all duration-300 text-center"
+                  className="block w-full border border-gray-600 text-gray-300 text-sm font-medium px-6 py-3 rounded-xl hover:border-indigo-500 hover:text-white transition-all duration-300 text-center cursor-pointer"
                 >
                   Browse Designs
                 </a>
@@ -252,7 +252,7 @@ const Footer = () => {
                   placeholder="Your email address"
                   className="flex-1 px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-white placeholder-gray-400 transition-all duration-300"
                 />
-                <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-semibold">
+                <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 font-semibold cursor-pointer">
                   Subscribe
                 </button>
               </div>

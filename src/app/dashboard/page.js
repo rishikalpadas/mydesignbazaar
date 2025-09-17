@@ -83,7 +83,7 @@ const Dashboard = () => {
           <p className="text-gray-600">{error}</p>
           <button
             onClick={() => router.push("/")}
-            className="mt-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-colors"
+            className="mt-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white px-6 py-2 rounded-lg font-medium hover:from-orange-600 hover:to-amber-600 transition-colors cursor-pointer"
           >
             Go Home
           </button>

@@ -246,12 +246,12 @@ const HowItWorks = () => {
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <button
                 onClick={handleStartAsDesigner}
-                className="bg-white text-indigo-600 px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold text-base md:text-lg hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl"
+                className="bg-white text-indigo-600 px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold text-base md:text-lg hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer"
               >
                 Start as Designer
               </button>
              <Link href="/categories"> 
-              <button className="bg-indigo-500 hover:bg-indigo-400 text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold text-base md:text-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl border-2 border-indigo-400">
+              <button className="bg-indigo-500 hover:bg-indigo-400 text-white px-6 md:px-8 py-3 md:py-4 rounded-2xl font-semibold text-base md:text-lg transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl border-2 border-indigo-400 cursor-pointer">
                 Browse Designs
               </button>
               </Link>

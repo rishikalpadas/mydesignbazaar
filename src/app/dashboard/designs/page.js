@@ -300,7 +300,7 @@ const AdminDesignsContent = () => {
           </div>
           <button
             onClick={() => router.push("/dashboard/designs/pending")}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg"
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg cursor-pointer"
           >
             <Clock className="w-5 h-5 mr-2" />
             Pending Designs
@@ -471,7 +471,7 @@ const AdminDesignsContent = () => {
                   <div className="relative">
                     <button
                       onClick={() => setShowActions(showActions === design._id ? null : design._id)}
-                      className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors"
+                      className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors cursor-pointer"
                     >
                       <MoreVertical className="w-4 h-4 text-gray-600" />
                     </button>
@@ -483,7 +483,7 @@ const AdminDesignsContent = () => {
                             handleViewDetails(design)
                             setShowActions(null)
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"
                         >
                           <Eye className="w-4 h-4 mr-3" />
                           View Details
@@ -493,7 +493,7 @@ const AdminDesignsContent = () => {
                             handleEditDesign(design)
                             setShowActions(null)
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"
                         >
                           <Edit3 className="w-4 h-4 mr-3" />
                           Edit Design
@@ -503,7 +503,7 @@ const AdminDesignsContent = () => {
                             handleShareDesign(design)
                             setShowActions(null)
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"
                         >
                           <Share2 className="w-4 h-4 mr-3" />
                           Share
@@ -514,7 +514,7 @@ const AdminDesignsContent = () => {
                               handleViewOnStore(design)
                               setShowActions(null)
                             }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"
                           >
                             <ExternalLink className="w-4 h-4 mr-3" />
                             View on Store
@@ -523,7 +523,7 @@ const AdminDesignsContent = () => {
                         <hr className="my-2" />
                         <button
                           onClick={() => handleDeleteDesign(design)}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center"
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4 mr-3" />
                           Delete Design
@@ -618,7 +618,7 @@ const AdminDesignsContent = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
                 disabled={!pagination.hasPrev}
-                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Previous
               </button>
@@ -635,7 +635,7 @@ const AdminDesignsContent = () => {
                         className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
                           pageNum === pagination.currentPage
                             ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-                            : "border border-orange-200 text-gray-700 hover:bg-orange-50"
+                            : "border border-orange-200 text-gray-700 hover:bg-orange-50 cursor-pointer"
                         }`}
                       >
                         {pageNum}
@@ -648,7 +648,7 @@ const AdminDesignsContent = () => {
               <button
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
                 disabled={!pagination.hasNext}
-                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
               </button>

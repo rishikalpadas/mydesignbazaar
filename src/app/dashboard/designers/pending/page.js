@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState, useCallback } from "react"
-import DashboardPageWrapper from "@/components/dashboard/DashboardPageWrapper"
+import DashboardPageWrapper from '../../../../components/dashboard/DashboardPageWrapper'
 import { Search, Users, Clock, CheckCircle, XCircle, Mail, User, Calendar } from "lucide-react"
 
 const PendingDesignersContent = () => {
@@ -249,7 +249,7 @@ const PendingDesignersContent = () => {
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => approveDesigner(designer.id)}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors cursor-pointer"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Approve
@@ -257,7 +257,7 @@ const PendingDesignersContent = () => {
 
                     <button
                       onClick={() => rejectDesigner(designer.id)}
-                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors cursor-pointer"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject

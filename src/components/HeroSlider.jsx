@@ -235,7 +235,7 @@ const HeroSlider = () => {
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4">
                       <button
-                        className={`bg-gradient-to-r ${slide.theme.primary} text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 group`}
+                        className={`bg-gradient-to-r ${slide.theme.primary} text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 group cursor-pointer`}
                       >
                         {slide.cta}
                         <svg
@@ -252,7 +252,7 @@ const HeroSlider = () => {
                           />
                         </svg>
                       </button>
-                      <button className="bg-white/90 lg:bg-white text-gray-800 px-6 lg:px-8 py-3 lg:py-4 rounded-xl font-semibold text-base lg:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 border border-gray-200 hover:border-gray-300">
+                      <button className="bg-white/90 lg:bg-white text-gray-800 px-6 lg:px-8 py-3 lg:py-4 rounded-xl font-semibold text-base lg:text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 border border-gray-200 hover:border-gray-300 cursor-pointer">
                         View Samples
                       </button>
                     </div>

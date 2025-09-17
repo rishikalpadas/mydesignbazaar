@@ -282,7 +282,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
                       const slug = titleToSlug(category)
                       if (slug) router.push(`/category/${slug}`)
                     }}
-                    className="text-gray-700 hover:text-amber-500 font-medium text-sm transition-colors duration-200 py-2 px-3 rounded-md hover:bg-amber-50"
+                    className="text-gray-700 hover:text-amber-500 font-medium text-sm transition-colors duration-200 py-2 px-3 rounded-md hover:bg-amber-50 cursor-pointer"
                   >
                     {category}
                   </button>

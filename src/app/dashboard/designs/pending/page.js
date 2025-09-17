@@ -16,7 +16,7 @@ import {
   MoreVertical,
 } from "lucide-react"
 import Image from "next/image"
-import DashboardPageWrapper from "@/components/dashboard/DashboardPageWrapper"
+import DashboardPageWrapper from '../../../../components/dashboard/DashboardPageWrapper'
 
 const PendingDesignsContent = () => {
   const router = useRouter()
@@ -170,7 +170,7 @@ const PendingDesignsContent = () => {
           </div>
           <button
             onClick={() => router.push("/dashboard/designs")}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg"
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl text-white font-medium transition-all duration-200 flex items-center shadow-lg cursor-pointer"
           >
             <Shield className="w-5 h-5 mr-2" />
             All Designs
@@ -311,7 +311,7 @@ const PendingDesignsContent = () => {
                     <div className="relative">
                       <button
                         onClick={() => setShowActions(showActions === design.id ? null : design.id)}
-                        className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors"
+                        className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-lg hover:bg-white transition-colors cursor-pointer"
                       >
                         <MoreVertical className="w-4 h-4 text-gray-600" />
                       </button>
@@ -323,7 +323,7 @@ const PendingDesignsContent = () => {
                               window.open(`/design/${design.id}`, "_blank")
                               setShowActions(null)
                             }}
-                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center"
+                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"
                           >
                             <Eye className="w-4 h-4 mr-3" />
                             View Details
@@ -377,7 +377,7 @@ const PendingDesignsContent = () => {
                     <button
                       onClick={() => approveDesign(design.id)}
                       disabled={approving[design.id]}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
                     >
                       {approving[design.id] ? (
                         <>
@@ -394,7 +394,7 @@ const PendingDesignsContent = () => {
                     <button
                       onClick={() => handleReject(design.id)}
                       disabled={rejecting[design.id]}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
                     >
                       {rejecting[design.id] ? (
                         <>

@@ -671,7 +671,7 @@ export default function BrandGuidelinesPage() {
                   Whether you&apos;re looking to partner with us or need clarification on brand usage, 
                   we&apos;re committed to maintaining the integrity and consistency of MY DESIGN BAZAAR™.
                 </p>
-                <button className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                <button className="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors cursor-pointer">
                   Get Brand Support
                 </button>
               </div>

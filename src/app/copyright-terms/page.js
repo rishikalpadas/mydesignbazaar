@@ -368,7 +368,7 @@ export default function CopyrightTermsPage() {
                 <div className="text-3xl mb-4">🎨</div>
                 <h3 className="font-bold text-gray-800 mb-2">For Designers</h3>
                 <p className="text-gray-600 text-sm mb-4">Upload your designs and start earning with full IP protection</p>
-                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors cursor-pointer">
                   Start Uploading
                 </button>
               </div>
@@ -376,7 +376,7 @@ export default function CopyrightTermsPage() {
                 <div className="text-3xl mb-4">🛒</div>
                 <h3 className="font-bold text-gray-800 mb-2">For Buyers</h3>
                 <p className="text-gray-600 text-sm mb-4">Access thousands of licensed designs for your business</p>
-                <button className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors">
+                <button className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors cursor-pointer">
                   Browse Designs
                 </button>
               </div>
@@ -384,7 +384,7 @@ export default function CopyrightTermsPage() {
                 <div className="text-3xl mb-4">📞</div>
                 <h3 className="font-bold text-gray-800 mb-2">Have Questions?</h3>
                 <p className="text-gray-600 text-sm mb-4">Our legal team is here to help clarify any concerns</p>
-                <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors">
+                <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-colors cursor-pointer">
                   Contact Support
                 </button>
               </div>

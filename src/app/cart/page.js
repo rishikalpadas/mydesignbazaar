@@ -50,7 +50,7 @@ const CartPage = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-gray-600 hover:text-amber-500 transition-colors">
+            <button onClick={() => router.back()} className="text-gray-600 hover:text-amber-500 transition-colors cursor-pointer">
               <ArrowLeft size={24} />
             </button>
             <div>
@@ -69,7 +69,7 @@ const CartPage = () => {
             <p className="text-gray-600 mb-6">Start shopping to add items to your cart</p>
             <button
               onClick={() => router.push("/")}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all cursor-pointer"
             >
               Continue Shopping
             </button>
@@ -101,14 +101,14 @@ const CartPage = () => {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 cursor-pointer"
                             >
                               <Minus size={14} />
                             </button>
                             <span className="w-8 text-center font-medium">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 cursor-pointer"
                             >
                               <Plus size={14} />
                             </button>
@@ -117,7 +117,7 @@ const CartPage = () => {
                             <span className="font-semibold text-gray-900">₹{item.price * item.quantity}</span>
                             <button
                               onClick={() => removeItem(item.id)}
-                              className="text-red-500 hover:text-red-700 transition-colors"
+                              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
                             >
                               <Trash2 size={16} />
                             </button>
@@ -149,12 +149,12 @@ const CartPage = () => {
                     <span>₹{total}</span>
                   </div>
                 </div>
-                <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all mb-3">
+                <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all mb-3 cursor-pointer">
                   Proceed to Checkout
                 </button>
                 <button
                   onClick={() => router.push("/")}
-                  className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all"
+                  className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all cursor-pointer"
                 >
                   Continue Shopping
                 </button>

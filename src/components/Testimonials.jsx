@@ -307,10 +307,10 @@ const Testimonials = () => {
           {/* **CTA Buttons** */}
           <div className="text-center">
             <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-              <button className="bg-white text-blue-600 px-6 py-3 md:px-8 md:py-4 rounded-2xl font-semibold hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+              <button className="bg-white text-blue-600 px-6 py-3 md:px-8 md:py-4 rounded-2xl font-semibold hover:bg-gray-50 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer">
                 Share Your Story
               </button>
-              <button className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 md:px-8 md:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl border-2 border-blue-400">
+              <button className="bg-blue-500 hover:bg-blue-400 text-white px-6 py-3 md:px-8 md:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl border-2 border-blue-400 cursor-pointer">
                 Join Community
               </button>
             </div>
