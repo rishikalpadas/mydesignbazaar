@@ -15,8 +15,8 @@ import {
   LayoutDashboard,
   UserCircle,
 } from "lucide-react"
-import { getSlugFromCategory } from "@/lib/category-map"
-import NoContextMenu from "@/components/NoContextMenu"
+import { getSlugFromCategory } from "../lib/category-map"
+import NoContextMenu from "../components/NoContextMenu"
 
 const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)

@@ -1,8 +1,8 @@
 import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
 import mongoose from "mongoose"
-import connectDB from "@/lib/mongodb"
-import { User } from "@/models/User"
+import connectDB from "../lib/mongodb"
+import { User } from "../models/User"
 
 // Admin Schema (same as in other files)
 const AdminSchema = new mongoose.Schema({

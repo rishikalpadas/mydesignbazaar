@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Design from '@/models/Design'
-import {User} from '@/models/User'
+import connectDB from '../../../../lib/mongodb'
+import Design from '../../../../models/Design'
+import {User} from '../../../../models/User'
 import jwt from 'jsonwebtoken'
 
 export async function GET(request) {

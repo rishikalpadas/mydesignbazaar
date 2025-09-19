@@ -1,6 +1,6 @@
 
-import connectDB from "../../../../../lib/mongodb";
-import Designer from "../../../../../models/Designer";
+import connectDB from '../../../../lib/mongodb';
+import Design from "../../../../models/Design";
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
@@ -8,7 +8,6 @@ import jwt from "jsonwebtoken";
 
 export async function GET(request,{params}) {
   try {
-
     connectDB();
     const token = request.cookies.get("auth-token")?.value;
 
@@ -25,16 +24,16 @@ export async function GET(request,{params}) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    const designer = await Designer.findOne({userId:id});
+    const design = await Design.findOne({_id:id});
     
-    if (!designer) {
+    if (!design) {
       return NextResponse.json(
         { error: "No designer available" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ data: designer }, { status: 200 });
+    return NextResponse.json({ data: design }, { status: 200 });
   } catch(error) {
     console.error("error:", error);
     return NextResponse.json(

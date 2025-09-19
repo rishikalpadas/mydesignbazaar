@@ -2,7 +2,7 @@
 import Navbar from '../../components/Navbar';
 import Newsletter from '../../components/Newsletter';
 import Footer from '../../components/Footer';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AboutUsPage() {
   const { user } = useAuth();

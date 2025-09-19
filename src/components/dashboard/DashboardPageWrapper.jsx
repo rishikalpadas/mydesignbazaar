@@ -2,8 +2,8 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import DashboardLayout from "./DashboardLayout"
-import LoadingSpinner from "@/components/ui/LoadingSpinner"
-import AuthModal from "@/components/AuthModal"
+import LoadingSpinner from "../../components/ui/LoadingSpinner"
+import AuthModal from "../../components/AuthModal"
 
 const DashboardPageWrapper = ({ children, requiredUserType = null }) => {
   const [user, setUser] = useState(null)

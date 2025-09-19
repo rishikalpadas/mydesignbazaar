@@ -1,5 +1,5 @@
 // pages/profiles.js
-import Navbar from "@/components/Navbar";
+import Navbar from "../../components/Navbar";
 import { Star, Globe, MapPin } from "lucide-react";
 
 const dummyProfiles = Array.from({ length: 10 }).map((_, i) => ({

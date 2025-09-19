@@ -1,10 +1,10 @@
-import connectDB from "@/lib/mongodb"
-import Design from "@/models/Design"
+import connectDB from "../../../lib/mongodb"
+import Design from "../../../models/Design"
 import Link from "next/link"
-import CategoryFilters from "@/components/category/CategoryFilters.jsx"
-import DesignGrid from "@/components/category/DesignGrid.jsx"
-import { getCategoryFromSlug } from "@/lib/category-map"
-import Navbar from "@/components/Navbar"
+import CategoryFilters from "../../../components/category/CategoryFilters.jsx"
+import DesignGrid from "../../../components/category/DesignGrid"
+import { getCategoryFromSlug } from "../../../lib/category-map"
+import Navbar from "../../../components/Navbar"
 
 
 const PER_PAGE_DEFAULT = 12

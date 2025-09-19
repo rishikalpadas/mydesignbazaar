@@ -1,12 +1,12 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import DashboardLayout from "@/components/dashboard/DashboardLayout"
-import AdminDashboard from "@/components/dashboard/AdminDashboard"
-import DesignerDashboard from "@/components/dashboard/DesignerDashboard"
-import BuyerDashboard from "@/components/dashboard/BuyerDashboard"
-import LoadingSpinner from "@/components/ui/LoadingSpinner"
-import AuthModal from "@/components/AuthModal"
+import DashboardLayout from "../../components/dashboard/DashboardLayout"
+import AdminDashboard from "../../components/dashboard/AdminDashboard"
+import DesignerDashboard from "../../components/dashboard/DesignerDashboard"
+import BuyerDashboard from "../../components/dashboard/BuyerDashboard"
+import LoadingSpinner from "../../components/ui/LoadingSpinner"
+import AuthModal from "../../components/AuthModal"
 
 const Dashboard = () => {
   const [user, setUser] = useState(null)

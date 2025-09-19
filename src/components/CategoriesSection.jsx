@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { getSlugFromCategory } from "@/lib/category-map"
+import { getSlugFromCategory } from "../lib/category-map"
 
 const categories = [
   {

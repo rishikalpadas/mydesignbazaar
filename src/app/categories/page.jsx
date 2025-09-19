@@ -1,5 +1,5 @@
 // pages/unique-designs.js
-import Navbar from "@/components/Navbar";
+import Navbar from "../../components/Navbar";
 import { Heart } from "lucide-react";
 
 const dummyDesigns = Array.from({ length: 18 },(_,i) => ({

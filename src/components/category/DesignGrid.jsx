@@ -1,7 +1,8 @@
 // Also includes robust preview URL fallback.
 "use client"
 import { useState, useMemo, useCallback } from "react"
-import ImageLightbox from "@/components/ImageLightbox"
+import ImageLightbox from "../../components/ImageLightbox"
+import { useRouter } from "next/navigation"
 
 function getPreviewUrl(d) {
   // Try new multiple preview images first
@@ -32,7 +33,8 @@ function getAllPreviewUrls(d) {
 }
 
 export default function DesignGrid({ items = [], categoryLabel = "" }) {
-  const [lightboxData, setLightboxData] = useState(null)
+  const [lightboxData, setLightboxData] = useState(null);
+  const router=useRouter();
 
   const handleOpen = useCallback((url, allUrls = []) => {
     setLightboxData({ 
@@ -60,6 +62,7 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
           <article
             key={key}
             className="group relative bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer border border-gray-100 overflow-hidden"
+            onClick={()=>router.push(`/product/details/${d._id}`)}
           >
             {/* Image */}
             <button
@@ -70,7 +73,7 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
               <img
                 src={url || "/placeholder.svg"}
                 alt={d.title || "Design preview"}
-                className="w-full h-48 sm:h-52 md:h-56 object-cover transition-transform duration-700 group-hover:scale-110 select-none"
+                className="w-full h-48 sm:h-52 md:h-56 object-cover transition-transform duration-700 group-hover:scale-110 cursor-pointer"
                 draggable={false}
                 loading="lazy"
                 onError={(e) => {
@@ -96,14 +99,14 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
             </button>
 
             {/* Content */}
-            <div className="p-4 sm:p-5 space-y-2">
+            <div className="p-4 sm:p-5 space-y-2"  >
               <h3 className="text-base font-bold text-gray-800 group-hover:text-gray-900 transition-colors line-clamp-1">
                 {d.title || "Untitled Design"}
               </h3>
               <p className="text-sm text-gray-500 line-clamp-2">{d.description}</p>
 
               <div className="flex items-center justify-between text-xs text-gray-600">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" >
                   <span className="inline-flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -141,13 +144,13 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
         ))}
       </div>
 
-      {lightboxData ? (
+      {/* {lightboxData ? (
         <ImageLightbox 
           src={lightboxData.src} 
           srcs={lightboxData.srcs}
           onClose={handleClose} 
         />
-      ) : null}
+      ) : null} */}
     </>
   )
 }

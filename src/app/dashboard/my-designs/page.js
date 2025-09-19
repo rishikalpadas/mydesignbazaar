@@ -22,7 +22,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import Image from "next/image"
-import DashboardPageWrapper from "@/components/dashboard/DashboardPageWrapper"
+import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
 
 const MyDesignsContent = () => {
   const router = useRouter()
@@ -310,6 +310,7 @@ const MyDesignsContent = () => {
             <div
               key={design._id}
               className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-orange-100 hover:shadow-xl transition-all duration-300 overflow-hidden group"
+             
             >
               {/* Image Container */}
               <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
@@ -403,7 +404,7 @@ const MyDesignsContent = () => {
 
                     {showActions === design._id && (
                       <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-10">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer">
+                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center cursor-pointer"  onClick={()=>router.push(`/product/details/${design._id}`)}>
                           <Eye className="w-4 h-4 mr-3" />
                           View Details
                         </button>

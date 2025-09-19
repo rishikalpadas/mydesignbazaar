@@ -22,7 +22,7 @@ import {
   Shield,
 } from "lucide-react"
 import Image from "next/image"
-import DashboardPageWrapper from "@/components/dashboard/DashboardPageWrapper"
+import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
 
 const AdminDesignsContent = () => {
   const router = useRouter()
