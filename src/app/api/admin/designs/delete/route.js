@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import connectDB from "@/lib/mongodb"
-import Design from "@/models/Design"
-import { withPermission } from "@/middleware/auth"
+import connectDB from "../../../../../lib/mongodb"
+import Design from "../../../../../models/Design"
+import { withPermission } from "../../../../../middleware/auth"
 import fs from "fs/promises"
 import path from "path"
 
