@@ -1,8 +1,29 @@
+'use client'
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
+import { useAuth } from '../../context/AuthContext';
 
 export default function AboutPage() {
+
+  const { user } = useAuth();
+
+  const handleStartAsDesigner=()=>{
+    console.log("[v0] Button clicked, user:", user) // Added debug logging
+    if (!user) {
+      console.log("[v0] No user, opening auth modal")
+      setShowAuthModal(true)
+    } else if (user.userType === "designer") {
+      console.log("[v0] User is designer, redirecting to dashboard")
+      router.push("/dashboard")
+    } else if (user.userType === "buyer") {
+      console.log("[v0] User is buyer, showing role prompt")
+      setShowRolePrompt(true)
+    } else {
+      console.log("[v0] Unknown user type:", user.userType)
+    }
+  
+  }
   return (
     <>
       <Navbar />
@@ -205,7 +226,7 @@ export default function AboutPage() {
                     <span className="text-gray-700">We handle marketing, hosting, customer acquisition, and payment</span>
                   </div>
                 </div>
-                <button className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <button className="mt-6 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   Join as Designer
                 </button>
               </div>
@@ -240,7 +261,7 @@ export default function AboutPage() {
                     <span className="text-gray-700">Full usage rights with transparent pricing</span>
                   </div>
                 </div>
-                <button className="mt-6 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <button className="mt-6 bg-gradient-to-r from-orange-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   Start Buying
                 </button>
               </div>
@@ -353,7 +374,7 @@ export default function AboutPage() {
                 <div className="text-3xl mb-4">🎨</div>
                 <h3 className="font-bold text-gray-800 mb-2">Designers</h3>
                 <p className="text-gray-600 text-sm mb-4">Apply now to join our platform and start earning</p>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                <button className="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors">
                   Apply Now
                 </button>
               </div>
@@ -361,7 +382,7 @@ export default function AboutPage() {
                 <div className="text-3xl mb-4">🛒</div>
                 <h3 className="font-bold text-gray-800 mb-2">Buyers</h3>
                 <p className="text-gray-600 text-sm mb-4">Subscribe or download as you go, with confidence</p>
-                <button className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors">
+                <button className="bg-orange-600  text-white px-4 py-2 rounded-lg cursor-pointer font-medium cursor-pointer hover:bg-orange-700 transition-colors" onClick={handleStartAsDesigner}>
                   Start Shopping
                 </button>
               </div>
@@ -369,7 +390,7 @@ export default function AboutPage() {
                 <div className="text-3xl mb-4">🤝</div>
                 <h3 className="font-bold text-gray-800 mb-2">Partners & Investors</h3>
                 <p className="text-gray-600 text-sm mb-4">Reach out to join this scalable revolution</p>
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors">
+                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 cursor-pointer transition-colors">
                   Get in Touch
                 </button>
               </div>

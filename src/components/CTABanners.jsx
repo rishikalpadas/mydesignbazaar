@@ -1,4 +1,5 @@
 "use client";
+import { useAuth } from "../context/AuthContext";
 import {
   Paintbrush2,
   ShoppingBag,
@@ -12,6 +13,7 @@ import {
   Crown,
 } from "lucide-react";
 import { useState } from "react";
+import AuthModal from "./AuthModal";
 
 const designerStats = [
   {
@@ -61,6 +63,25 @@ const buyerBenefits = [
 
 const CTABanners = () => {
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showRolePrompt, setShowRolePrompt] = useState(false);
+  const { user } = useAuth();
+
+  const handleStartAsDesigner = () => {
+    console.log("[v0] Button clicked, user:", user); // Added debug logging
+    if (!user) {
+      console.log("[v0] No user, opening auth modal");
+      setShowAuthModal(true);
+    } else if (user.userType === "designer") {
+      console.log("[v0] User is designer, redirecting to dashboard");
+      router.push("/dashboard");
+    } else if (user.userType === "buyer") {
+      console.log("[v0] User is buyer, showing role prompt");
+      setShowRolePrompt(true);
+    } else {
+      console.log("[v0] Unknown user type:", user.userType);
+    }
+  };
 
   return (
     <section className="py-20 px-4 md:px-8 lg:px-16 bg-gradient-to-br from-slate-50 via-white to-purple-50/30 relative overflow-hidden">
@@ -141,7 +162,9 @@ const CTABanners = () => {
                   <div key={index} className="text-center">
                     <div className="flex items-center justify-center gap-1 mb-2">
                       {stat.icon}
-                      <span className="text-lg lg:text-2xl font-bold">{stat.value}</span>
+                      <span className="text-lg lg:text-2xl font-bold">
+                        {stat.value}
+                      </span>
                     </div>
                     <p className="text-xs text-indigo-200">{stat.label}</p>
                   </div>
@@ -151,10 +174,13 @@ const CTABanners = () => {
               {/* **CTA Button** */}
               <div className="flex flex-col gap-3 lg:gap-4">
                 <a
-                  href="/signup?role=designer"
+                  // href="/signup?role=designer"
                   className="group/btn flex-1 bg-white text-indigo-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
                 >
-                  <div className="flex items-center justify-center gap-2">
+                  <div
+                    className="flex items-center justify-center gap-2 cursor-pointer"
+                    onClick={handleStartAsDesigner}
+                  >
                     Sell Designs
                     <ArrowRight
                       className={`w-5 h-5 transition-transform duration-300 ${
@@ -223,7 +249,9 @@ const CTABanners = () => {
                   <div key={index} className="text-center">
                     <div className="flex items-center justify-center gap-1 mb-2">
                       {stat.icon}
-                      <span className="text-lg lg:text-2xl font-bold">{stat.value}</span>
+                      <span className="text-lg lg:text-2xl font-bold">
+                        {stat.value}
+                      </span>
                     </div>
                     <p className="text-xs text-orange-200">{stat.label}</p>
                   </div>
@@ -233,10 +261,13 @@ const CTABanners = () => {
               {/* **CTA Button** */}
               <div className="flex flex-col gap-3 lg:gap-4">
                 <a
-                  href="/explore"
-                  className="group/btn flex-1 bg-white text-orange-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1"
+                  // href="/explore"
+                  className="group/btn flex-1 bg-white text-orange-700 font-semibold px-4 py-3 lg:px-6 lg:py-4 rounded-2xl text-center transition-all duration-300 hover:bg-gray-50 hover:shadow-lg transform hover:-translate-y-1 cursor-pointer"
                 >
-                  <div className="flex items-center justify-center gap-2">
+                  <div
+                    className="flex items-center justify-center gap-2"
+                    onClick={handleStartAsDesigner}
+                  >
                     Start Shopping
                     <ArrowRight
                       className={`w-5 h-5 transition-transform duration-300 ${
@@ -298,7 +329,7 @@ const CTABanners = () => {
         {/* **Final CTA Section** */}
         <div className="text-center">
           <div className="bg-gradient-to-r from-gray-900 to-gray-800 rounded-3xl p-6 lg:p-12 text-white">
-            <h3 className="text-3xl lg:text-4xl font-bold mb-4">
+            <h3 className="text-3xl lg:text-4xl font-bold mb-4 cursor-pointer">
               Ready to Get Started?
             </h3>
             <p className="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
@@ -307,15 +338,69 @@ const CTABanners = () => {
             </p>
 
             <div className="flex flex-col gap-3 justify-center max-w-sm mx-auto lg:flex-row lg:gap-4 lg:max-w-md">
-              <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+              <button className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer" onClick={handleStartAsDesigner}>
                 Join as Designer
               </button>
-              <button className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+              <button
+                className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-6 py-3 lg:px-8 lg:py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer"
+                onClick={handleStartAsDesigner}
+              >
                 Start Shopping
               </button>
             </div>
           </div>
         </div>
+
+        {showRolePrompt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black bg-opacity-50"
+              onClick={() => setShowRolePrompt(false)}
+            />
+            <div className="relative bg-white rounded-xl p-6 max-w-md w-full">
+              <h3 className="text-lg font-semibold mb-4">
+                Switch Account Type
+              </h3>
+              <p className="text-gray-600 mb-6">
+                You're currently logged in as a buyer. To start as a designer,
+                please sign out and create a new designer account or log in with
+                your designer credentials.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowRolePrompt(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                {/* <button
+                onClick={() => {
+                  setShowRolePrompt(false)
+                  setShowAuthModal(true)
+                }}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Create Designer Account
+              </button> */}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={(userData) => {
+            console.log("[v0] Auth success, user data:", userData); // Added debug logging
+            setShowAuthModal(false);
+            if (userData && userData.userType === "designer") {
+              router.push("/dashboard");
+            } else {
+              // If not a designer, just close modal and let them try again
+              console.log("[v0] User is not a designer, staying on page");
+            }
+          }}
+        />
       </div>
     </section>
   );

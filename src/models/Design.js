@@ -26,6 +26,18 @@ const designSchema = new mongoose.Schema(
         maxlength: 30,
       },
     ],
+    previewImages: [{
+      filename: String,
+      originalName: String,
+      path: String,
+      size: Number,
+      mimetype: String,
+      isPrimary: {
+        type: Boolean,
+        default: false
+      }
+    }],
+    // Keep the old previewImage field for backward compatibility
     previewImage: {
       filename: String,
       originalName: String,
@@ -33,6 +45,18 @@ const designSchema = new mongoose.Schema(
       size: Number,
       mimetype: String,
     },
+    rawFile: {
+      filename: String,
+      originalName: String,
+      path: String,
+      size: Number,
+      mimetype: String,
+      fileType: {
+        type: String,
+        enum: ["psd", "pdf", "cdr", "ai", "eps", "svg"],
+      },
+    },
+    // Keep the old rawFiles field for backward compatibility
     rawFiles: [
       {
         filename: String,
@@ -96,13 +120,52 @@ designSchema.index({ category: 1 })
 designSchema.index({ createdAt: -1 })
 designSchema.index({ featured: 1, status: 1 })
 
-// Virtual for preview image URL - matches the actual file structure
-designSchema.virtual("previewImageUrl").get(function () {
-  return this.previewImage ? `/uploads/designs/${this._id}/preview/${this.previewImage.filename}` : null
+// Virtual for multiple preview image URLs
+designSchema.virtual("previewImageUrls").get(function () {
+  if (this.previewImages && this.previewImages.length > 0) {
+    return this.previewImages.map((img) => ({
+      ...img.toObject ? img.toObject() : img,
+      url: `/api/uploads/designs/${this._id}/preview/${img.filename}`,
+    }))
+  }
+  // Fallback to old single preview image for backward compatibility
+  return this.previewImage ? [{
+    ...this.previewImage,
+    url: `/api/uploads/designs/${this._id}/preview/${this.previewImage.filename}`,
+    isPrimary: true
+  }] : []
 })
 
-// Virtual for raw file URLs
+// Virtual for primary preview image URL (backward compatibility)
+designSchema.virtual("previewImageUrl").get(function () {
+  if (this.previewImages && this.previewImages.length > 0) {
+    const primary = this.previewImages.find(img => img.isPrimary) || this.previewImages[0]
+    return `/api/uploads/designs/${this._id}/preview/${primary.filename}`
+  }
+  return this.previewImage ? `/api/uploads/designs/${this._id}/preview/${this.previewImage.filename}` : null
+})
+
+// Virtual for raw file URL (single file)
+designSchema.virtual("rawFileUrl").get(function () {
+  if (this.rawFile) {
+    return `/uploads/designs/${this._id}/raw/${this.rawFile.filename}`
+  }
+  // Fallback to old rawFiles array for backward compatibility
+  const files = Array.isArray(this.rawFiles) ? this.rawFiles : []
+  if (files.length > 0) {
+    return `/uploads/designs/${this._id}/raw/${files[0].filename}`
+  }
+  return null
+})
+
+// Virtual for raw file URLs (backward compatibility)
 designSchema.virtual("rawFileUrls").get(function () {
+  if (this.rawFile) {
+    return [{
+      ...this.rawFile.toObject ? this.rawFile.toObject() : this.rawFile,
+      url: `/uploads/designs/${this._id}/raw/${this.rawFile.filename}`,
+    }]
+  }
   const files = Array.isArray(this.rawFiles) ? this.rawFiles : []
   return files.map((file) => {
     const base = file && typeof file.toObject === "function" ? file.toObject() : file

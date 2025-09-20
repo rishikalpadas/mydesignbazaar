@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import connectDB from '@/lib/mongodb'
-import Design from '@/models/Design'
-import {User} from '@/models/User'
+import connectDB from '../../../../lib/mongodb'
+import Design from '../../../../models/Design'
+import {User} from '../../../../models/User'
 import jwt from 'jsonwebtoken'
 
 export async function GET(request) {
@@ -111,11 +111,33 @@ export async function GET(request) {
     }
     
     // Add virtual fields for image URLs
-    const designsWithUrls = designs.map(design => ({
-      ...design,
-      previewImageUrl: design.previewImage ? 
-        `/uploads/designs/${design._id}/preview/${design.previewImage.filename}` : null
-    }))
+    const designsWithUrls = designs.map(design => {
+      const baseDesign = { ...design }
+      
+      // Handle multiple preview images (new format)
+      if (design.previewImages && design.previewImages.length > 0) {
+        baseDesign.previewImageUrls = design.previewImages.map(img => ({
+          ...img,
+          url: `/api/uploads/designs/${design._id}/preview/${img.filename}`
+        }))
+        // Primary preview image URL for backward compatibility
+        const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
+        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${primary.filename}`
+      } else if (design.previewImage) {
+        // Fallback to single preview image (old format)
+        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`
+        baseDesign.previewImageUrls = [{
+          ...design.previewImage,
+          url: `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`,
+          isPrimary: true
+        }]
+      } else {
+        baseDesign.previewImageUrl = null
+        baseDesign.previewImageUrls = []
+      }
+      
+      return baseDesign
+    })
     
     return NextResponse.json({
       success: true,

@@ -1,26 +1,56 @@
 // Also includes robust preview URL fallback.
 "use client"
 import { useState, useMemo, useCallback } from "react"
-import ImageLightbox from "@/components/ImageLightbox"
+import ImageLightbox from "../../components/ImageLightbox"
+import { useRouter } from "next/navigation"
 
 function getPreviewUrl(d) {
+  // Try new multiple preview images first
+  if (d?.previewImageUrls && d.previewImageUrls.length > 0) {
+    const primary = d.previewImageUrls.find(img => img.isPrimary) || d.previewImageUrls[0]
+    return primary.url
+  }
+  
+  // Fallback to single preview image URL
   if (d?.previewImageUrl) return d.previewImageUrl
+  
+  // Fallback to old structure
   const filename = d?.previewImage?.filename
-  if (filename && d?._id) return `/uploads/designs/${d._id}/preview/${filename}`
-  return "/design-preview.png"
+  if (filename && d?._id) return `/api/uploads/designs/${d._id}/preview/${filename}`
+  
+  return "/design-preview.svg"
+}
+
+function getAllPreviewUrls(d) {
+  // Return all preview image URLs for gallery view
+  if (d?.previewImageUrls && d.previewImageUrls.length > 0) {
+    return d.previewImageUrls.map(img => img.url)
+  }
+  
+  // Fallback to single image
+  const singleUrl = getPreviewUrl(d)
+  return singleUrl !== "/design-preview.svg" ? [singleUrl] : []
 }
 
 export default function DesignGrid({ items = [], categoryLabel = "" }) {
-  const [openSrc, setOpenSrc] = useState(null)
+  const [lightboxData, setLightboxData] = useState(null);
+  const router=useRouter();
 
-  const handleOpen = useCallback((url) => setOpenSrc(url), [])
-  const handleClose = useCallback(() => setOpenSrc(null), [])
+  const handleOpen = useCallback((url, allUrls = []) => {
+    setLightboxData({ 
+      src: url, 
+      srcs: allUrls.length > 1 ? allUrls : [url] 
+    })
+  }, [])
+  
+  const handleClose = useCallback(() => setLightboxData(null), [])
 
   const cards = useMemo(
     () =>
       items.map((d) => {
         const url = getPreviewUrl(d)
-        return { key: String(d._id), url, d }
+        const allUrls = getAllPreviewUrls(d)
+        return { key: String(d._id), url, allUrls, d }
       }),
     [items],
   )
@@ -28,42 +58,55 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
   return (
     <>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-        {cards.map(({ key, url, d }) => (
+        {cards.map(({ key, url, allUrls, d }) => (
           <article
             key={key}
             className="group relative bg-white rounded-xl sm:rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer border border-gray-100 overflow-hidden"
+            onClick={()=>router.push(`/product/details/${d._id}`)}
           >
             {/* Image */}
             <button
               type="button"
               className="relative overflow-hidden block w-full text-left"
-              onClick={() => handleOpen(url)}
+              onClick={() => handleOpen(url, allUrls)}
             >
               <img
                 src={url || "/placeholder.svg"}
                 alt={d.title || "Design preview"}
-                className="w-full h-48 sm:h-52 md:h-56 object-cover transition-transform duration-700 group-hover:scale-110 select-none"
+                className="w-full h-48 sm:h-52 md:h-56 object-cover transition-transform duration-700 group-hover:scale-110 cursor-pointer"
                 draggable={false}
                 loading="lazy"
                 onError={(e) => {
-                  e.currentTarget.src = "/design-preview.png"
+                  e.currentTarget.src = "/design-preview.svg"
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Category Badge */}
               <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs font-medium shadow-sm">
                 {categoryLabel}
               </div>
+              
+              {/* Multiple Images Indicator */}
+              {allUrls.length > 1 && (
+                <div className="absolute top-2 left-2 bg-blue-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium shadow-sm flex items-center">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                  </svg>
+                  {allUrls.length}
+                </div>
+              )}
             </button>
 
             {/* Content */}
-            <div className="p-4 sm:p-5 space-y-2">
+            <div className="p-4 sm:p-5 space-y-2"  >
               <h3 className="text-base font-bold text-gray-800 group-hover:text-gray-900 transition-colors line-clamp-1">
                 {d.title || "Untitled Design"}
               </h3>
               <p className="text-sm text-gray-500 line-clamp-2">{d.description}</p>
 
               <div className="flex items-center justify-between text-xs text-gray-600">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" >
                   <span className="inline-flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -101,7 +144,13 @@ export default function DesignGrid({ items = [], categoryLabel = "" }) {
         ))}
       </div>
 
-      {openSrc ? <ImageLightbox src={openSrc || "/placeholder.svg"} onClose={handleClose} /> : null}
+      {/* {lightboxData ? (
+        <ImageLightbox 
+          src={lightboxData.src} 
+          srcs={lightboxData.srcs}
+          onClose={handleClose} 
+        />
+      ) : null} */}
     </>
   )
 }

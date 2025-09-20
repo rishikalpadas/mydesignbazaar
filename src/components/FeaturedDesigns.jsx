@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const featuredDesigns = [
   {
     id: 1,
@@ -212,7 +214,7 @@ const FeaturedDesigns = () => {
                       %
                     </div>
                   </div>
-                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                  <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
                     Buy Now
                   </button>
                 </div>
@@ -229,6 +231,7 @@ const FeaturedDesigns = () => {
         {/* Bottom CTA */}
         <div className="text-center mt-8 sm:mt-12 lg:mt-16">
           <button className="group bg-gradient-to-r from-gray-800 to-gray-700 hover:from-gray-900 hover:to-gray-800 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm sm:text-base">
+            <Link href="/categories">
             <span className="flex items-center gap-2">
               Explore All Designs
               <svg
@@ -245,6 +248,7 @@ const FeaturedDesigns = () => {
                 />
               </svg>
             </span>
+            </Link>
           </button>
         </div>
       </div>

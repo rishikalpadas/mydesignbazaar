@@ -56,7 +56,7 @@ const AppPromo = () => {
         <p className="text-indigo-100 mb-6">
           Download our app and start creating stunning designs on the go!
         </p>
-        <button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl">
+        <button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl cursor-pointer">
           Get Notified
         </button>
       </div>

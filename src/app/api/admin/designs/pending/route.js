@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import connectDB from "@/lib/mongodb"
-import Design from "@/models/Design"
-import { withPermission } from "@/middleware/auth"
+import connectDB from "../../../../../lib/mongodb"
+import Design from "../../../../../models/Design"
+import { withPermission } from "../../../../../middleware/auth"
 
 async function handler() {
   try {
@@ -18,7 +18,7 @@ async function handler() {
       title: d.title,
       category: d.category,
       createdAt: d.createdAt,
-      previewImageUrl: d.previewImage ? `/uploads/designs/${d._id}/preview/${d.previewImage.filename}` : null,
+      previewImageUrl: d.previewImage ? `/api/uploads/designs/${d._id}/preview/${d.previewImage.filename}` : null,
       uploadedBy: {
         email: d.uploadedBy?.email || "Unknown",
       },

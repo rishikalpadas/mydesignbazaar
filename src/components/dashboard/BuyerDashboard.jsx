@@ -58,13 +58,13 @@ const BuyerDashboard = ({ user }) => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-left transition-all duration-300 hover:shadow-lg">
+            <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-left transition-all duration-300 hover:shadow-lg cursor-pointer">
               <Search className="h-8 w-8 text-blue-500 mb-2" />
               <h3 className="font-semibold text-gray-900">Browse Designs</h3>
               <p className="text-sm text-gray-500">Discover new creative works</p>
             </button>
 
-            <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-left transition-all duration-300 hover:shadow-lg">
+            <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-blue-50 text-left transition-all duration-300 hover:shadow-lg cursor-pointer">
               <Heart className="h-8 w-8 text-red-500 mb-2" />
               <h3 className="font-semibold text-gray-900">My Wishlist</h3>
               <p className="text-sm text-gray-500">View saved designs</p>
