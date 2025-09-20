@@ -2,8 +2,8 @@ import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose"
-import connectDB from "@/lib/mongodb"
-import { User, Designer, Buyer } from "@/models/User"
+import connectDB from "../../../../lib/mongodb"
+import { User, Designer, Buyer } from "../../../../models/User"
 
 // Admin Schema (same as in setup route)
 const AdminSchema = new mongoose.Schema({
