@@ -1,7 +1,7 @@
 'use client'
 import Navbar from '../../components/Navbar';
 import Newsletter from '../../components/Newsletter';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import Footer from '../../components/Footer';
 
 export default function RefundPolicyPage() {
