@@ -213,7 +213,7 @@ export default function PricingPage() {
                       <div>
                         <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center">
                           <Check className="w-5 h-5 text-green-500 mr-2" />
-                          What's Included
+                          What&apos;s Included
                         </h4>
                         <ul className="space-y-3">
                           {plan.features.map((feature, index) => (
