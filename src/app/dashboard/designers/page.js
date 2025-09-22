@@ -64,7 +64,7 @@ const DesignersContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [sortBy]);
+  }, [sortBy, searchTerm]);
 
   const viewDesigner=(id)=>{
     router.push(`/dashboard/designers/${id}`)

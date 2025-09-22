@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
+import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB
@@ -207,8 +208,12 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Create design document first to get ID
+    // Generate unique design ID
+    const customDesignId = await generateUniqueDesignId()
+
+    // Create design document with custom ID
     const design = new Design({
+      designId: customDesignId,
       title: title.trim(),
       description: description.trim(),
       category,
@@ -219,27 +224,28 @@ export async function POST(request) {
 
     await design.save()
     const designId = design._id.toString()
+    const customId = design.designId
 
     try {
-      // Save preview images
+      // Save preview images using custom design ID
       const previewImagesData = []
       for (const [index, previewFile] of previewFiles.entries()) {
-        const previewImageData = await saveFile(previewFile, designId, "preview")
+        const previewImageData = await saveFile(previewFile, customId, "preview")
         previewImageData.isPrimary = index === 0 // First image is primary
         previewImagesData.push(previewImageData)
       }
       design.previewImages = previewImagesData
-      
+
       // For backward compatibility, set the first preview as the main previewImage
       if (previewImagesData.length > 0) {
         design.previewImage = previewImagesData[0]
       }
 
-      // Save raw file
-      const rawFileData = await saveFile(rawFileToProcess, designId, "raw")
+      // Save raw file using custom design ID
+      const rawFileData = await saveFile(rawFileToProcess, customId, "raw")
       rawFileData.fileType = fileType
       design.rawFile = rawFileData
-      
+
       // For backward compatibility, also set rawFiles array
       design.rawFiles = [rawFileData]
 
@@ -251,6 +257,7 @@ export async function POST(request) {
         message: "Design uploaded successfully and is pending approval",
         design: {
           id: design._id,
+          designId: design.designId,
           title: design.title,
           status: design.status,
         },

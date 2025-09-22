@@ -2,33 +2,19 @@
 import connectDB from '../../../../lib/mongodb';
 import Design from "../../../../models/Design";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 
 
 
 export async function GET(request,{params}) {
   try {
     connectDB();
-    const token = request.cookies.get("auth-token")?.value;
-
-    console.log("token",process.env.JWT_SECRET);
-    if (!token) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
     const id=await params.id;
-    
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (error) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
 
     const design = await Design.findOne({_id:id});
     
     if (!design) {
       return NextResponse.json(
-        { error: "No designer available" },
+        { error: "Design not found" },
         { status: 404 }
       );
     }
@@ -37,7 +23,7 @@ export async function GET(request,{params}) {
   } catch(error) {
     console.error("error:", error);
     return NextResponse.json(
-      { error: "Failed to get designers. Please try again." },
+      { error: "Failed to get design. Please try again." },
       { status: 500 }
     );
   }

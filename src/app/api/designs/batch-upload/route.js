@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
+import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
@@ -232,7 +233,10 @@ export async function POST(request) {
         }
 
         // If we got here, all validations passed, create the design
+        const customDesignId = await generateUniqueDesignId()
+
         const design = new Design({
+          designId: customDesignId,
           title: title.trim(),
           description: description.trim(),
           category,
@@ -243,12 +247,13 @@ export async function POST(request) {
 
         await design.save()
         const designId = design._id.toString()
+        const customId = design.designId
 
         try {
           // Save preview images
           const previewImagesData = []
           for (const [index, previewFile] of previewImages.entries()) {
-            const previewImageData = await saveFile(previewFile, designId, "preview")
+            const previewImageData = await saveFile(previewFile, customId, "preview")
             previewImageData.isPrimary = index === 0 // First image is primary
             previewImagesData.push(previewImageData)
           }
@@ -260,7 +265,7 @@ export async function POST(request) {
           }
 
           // Save raw file
-          const rawFileData = await saveFile(rawFile, designId, "raw")
+          const rawFileData = await saveFile(rawFile, customId, "raw")
           rawFileData.fileType = fileType
           design.rawFile = rawFileData
           

@@ -29,6 +29,7 @@ const Footer = () => {
     { name: "Licensing Policy", href: "/licensing-policy" },
     { name: "Monetization Policy", href: "/monetization-policy" },
     { name: "Philosophy", href: "/philosophy" },
+    { name: "Pricing", href: "/pricing" },
     { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Refund Policy", href: "/refund-policy" },
     { name: "Terms of Service", href: "/terms-of-service" },
@@ -36,7 +37,7 @@ const Footer = () => {
   ];
 
   // Split links into two columns
-  const midPoint = Math.ceil(quickLinks.length / 2);
+  const midPoint = Math.ceil(quickLinks.length / 2.2);
   const firstColumn = quickLinks.slice(0, midPoint);
   const secondColumn = quickLinks.slice(midPoint);
 

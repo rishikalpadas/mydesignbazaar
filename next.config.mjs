@@ -8,9 +8,20 @@ const nextConfig = {
         protocol: 'http',
         hostname: 'localhost',
         port: '3000',
+        pathname: '/api/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3000',
         pathname: '/uploads/**',
       },
       // Production domain - adjust hostname as needed
+      {
+        protocol: 'https',
+        hostname: '**', // Allow all domains for production
+        pathname: '/api/uploads/**',
+      },
       {
         protocol: 'https',
         hostname: '**', // Allow all domains for production
