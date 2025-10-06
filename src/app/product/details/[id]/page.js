@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Heart, Share2, Eye, Download, Calendar, User, Tag, ShoppingCart, Star } from 'lucide-react';
+import { Heart, Share2, Eye, Download, Calendar, User, Tag, ShoppingCart, Star, Brush } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image';
 import Navbar from '../../../../components/Navbar';
 import Footer from '../../../../components/Footer';
 import Newsletter from '../../../../components/Newsletter';
+import SimilarDesignsSlider from '../../../../components/SimilarDesignsSlider';
 
 // Custom Skeleton Component
 const Skeleton = ({ className = "", ...props }) => {
@@ -268,19 +269,20 @@ const ProductView = ({ productData, isLoading = false }) => {
             {/* Additional Info */}
             <div className="text-sm text-gray-500 space-y-1 pt-4 border-t">
               <div className="flex items-center space-x-2">
+                <Brush className="w-4 h-4" />
+                <span>Design ID: {product?.designId || 'N/A'}</span>
+              </div>
+              <div className="flex items-center space-x-2">
                 <Calendar className="w-4 h-4" />
                 <span>Uploaded: {formatDate(product?.uploadDate)}</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <User className="w-4 h-4" />
-                <span>Design ID: {product?._id || 'N/A'}</span>
-              </div>
-              {product?.approvalDate && (
+              
+              {/* {product?.approvalDate && (
                 <div className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                   <span>Approved: {formatDate(product?.approvalDate)}</span>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
         </div>
@@ -331,6 +333,10 @@ const Page = () => {
   return (
     <div className="py-8">
       <ProductView productData={productData} isLoading={isLoading} />
+      {/* Similar Designs Section */}
+      {!isLoading && productData && (
+        <SimilarDesignsSlider currentDesignId={id} />
+      )}
     </div>
   );
 };
@@ -342,7 +348,7 @@ const ProductPage = () => {
       <main className="bg-gray-50">
         <Page />
       </main>
-      <Newsletter />
+      {/* <Newsletter /> */}
       <Footer />
     </>
   )

@@ -119,7 +119,13 @@ const Sidebar = ({ user, isOpen, onClose }) => {
         <div className="flex min-h-0 flex-1 flex-col bg-white/90 backdrop-blur-sm border-r border-orange-100 shadow-lg">
           {/* Logo */}
           <div className="flex h-16 flex-shrink-0 items-center px-4 border-b border-orange-100 bg-gradient-to-r">
-            <img src="/logo.png" alt="MyDesignBazaar" className="h-8 w-auto" />
+            <button
+              onClick={() => router.push('/')}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
+              aria-label="Go to homepage"
+            >
+              <img src="/logo.png" alt="MyDesignBazaar" className="h-8 w-auto" />
+            </button>
           </div>
 
           {/* Navigation */}
@@ -180,7 +186,16 @@ const Sidebar = ({ user, isOpen, onClose }) => {
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white/95 backdrop-blur-sm border-r border-orange-100 shadow-xl">
           {/* Header */}
           <div className="flex h-16 items-center justify-between px-4 border-b border-orange-100 bg-gradient-to-r from-orange-500 to-amber-500">
-            <img src="/logo.png" alt="MyDesignBazaar" className="h-8 w-auto" />
+            <button
+              onClick={() => {
+                router.push('/')
+                onClose()
+              }}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
+              aria-label="Go to homepage"
+            >
+              <img src="/logo.png" alt="MyDesignBazaar" className="h-8 w-auto" />
+            </button>
             <button onClick={onClose} className="p-2 rounded-md text-white hover:bg-white/20 transition-colors">
               <X className="h-6 w-6" />
             </button>

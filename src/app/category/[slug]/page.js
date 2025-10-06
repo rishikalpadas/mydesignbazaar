@@ -5,6 +5,7 @@ import CategoryFilters from "../../../components/category/CategoryFilters.jsx"
 import DesignGrid from "../../../components/category/DesignGrid"
 import { getCategoryFromSlug } from "../../../lib/category-map"
 import Navbar from "../../../components/Navbar"
+import Footer from "../../../components/Footer"
 
 
 const PER_PAGE_DEFAULT = 12
@@ -53,10 +54,34 @@ export default async function CategoryPage({ params, searchParams }) {
   const sort = getSort(sortKey)
   const skip = (page - 1) * perPage
 
-  const [items, total] = await Promise.all([
-    Design.find(query).sort(sort).skip(skip).limit(perPage).lean({ virtuals: true }),
+  const [designs, total] = await Promise.all([
+    Design.find(query).sort(sort).skip(skip).limit(perPage).lean(),
     Design.countDocuments(query),
   ])
+
+  // Add image URLs explicitly
+  const items = designs.map(design => {
+    const designIdToUse = design.designId || design._id
+
+    // Handle multiple preview images
+    if (design.previewImages && design.previewImages.length > 0) {
+      design.previewImageUrls = design.previewImages.map(img => ({
+        ...img,
+        url: `/api/uploads/designs/${designIdToUse}/preview/${img.filename}`
+      }))
+      const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
+      design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primary.filename}`
+    } else if (design.previewImage) {
+      design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`
+      design.previewImageUrls = [{
+        ...design.previewImage,
+        url: `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`,
+        isPrimary: true
+      }]
+    }
+
+    return design
+  })
 
   const totalPages = Math.max(Math.ceil(total / perPage), 1)
 
@@ -200,6 +225,7 @@ export default async function CategoryPage({ params, searchParams }) {
         )}
       </section>
     </main>
+    <Footer/>
     </>
   )
 }

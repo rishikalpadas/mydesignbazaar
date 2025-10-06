@@ -46,7 +46,7 @@ export async function generateUniqueDesignId() {
 
   while (attempts < maxAttempts) {
     const sixDigitSuffix = generateSixDigitSuffix();
-    const designId = `FY${fyPrefix}${sixDigitSuffix}`;
+    const designId = `MDB${fyPrefix}${sixDigitSuffix}`;
 
     // Check if this ID already exists
     const existingDesign = await Design.findOne({ designId });
@@ -89,7 +89,7 @@ export function getCurrentFinancialYearDisplay() {
  * @returns {object} - { fyYear: "2526", suffix: "123456", fyDisplay: "2025-26" }
  */
 export function parseDesignId(designId) {
-  if (!designId || !designId.startsWith('FY') || designId.length !== 12) {
+  if (!designId || !designId.startsWith('MDB') || designId.length !== 12) {
     throw new Error('Invalid design ID format');
   }
 

@@ -56,6 +56,7 @@ const UploadContent = () => {
   }])
 
   const [globalErrors, setGlobalErrors] = useState({})
+  const [expandedDesigns, setExpandedDesigns] = useState(new Set([0])) // First design expanded by default
 
   // Check if user is first-time uploader
   const checkFirstTimeUpload = useCallback(async () => {
@@ -105,7 +106,8 @@ const UploadContent = () => {
 
   const addDesign = () => {
     if (designs.length >= MAX_DESIGNS) return
-    
+
+    const newIndex = designs.length
     setDesigns(prev => [
       ...prev,
       {
@@ -120,12 +122,23 @@ const UploadContent = () => {
         errors: {}
       }
     ])
+    // Expand the newly added design
+    setExpandedDesigns(prev => new Set([...prev, newIndex]))
   }
 
   const removeDesign = (index) => {
     // Don't allow removing designs if it would go below minimum required
     if (designs.length <= minDesignsRequired) return
     setDesigns(prev => prev.filter((_, i) => i !== index))
+    // Remove from expanded set and adjust indices
+    setExpandedDesigns(prev => {
+      const newSet = new Set()
+      prev.forEach(i => {
+        if (i < index) newSet.add(i)
+        else if (i > index) newSet.add(i - 1)
+      })
+      return newSet
+    })
   }
 
   const duplicateDesign = (index) => {
@@ -146,59 +159,113 @@ const UploadContent = () => {
     ])
   }
 
-  const handlePreviewImagesChange = (designIndex, files) => {
-    const validFiles = []
-    const validUrls = []
-    const errors = []
-
-    Array.from(files).forEach((file, fileIndex) => {
-      if (fileIndex >= MAX_PREVIEW_IMAGES) return
-
-      // Validate file type
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-      const validExtensions = ['jpg', 'jpeg', 'png', 'webp']
-      const fileExtension = file.name.split('.').pop().toLowerCase()
-      
-      if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-        errors.push(`${file.name}: Please select a JPG, PNG, or WebP image`)
-        return
+  const toggleDesignExpanded = (index) => {
+    setExpandedDesigns(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(index)) {
+        newSet.delete(index)
+      } else {
+        newSet.add(index)
       }
-
-      // Validate file size (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        errors.push(`${file.name}: Image must be less than 5MB`)
-        return
-      }
-
-      validFiles.push(file)
-      validUrls.push(URL.createObjectURL(file))
+      return newSet
     })
+  }
 
-    setDesigns(prev => 
-      prev.map((design, i) => 
-        i === designIndex 
-          ? { 
-              ...design, 
-              previewImages: validFiles, 
-              previewImageUrls: validUrls,
-              errors: { ...design.errors, previewImages: errors.length > 0 ? errors.join(', ') : '' }
+  const expandAll = () => {
+    setExpandedDesigns(new Set(designs.map((_, index) => index)))
+  }
+
+  const collapseAll = () => {
+    setExpandedDesigns(new Set())
+  }
+
+  const handlePreviewImagesChange = (designIndex, files) => {
+    setDesigns(prev => {
+      const design = prev[designIndex]
+      const currentCount = design.previewImages.length
+      const availableSlots = MAX_PREVIEW_IMAGES - currentCount
+
+      if (availableSlots <= 0) {
+        return prev
+      }
+
+      const validFiles = []
+      const validUrls = []
+      const errors = []
+
+      Array.from(files).forEach((file, fileIndex) => {
+        // Stop if we've reached the max limit
+        if (validFiles.length >= availableSlots) return
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+        const validExtensions = ['jpg', 'jpeg', 'png', 'webp']
+        const fileExtension = file.name.split('.').pop().toLowerCase()
+
+        if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+          errors.push(`${file.name}: Please select a JPG, PNG, or WebP image`)
+          return
+        }
+
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          errors.push(`${file.name}: Image must be less than 5MB`)
+          return
+        }
+
+        validFiles.push(file)
+        validUrls.push(URL.createObjectURL(file))
+      })
+
+      return prev.map((d, i) =>
+        i === designIndex
+          ? {
+              ...d,
+              previewImages: [...d.previewImages, ...validFiles],
+              previewImageUrls: [...d.previewImageUrls, ...validUrls],
+              errors: { ...d.errors, previewImages: errors.length > 0 ? errors.join(', ') : '' }
+            }
+          : d
+      )
+    })
+  }
+
+  const removePreviewImage = (designIndex, imageIndex) => {
+    setDesigns(prev =>
+      prev.map((design, i) =>
+        i === designIndex
+          ? {
+              ...design,
+              previewImages: design.previewImages.filter((_, j) => j !== imageIndex),
+              previewImageUrls: design.previewImageUrls.filter((_, j) => j !== imageIndex)
             }
           : design
       )
     )
   }
 
-  const removePreviewImage = (designIndex, imageIndex) => {
-    setDesigns(prev => 
-      prev.map((design, i) => 
-        i === designIndex 
-          ? { 
-              ...design, 
-              previewImages: design.previewImages.filter((_, j) => j !== imageIndex),
-              previewImageUrls: design.previewImageUrls.filter((_, j) => j !== imageIndex)
-            }
-          : design
-      )
+  const movePreviewImage = (designIndex, fromIndex, toIndex) => {
+    setDesigns(prev =>
+      prev.map((design, i) => {
+        if (i !== designIndex) return design
+
+        const newPreviewImages = [...design.previewImages]
+        const newPreviewImageUrls = [...design.previewImageUrls]
+
+        // Remove from old position
+        const [movedImage] = newPreviewImages.splice(fromIndex, 1)
+        const [movedUrl] = newPreviewImageUrls.splice(fromIndex, 1)
+
+        // Insert at new position
+        newPreviewImages.splice(toIndex, 0, movedImage)
+        newPreviewImageUrls.splice(toIndex, 0, movedUrl)
+
+        return {
+          ...design,
+          previewImages: newPreviewImages,
+          previewImageUrls: newPreviewImageUrls
+        }
+      })
     )
   }
 
@@ -251,22 +318,31 @@ const UploadContent = () => {
 
   const validateAllDesigns = () => {
     let hasErrors = false
+    const errors = {}
 
-    // Check minimum designs requirement
+    // Check minimum designs requirement - strict check
     if (designs.length < minDesignsRequired) {
-      setGlobalErrors({
-        submit: `${isFirstTimeUpload ? 'First-time uploaders must' : 'You must'} upload at least ${minDesignsRequired} design${minDesignsRequired > 1 ? 's' : ''}.`
-      })
+      errors.submit = `${isFirstTimeUpload ? 'First-time uploaders must' : 'You must'} upload at least ${minDesignsRequired} design${minDesignsRequired > 1 ? 's' : ''}. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
       hasErrors = true
     }
 
-    setDesigns(prev => 
+    // Validate each design
+    setDesigns(prev =>
       prev.map(design => {
-        const errors = validateDesign(design)
-        if (Object.keys(errors).length > 0) hasErrors = true
-        return { ...design, errors }
+        const designErrors = validateDesign(design)
+        if (Object.keys(designErrors).length > 0) {
+          hasErrors = true
+        }
+        return { ...design, errors: designErrors }
       })
     )
+
+    // Set global errors after design validation
+    if (hasErrors) {
+      setGlobalErrors(errors)
+    } else {
+      setGlobalErrors({})
+    }
 
     return !hasErrors
   }
@@ -288,8 +364,19 @@ const UploadContent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    if (!validateAllDesigns()) return
+
+    console.log('Submit attempt:', {
+      designsCount: designs.length,
+      minRequired: minDesignsRequired,
+      isFirstTime: isFirstTimeUpload
+    })
+
+    if (!validateAllDesigns()) {
+      console.log('Validation failed, not submitting')
+      // Scroll to top to show error message
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
 
     setLoading(true)
     setSuccess(false)
@@ -413,20 +500,53 @@ const UploadContent = () => {
               {isFirstTimeUpload ? 'Initial Upload' : 'Design Upload'}
             </h2>
             <p className="text-gray-600 mt-1">
-              {isFirstTimeUpload 
+              {isFirstTimeUpload
                 ? `Upload ${minDesignsRequired} designs minimum (up to ${MAX_DESIGNS} designs allowed)`
                 : `Upload 1-${MAX_DESIGNS} designs at once`
               }
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-purple-600">{designs.length}</div>
-            <div className="text-sm text-gray-500">
-              {isFirstTimeUpload ? `of ${minDesignsRequired} min` : 'designs'}
+          <div className="flex items-center gap-4">
+            {designs.length > 1 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={expandAll}
+                  className="text-sm px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                >
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAll}
+                  className="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Collapse All
+                </button>
+              </div>
+            )}
+            <div className="text-right">
+              <div className="text-2xl font-bold text-purple-600">{designs.length}</div>
+              <div className="text-sm text-gray-500">
+                {isFirstTimeUpload ? `of ${minDesignsRequired} min` : 'designs'}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Global Error Display - At top of form */}
+      {globalErrors.submit && (
+        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-lg">
+          <div className="flex items-start">
+            <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-lg font-bold text-red-800 mb-1">Upload Requirements Not Met</h3>
+              <p className="text-red-700">{globalErrors.submit}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Design Forms */}
@@ -438,9 +558,12 @@ const UploadContent = () => {
             isOnly={designs.length === 1}
             canRemove={designs.length > minDesignsRequired}
             isFirstTimeUpload={isFirstTimeUpload}
+            isExpanded={expandedDesigns.has(designIndex)}
+            onToggleExpand={() => toggleDesignExpanded(designIndex)}
             onUpdate={updateDesign}
             onPreviewImagesChange={handlePreviewImagesChange}
             onRemovePreviewImage={removePreviewImage}
+            onMovePreviewImage={movePreviewImage}
             onRawFileChange={handleRawFileChange}
             onRemove={() => removeDesign(designIndex)}
             onDuplicate={() => duplicateDesign(designIndex)}
@@ -508,43 +631,104 @@ const UploadContent = () => {
 }
 
 // Individual Design Form Component
-const DesignForm = ({ 
-  design, 
-  designIndex, 
+const DesignForm = ({
+  design,
+  designIndex,
   isOnly,
   canRemove,
   isFirstTimeUpload,
-  onUpdate, 
-  onPreviewImagesChange, 
-  onRemovePreviewImage, 
-  onRawFileChange, 
-  onRemove, 
-  onDuplicate, 
-  getFileIcon 
+  isExpanded,
+  onToggleExpand,
+  onUpdate,
+  onPreviewImagesChange,
+  onRemovePreviewImage,
+  onMovePreviewImage,
+  onRawFileChange,
+  onRemove,
+  onDuplicate,
+  getFileIcon
 }) => {
   return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-orange-100 p-6">
-      {/* Design Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center">
-          <Type className="w-5 h-5 mr-2 text-purple-600" />
-          Design {designIndex + 1}
-          {isFirstTimeUpload && designIndex < 10 && (
-            <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
-              Required
-            </span>
-          )}
-        </h2>
-        
-        <div className="flex space-x-2">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-orange-100 overflow-hidden">
+      {/* Design Header - Always visible */}
+      <div
+        className="flex items-center justify-between p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+        onClick={onToggleExpand}
+      >
+        <div className="flex items-center gap-3">
           <button
+            type="button"
+            className="p-1 hover:bg-gray-200 rounded transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggleExpand()
+            }}
+          >
+            {isExpanded ? (
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl font-medium bg-clip-text flex items-center">
+              {/* <Type className="w-5 h-5 mr-2 text-purple-600" /> */}
+              Design #{designIndex + 1}
+              {design.title && (
+                <span className="ml-2 text-base text-gray-800 font-medium">
+                  - {design.title}
+                </span>
+              )}
+              {isFirstTimeUpload && designIndex < 10 && (
+                <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">
+                  Required
+                </span>
+              )}
+            </h2>
+            {!isExpanded && (
+              <div className="flex items-center gap-3 text-sm text-gray-500">
+                {design.category && (
+                  <span className="flex items-center gap-1">
+                    <Palette className="w-3 h-3" />
+                    {design.category}
+                  </span>
+                )}
+                {design.previewImages.length > 0 && (
+                  <span className="flex items-center gap-1">
+                    <ImageIcon className="w-3 h-3" />
+                    {design.previewImages.length} image{design.previewImages.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {design.rawFile && (
+                  <span className="flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    {design.rawFile.name}
+                  </span>
+                )}
+                {(!design.title || !design.category || design.previewImages.length === 0 || !design.rawFile) && (
+                  <span className="text-amber-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" />
+                    Incomplete
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
+          {/* <button
             type="button"
             onClick={onDuplicate}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
             title="Duplicate design"
           >
             <Copy className="w-4 h-4" />
-          </button>
+          </button> */}
           {canRemove && (
             <button
               type="button"
@@ -558,7 +742,9 @@ const DesignForm = ({
         </div>
       </div>
 
-      <div className="space-y-6">
+      {/* Collapsible Content */}
+      {isExpanded && (
+        <div className="px-6 pb-6 space-y-6 border-t border-gray-100">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Title */}
@@ -637,10 +823,32 @@ const DesignForm = ({
           <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-gradient-to-br from-orange-50 to-amber-50">
             {design.previewImageUrls.length > 0 ? (
               <div className="space-y-4">
+                <p className="text-sm text-gray-600 mb-2">First image will be shown as primary preview. Drag to reorder.</p>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {design.previewImageUrls.map((url, imageIndex) => (
-                    <div key={imageIndex} className="relative group">
-                      <div className="relative w-full h-24 bg-gray-100 rounded-lg overflow-hidden">
+                    <div
+                      key={imageIndex}
+                      className="relative group"
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.effectAllowed = 'move'
+                        e.dataTransfer.setData('imageIndex', imageIndex)
+                        e.dataTransfer.setData('designIndex', designIndex)
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault()
+                        e.dataTransfer.dropEffect = 'move'
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault()
+                        const fromIndex = parseInt(e.dataTransfer.getData('imageIndex'))
+                        const fromDesignIndex = parseInt(e.dataTransfer.getData('designIndex'))
+                        if (fromDesignIndex === designIndex && fromIndex !== imageIndex) {
+                          onMovePreviewImage(designIndex, fromIndex, imageIndex)
+                        }
+                      }}
+                    >
+                      <div className="relative w-full h-24 bg-gray-100 rounded-lg overflow-hidden cursor-move border-2 border-transparent hover:border-purple-400 transition-colors">
                         <Image
                           src={url}
                           alt={`Preview ${imageIndex + 1}`}
@@ -648,15 +856,45 @@ const DesignForm = ({
                           className="object-cover"
                         />
                         {imageIndex === 0 && (
-                          <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
+                          <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-2 py-0.5 rounded font-medium">
                             Primary
                           </div>
                         )}
+                        <div className="absolute bottom-1 left-1 bg-black/50 text-white text-xs px-1.5 py-0.5 rounded">
+                          {imageIndex + 1}
+                        </div>
                       </div>
+
+                      {/* Reorder buttons */}
+                      <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {imageIndex > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => onMovePreviewImage(designIndex, imageIndex, imageIndex - 1)}
+                            className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-blue-600 transition-colors"
+                            title="Move left"
+                          >
+                            <span className="text-xs">←</span>
+                          </button>
+                        )}
+                        {imageIndex < design.previewImageUrls.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => onMovePreviewImage(designIndex, imageIndex, imageIndex + 1)}
+                            className="bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-blue-600 transition-colors"
+                            title="Move right"
+                          >
+                            <span className="text-xs">→</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Remove button */}
                       <button
                         type="button"
                         onClick={() => onRemovePreviewImage(designIndex, imageIndex)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                        title="Remove image"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -757,7 +995,8 @@ const DesignForm = ({
           </div>
           {design.errors.rawFile && <p className="text-red-500 text-sm mt-2">{design.errors.rawFile}</p>}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -113,29 +113,31 @@ export async function GET(request) {
     // Add virtual fields for image URLs
     const designsWithUrls = designs.map(design => {
       const baseDesign = { ...design }
-      
+      // Use designId (custom ID like "MDB001") instead of _id (MongoDB ObjectId)
+      const designIdToUse = design.designId || design._id
+
       // Handle multiple preview images (new format)
       if (design.previewImages && design.previewImages.length > 0) {
         baseDesign.previewImageUrls = design.previewImages.map(img => ({
           ...img,
-          url: `/api/uploads/designs/${design._id}/preview/${img.filename}`
+          url: `/api/uploads/designs/${designIdToUse}/preview/${img.filename}`
         }))
         // Primary preview image URL for backward compatibility
         const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
-        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${primary.filename}`
+        baseDesign.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primary.filename}`
       } else if (design.previewImage) {
         // Fallback to single preview image (old format)
-        baseDesign.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`
+        baseDesign.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`
         baseDesign.previewImageUrls = [{
           ...design.previewImage,
-          url: `/api/uploads/designs/${design._id}/preview/${design.previewImage.filename}`,
+          url: `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`,
           isPrimary: true
         }]
       } else {
         baseDesign.previewImageUrl = null
         baseDesign.previewImageUrls = []
       }
-      
+
       return baseDesign
     })
     

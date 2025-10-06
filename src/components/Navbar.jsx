@@ -17,15 +17,87 @@ import {
 } from "lucide-react"
 import { getSlugFromCategory } from "../lib/category-map"
 import NoContextMenu from "../components/NoContextMenu"
+import AuthModal from "../components/AuthModal"
 
-const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout }) => {
+const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsAuthenticated, user: externalUser, onLogout: externalOnLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const [internalAuthModalOpen, setInternalAuthModalOpen] = useState(false)
+  const [internalIsAuthenticated, setInternalIsAuthenticated] = useState(false)
+  const [internalUser, setInternalUser] = useState(null)
   const router = useRouter()
 
   const mobileSearchRef = useRef(null)
   const userDropdownRef = useRef(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Determine if we should use external auth (when callback is provided)
+  const hasExternalAuth = externalOnAuthClick !== undefined
+
+  // Use external props if provided, otherwise use internal state
+  const isAuthenticated = hasExternalAuth ? externalIsAuthenticated : internalIsAuthenticated
+  const user = hasExternalAuth ? externalUser : internalUser
+
+  // Fetch auth state if not provided via props
+  useEffect(() => {
+    if (!hasExternalAuth && !authChecked) {
+      checkAuthStatus()
+    }
+  }, [hasExternalAuth, authChecked])
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setInternalIsAuthenticated(true)
+        setInternalUser(data.user)
+      } else {
+        setInternalIsAuthenticated(false)
+        setInternalUser(null)
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error)
+      setInternalIsAuthenticated(false)
+      setInternalUser(null)
+    } finally {
+      setAuthChecked(true)
+    }
+  }
+
+  const handleAuthClick = () => {
+    if (externalOnAuthClick) {
+      externalOnAuthClick()
+    } else {
+      setInternalAuthModalOpen(true)
+    }
+  }
+
+  const handleLogout = async () => {
+    if (externalOnLogout) {
+      await externalOnLogout()
+    } else {
+      try {
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        })
+        setInternalIsAuthenticated(false)
+        setInternalUser(null)
+        router.push("/")
+      } catch (error) {
+        console.error("Logout error:", error)
+      }
+    }
+  }
+
+  const handleAuthSuccess = () => {
+    setInternalAuthModalOpen(false)
+    checkAuthStatus()
+  }
 
   useEffect(() => {
     if (mobileMenuOpen && mobileSearchRef.current) {
@@ -57,7 +129,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
     if (isAuthenticated) {
       setUserDropdownOpen(!userDropdownOpen)
     } else {
-      onAuthClick()
+      handleAuthClick()
     }
   }
 
@@ -65,7 +137,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
     if (isAuthenticated) {
       router.push("/wishlist")
     } else {
-      onAuthClick()
+      handleAuthClick()
     }
   }
 
@@ -73,7 +145,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
     if (isAuthenticated) {
       router.push("/cart")
     } else {
-      onAuthClick()
+      handleAuthClick()
     }
   }
 
@@ -84,7 +156,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
 
   const handleLogoutClick = async () => {
     setUserDropdownOpen(false)
-    await onLogout()
+    await handleLogout()
   }
 
   const getUserDisplayName = () => {
@@ -171,6 +243,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
   )
 
   return (
+    <>
     <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
       {/* Mount no-context-menu listener once via navbar (client component) */}
       <NoContextMenu />
@@ -194,7 +267,11 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
 
             {/* Logo */}
             <div className="flex items-center">
-              <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+                aria-label="Go to homepage"
+              >
                 <div className="relative">
                   <img
                     src="/logo.png"
@@ -206,7 +283,7 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
                     }}
                   />
                 </div>
-              </div>
+              </button>
             </div>
           </div>
 
@@ -398,6 +475,15 @@ const Navbar = ({ onAuthClick, isAuthenticated = false, user = null, onLogout })
         </div>
       )}
     </header>
+    {/* Internal Auth Modal - only shown when not using external auth */}
+    {!hasExternalAuth && internalAuthModalOpen && (
+      <AuthModal
+        isOpen={internalAuthModalOpen}
+        onClose={() => setInternalAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
+    )}
+  </>
   )
 }
 

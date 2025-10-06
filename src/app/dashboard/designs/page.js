@@ -392,6 +392,9 @@ const AdminDesignsContent = () => {
                   // Try to get primary image URL from multiple sources
                   let imageUrl = null
 
+                  // Use designId (custom ID) instead of _id for URL construction
+                  const designIdToUse = design.designId || design._id
+
                   // First, try the previewImageUrl (backward compatibility)
                   if (design.previewImageUrl) {
                     imageUrl = design.previewImageUrl
@@ -404,7 +407,7 @@ const AdminDesignsContent = () => {
                   // Fallback to previewImages array (direct from database)
                   else if (design.previewImages && design.previewImages.length > 0) {
                     const primaryImage = design.previewImages.find((img) => img.isPrimary) || design.previewImages[0]
-                    imageUrl = `/api/uploads/designs/${design._id}/preview/${primaryImage.filename}`
+                    imageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primaryImage.filename}`
                   }
 
                   return imageUrl ? (

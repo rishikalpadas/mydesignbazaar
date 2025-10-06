@@ -165,7 +165,7 @@ const Footer = () => {
                     <span>Email: info@mydesignbazaar.com</span>
                   </a>
                 </li>
-                <li className="group">
+                {/* <li className="group">
                   <a
                     href="tel:18001234567"
                     className="flex items-center gap-3 text-sm hover:text-white transition-colors duration-300"
@@ -175,7 +175,7 @@ const Footer = () => {
                     </div>
                     <span>Call or WhatsApp: +919831147445</span>
                   </a>
-                </li>
+                </li> */}
                 {/* <li className="group">
                   <a
                     href="https://wa.me/919876543210"

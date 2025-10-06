@@ -63,6 +63,30 @@ async function handler(request) {
       .limit(limit)
       .lean()
 
+    // Add image URLs explicitly
+    const designsWithUrls = designs.map(design => {
+      const designIdToUse = design.designId || design._id
+
+      // Handle multiple preview images
+      if (design.previewImages && design.previewImages.length > 0) {
+        design.previewImageUrls = design.previewImages.map(img => ({
+          ...img,
+          url: `/api/uploads/designs/${designIdToUse}/preview/${img.filename}`
+        }))
+        const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
+        design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primary.filename}`
+      } else if (design.previewImage) {
+        design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`
+        design.previewImageUrls = [{
+          ...design.previewImage,
+          url: `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`,
+          isPrimary: true
+        }]
+      }
+
+      return design
+    })
+
     // Calculate stats
     const stats = await Design.aggregate([
       {
@@ -95,7 +119,7 @@ async function handler(request) {
 
     return NextResponse.json({
       success: true,
-      designs,
+      designs: designsWithUrls,
       stats: designStats,
       pagination: {
         currentPage: page,

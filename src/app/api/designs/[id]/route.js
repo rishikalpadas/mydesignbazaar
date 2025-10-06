@@ -16,14 +16,15 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Design not found" }, { status: 404 })
     }
 
-    // Add image URLs
+    // Add image URLs - use designId (custom ID) instead of _id
+    const designIdToUse = design.designId || design._id
     if (design.previewImages && design.previewImages.length > 0) {
       design.previewImageUrls = design.previewImages.map((img) => ({
         ...img,
-        url: `/api/uploads/designs/${design._id}/preview/${img.filename}`,
+        url: `/api/uploads/designs/${designIdToUse}/preview/${img.filename}`,
       }))
       const primary = design.previewImages.find((img) => img.isPrimary) || design.previewImages[0]
-      design.previewImageUrl = `/api/uploads/designs/${design._id}/preview/${primary.filename}`
+      design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primary.filename}`
     }
 
     return NextResponse.json({

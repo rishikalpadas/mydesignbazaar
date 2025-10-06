@@ -9,20 +9,27 @@ async function handler() {
 
     const designs = await Design.find({ status: "pending" })
       .sort({ createdAt: -1 })
-      .select("_id title category createdAt previewImage uploadedBy")
+      .select("_id designId title category createdAt previewImage previewImages uploadedBy")
       .populate("uploadedBy", "email")
       .lean()
 
-    const result = designs.map((d) => ({
-      id: d._id,
-      title: d.title,
-      category: d.category,
-      createdAt: d.createdAt,
-      previewImageUrl: d.previewImage ? `/api/uploads/designs/${d._id}/preview/${d.previewImage.filename}` : null,
-      uploadedBy: {
-        email: d.uploadedBy?.email || "Unknown",
-      },
-    }))
+    const result = designs.map((d) => {
+      const designIdToUse = d.designId || d._id
+      return {
+        id: d._id,
+        title: d.title,
+        category: d.category,
+        createdAt: d.createdAt,
+        previewImageUrl: d.previewImage
+          ? `/api/uploads/designs/${designIdToUse}/preview/${d.previewImage.filename}`
+          : (d.previewImages && d.previewImages.length > 0)
+            ? `/api/uploads/designs/${designIdToUse}/preview/${d.previewImages[0].filename}`
+            : null,
+        uploadedBy: {
+          email: d.uploadedBy?.email || "Unknown",
+        },
+      }
+    })
 
     return NextResponse.json({ success: true, designs: result })
   } catch (error) {
