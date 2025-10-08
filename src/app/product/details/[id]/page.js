@@ -457,7 +457,7 @@ const ProductView = ({ productData, isLoading = false }) => {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
             <h3 className="text-xl font-semibold text-gray-900">Buyer Access Required</h3>
             <p className="text-gray-600">
-              You're not a buyer. Please login as a buyer or create a new buyer account to continue downloading designs.
+              You&apos;re not a buyer. Please login as a buyer or create a new buyer account to continue downloading designs.
             </p>
             <div className="flex space-x-3">
               <button
