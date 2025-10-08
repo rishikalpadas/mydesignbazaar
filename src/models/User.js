@@ -155,6 +155,16 @@ const buyerSchema = new mongoose.Schema({
   // Stats
   totalPurchases: { type: Number, default: 0 },
   totalSpent: { type: Number, default: 0 },
+
+  // Subscription Info (reference to current active subscription)
+  currentSubscription: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserSubscription',
+  },
+  subscriptionHistory: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserSubscription',
+  }],
 });
 
 // Create models

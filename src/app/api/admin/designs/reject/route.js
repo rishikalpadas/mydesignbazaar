@@ -12,16 +12,20 @@ async function handler(request) {
       return NextResponse.json({ error: "designId and reason are required" }, { status: 400 })
     }
 
-    const design = await Design.findById(designId)
+    const design = await Design.findByIdAndUpdate(
+      designId,
+      {
+        status: "rejected",
+        rejectionReason: reason,
+        approvalDate: null,
+        approvedBy: request.user._id
+      },
+      { new: true, runValidators: false }
+    )
+
     if (!design) {
       return NextResponse.json({ error: "Design not found" }, { status: 404 })
     }
-
-    design.status = "rejected"
-    design.rejectionReason = reason
-    design.approvalDate = undefined
-    design.approvedBy = request.user._id
-    await design.save()
 
     return NextResponse.json({
       success: true,

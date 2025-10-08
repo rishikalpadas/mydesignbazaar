@@ -26,6 +26,7 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const [internalAuthModalOpen, setInternalAuthModalOpen] = useState(false)
   const [internalIsAuthenticated, setInternalIsAuthenticated] = useState(false)
   const [internalUser, setInternalUser] = useState(null)
+  const [subscription, setSubscription] = useState(null)
   const router = useRouter()
 
   const mobileSearchRef = useRef(null)
@@ -46,6 +47,13 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     }
   }, [hasExternalAuth, authChecked])
 
+  // Fetch subscription status when user changes (for both internal and external auth)
+  useEffect(() => {
+    if (user?.userType === 'buyer') {
+      fetchSubscriptionStatus()
+    }
+  }, [user])
+
   const checkAuthStatus = async () => {
     try {
       const response = await fetch("/api/auth/me", {
@@ -55,6 +63,11 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
         const data = await response.json()
         setInternalIsAuthenticated(true)
         setInternalUser(data.user)
+
+        // If user is a buyer, fetch subscription status
+        if (data.user.userType === 'buyer') {
+          fetchSubscriptionStatus()
+        }
       } else {
         setInternalIsAuthenticated(false)
         setInternalUser(null)
@@ -65,6 +78,23 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       setInternalUser(null)
     } finally {
       setAuthChecked(true)
+    }
+  }
+
+  const fetchSubscriptionStatus = async () => {
+    try {
+      const response = await fetch("/api/subscription/status", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        console.log("Navbar - Subscription data fetched:", data)
+        setSubscription(data)
+      } else {
+        console.error("Failed to fetch subscription, status:", response.status)
+      }
+    } catch (error) {
+      console.error("Failed to fetch subscription:", error)
     }
   }
 
@@ -185,7 +215,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
 
   const titleToSlug = (title) => getSlugFromCategory(title)
 
-  const UserDropdown = () => (
+  const UserDropdown = () => {
+    console.log("Rendering UserDropdown - user.userType:", user?.userType, "subscription:", subscription)
+    return (
     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
       {/* User Info Header */}
       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
@@ -229,6 +261,38 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
         </button>
       </div>
 
+      {/* Credits Display (Buyers Only) */}
+      {user?.userType === 'buyer' && subscription && (
+        <div className="border-t border-gray-100 py-2">
+          {subscription.isValid ? (
+            <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-emerald-50 mx-2 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-green-700 font-medium">Available Credits</p>
+                  <p className="text-lg font-bold text-green-900">{subscription.subscription?.creditsRemaining || 0}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-green-600">{subscription.subscription?.planName}</p>
+                  <p className="text-xs text-green-700">{subscription.subscription?.daysRemaining} days left</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 mx-2 rounded-lg border border-orange-200">
+              <div className="text-center">
+                <p className="text-xs text-orange-700 font-medium mb-1">No Active Subscription</p>
+                <a
+                  href="/pricing"
+                  className="text-xs text-orange-600 hover:text-orange-700 font-semibold underline"
+                >
+                  View Plans →
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Logout */}
       <div className="border-t border-gray-100 pt-2">
         <button
@@ -240,7 +304,8 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
         </button>
       </div>
     </div>
-  )
+    )
+  }
 
   return (
     <>

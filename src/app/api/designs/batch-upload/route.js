@@ -7,6 +7,7 @@ import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 import { v4 as uuidv4 } from "uuid"
 import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
+import { batchWatermark } from "../../../../lib/watermark"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
@@ -258,7 +259,24 @@ export async function POST(request) {
             previewImagesData.push(previewImageData)
           }
           design.previewImages = previewImagesData
-          
+
+          // Generate watermarked versions of preview images
+          try {
+            const watermarkedDir = path.join(process.cwd(), "public", "uploads", "designs", customId, "preview", "watermarked")
+            await mkdir(watermarkedDir, { recursive: true })
+
+            const watermarkPairs = previewImagesData.map((img) => ({
+              input: path.join(process.cwd(), "public", "uploads", "designs", customId, "preview", img.filename),
+              output: path.join(watermarkedDir, img.filename),
+            }))
+
+            await batchWatermark(watermarkPairs)
+            console.log(`Generated ${watermarkPairs.length} watermarked previews for design ${customId}`)
+          } catch (watermarkError) {
+            console.error("Watermark generation error:", watermarkError)
+            // Continue without watermarks if generation fails
+          }
+
           // For backward compatibility, set the first preview as the main previewImage
           if (previewImagesData.length > 0) {
             design.previewImage = previewImagesData[0]

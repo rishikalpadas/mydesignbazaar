@@ -9,22 +9,38 @@ async function handler() {
 
     const designs = await Design.find({ status: "pending" })
       .sort({ createdAt: -1 })
-      .select("_id designId title category createdAt previewImage previewImages uploadedBy")
+      .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy")
       .populate("uploadedBy", "email")
       .lean()
 
     const result = designs.map((d) => {
       const designIdToUse = d.designId || d._id
+
+      // Map preview images
+      const previewImageUrls = (d.previewImages || []).map((preview, idx) => ({
+        url: `/api/uploads/designs/${designIdToUse}/preview/${preview.filename}`,
+        originalName: preview.originalName || preview.filename,
+        isPrimary: preview.isPrimary || idx === 0,
+      }))
+
+      // Map raw files
+      const rawFileUrls = (d.rawFiles || (d.rawFile ? [d.rawFile] : [])).map((raw) => ({
+        url: `/api/uploads/designs/${designIdToUse}/raw/${raw.filename}`,
+        originalName: raw.originalName || raw.filename,
+        size: raw.size,
+        fileType: raw.fileType,
+      }))
+
       return {
         id: d._id,
+        designId: designIdToUse,
         title: d.title,
         category: d.category,
         createdAt: d.createdAt,
-        previewImageUrl: d.previewImage
-          ? `/api/uploads/designs/${designIdToUse}/preview/${d.previewImage.filename}`
-          : (d.previewImages && d.previewImages.length > 0)
-            ? `/api/uploads/designs/${designIdToUse}/preview/${d.previewImages[0].filename}`
-            : null,
+        previewImageUrl: previewImageUrls[0]?.url || null,
+        previewImageUrls,
+        rawFileUrls,
+        rawFileUrl: rawFileUrls[0]?.url || null,
         uploadedBy: {
           email: d.uploadedBy?.email || "Unknown",
         },

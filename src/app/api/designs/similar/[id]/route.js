@@ -6,7 +6,7 @@ export async function GET(request, { params }) {
   try {
     await connectDB()
 
-    const { id } = params
+    const { id } = await params
 
     // Get the current design to extract its tags and category
     const currentDesign = await Design.findById(id).lean()

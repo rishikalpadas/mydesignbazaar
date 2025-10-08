@@ -3,29 +3,32 @@ const nextConfig = {
   images: {
     // Allow images from any domain for production flexibility
     remotePatterns: [
-      // Local development
+      // Local development - localhost
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/uploads/**',
+      },
+      // Local development - allow all local network IP addresses
+      {
+        protocol: 'http',
+        hostname: '**.168.**',
       },
       {
         protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/uploads/**',
-      },
-      // Production domain - adjust hostname as needed
-      {
-        protocol: 'https',
-        hostname: '**', // Allow all domains for production
-        pathname: '/api/uploads/**',
+        hostname: '10.**',
       },
       {
+        protocol: 'http',
+        hostname: '172.**',
+      },
+      // Production domain - allow all domains
+      {
         protocol: 'https',
-        hostname: '**', // Allow all domains for production
-        pathname: '/uploads/**',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: '**',
       },
     ],
     // Disable image optimization for static uploads in production

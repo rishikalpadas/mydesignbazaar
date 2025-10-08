@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Heart, Share2, Eye, Download, Calendar, User, Tag, ShoppingCart, Star, Brush } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
@@ -88,12 +88,70 @@ const ProductView = ({ productData, isLoading = false }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
+  const [showNonBuyerPopup, setShowNonBuyerPopup] = useState(false);
+  const [showNoSubscriptionPopup, setShowNoSubscriptionPopup] = useState(false);
+  const [user, setUser] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  // Generate watermark URL
+  const watermarkUrl = useMemo(() => {
+    const istStamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+    const text = `mydesignbazaar — ${istStamp}`;
+    const svg = `
+      <svg xmlns='http://www.w3.org/2000/svg' width='280' height='180'>
+        <style>
+          text {
+            font: 600 16px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            fill: rgba(255,255,255,0.22);
+            stroke: rgba(0,0,0,0.18);
+            stroke-width: 1;
+            paint-order: stroke;
+          }
+        </style>
+        <g transform='rotate(-30 140 90)'>
+          <text x='20' y='40'>${text}</text>
+          <text x='20' y='100'>${text}</text>
+          <text x='20' y='160'>${text}</text>
+        </g>
+      </svg>
+    `.trim();
+    return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`;
+  }, []);
 
   // Set base URL client-side to avoid SSR issues
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setBaseUrl(`${window.location.protocol}//${window.location.host}`);
     }
+  }, []);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get('/api/auth/me', {
+          withCredentials: true,
+        });
+        setUser(response.data.user);
+
+        // If user is a buyer, fetch subscription status
+        if (response.data.user.userType === 'buyer') {
+          try {
+            const subResponse = await axios.get('/api/subscription/status', {
+              withCredentials: true,
+            });
+            setSubscription(subResponse.data);
+          } catch (error) {
+            console.log('Failed to fetch subscription:', error);
+          }
+        }
+      } catch (error) {
+        // User is not logged in or token is invalid
+        console.log('User not authenticated');
+      }
+    };
+    fetchUser();
   }, []);
 
 
@@ -117,7 +175,72 @@ const ProductView = ({ productData, isLoading = false }) => {
   // Normalize URL to avoid double slashes
   const normalizeUrl = (path) => {
     if (!path) return '/placeholder.jpg';
-    return `${baseUrl}/${path.startsWith('/') ? path : `/${path}`}`.replace(/([^:]\/)\/+/g, '$1');
+    // If path already starts with /api/ or http, return as-is
+    if (path.startsWith('/api/') || path.startsWith('http')) {
+      return path;
+    }
+    return `${baseUrl}/${path.startsWith('/') ? path.substring(1) : path}`;
+  };
+
+  // Handle download button click
+  const handleDownloadClick = async (e) => {
+    e.preventDefault();
+
+    // Check if user is logged in and is a buyer
+    if (!user || user.userType !== 'buyer') {
+      setShowNonBuyerPopup(true);
+      return;
+    }
+
+    // Check if user has an active subscription
+    if (!subscription?.isValid) {
+      setShowNoSubscriptionPopup(true);
+      return;
+    }
+
+    // Initiate download with credit deduction
+    setIsDownloading(true);
+    try {
+      const response = await axios.post(
+        `/api/designs/download/${product._id}`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        // Update local subscription state
+        setSubscription(prev => ({
+          ...prev,
+          subscription: {
+            ...prev.subscription,
+            creditsRemaining: response.data.creditsRemaining
+          }
+        }));
+
+        // Trigger file download
+        const downloadUrl = response.data.downloadUrl;
+        const fileName = response.data.fileName;
+
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Show success message
+        alert(`Download started! Credits remaining: ${response.data.creditsRemaining}`);
+      }
+    } catch (error) {
+      console.error('Download error:', error);
+      if (error.response?.data?.requiresSubscription) {
+        setShowNoSubscriptionPopup(true);
+      } else {
+        alert(error.response?.data?.error || 'Download failed. Please try again.');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -127,17 +250,30 @@ const ProductView = ({ productData, isLoading = false }) => {
           {/* Image Section */}
           <div className="space-y-4">
             {/* Main Image */}
-            <div className="relative bg-gray-50 rounded-lg overflow-hidden border">
+            <div className="relative bg-gray-50 rounded-lg overflow-hidden border select-none" onContextMenu={(e) => e.preventDefault()}>
               <Image
                 src={normalizeUrl(product?.previewImageUrls?.[selectedImageIndex]?.url)}
                 alt={product?.title || 'Product Image'}
-                className="w-full h-96 object-contain"
+                className="w-full h-96 object-contain select-none"
                 priority
                 width={800}
                 height={600}
+                draggable={false}
+              />
+              {/* Watermark Overlay */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  backgroundImage: watermarkUrl,
+                  backgroundRepeat: "repeat",
+                  backgroundSize: "280px 180px",
+                  mixBlendMode: "multiply",
+                  opacity: 1,
+                }}
               />
               {product?.featured && (
-                <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium z-20">
                   Featured
                 </div>
               )}
@@ -231,16 +367,43 @@ const ProductView = ({ productData, isLoading = false }) => {
               </div>
             )}
 
+            {/* Subscription Info Banner */}
+            {user?.userType === 'buyer' && subscription?.isValid && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="font-semibold text-green-900">{subscription.subscription?.planName} Plan Active</span>
+                    </div>
+                    <div className="flex items-center space-x-4 mt-1 text-sm text-green-700">
+                      <span>{subscription.subscription?.creditsRemaining} credits left</span>
+                      <span>•</span>
+                      <span>{subscription.subscription?.daysRemaining} days remaining</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-green-900">{subscription.subscription?.creditsRemaining}</div>
+                    <div className="text-xs text-green-600">downloads</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-3">
-              <a
-                href={normalizeUrl(product?.rawFileUrls?.[0]?.url) || '#'}
-                download={product?.rawFileUrls?.[0]?.originalName || 'design.pdf'}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2"
+              <button
+                onClick={handleDownloadClick}
+                disabled={isDownloading}
+                className={`w-full font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                  isDownloading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
               >
-                <Download className="w-5 h-5" />
-                <span>Download Design</span>
-              </a>
+                <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
+                <span>{isDownloading ? 'Processing...' : 'Download Design (1 Credit)'}</span>
+              </button>
               <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
                 <ShoppingCart className="w-5 h-5" />
                 <span>Add to Cart</span>
@@ -276,7 +439,7 @@ const ProductView = ({ productData, isLoading = false }) => {
                 <Calendar className="w-4 h-4" />
                 <span>Uploaded: {formatDate(product?.uploadDate)}</span>
               </div>
-              
+
               {/* {product?.approvalDate && (
                 <div className="flex items-center space-x-2">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
@@ -287,6 +450,84 @@ const ProductView = ({ productData, isLoading = false }) => {
           </div>
         </div>
       </div>
+
+      {/* Non-Buyer Popup */}
+      {showNonBuyerPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-semibold text-gray-900">Buyer Access Required</h3>
+            <p className="text-gray-600">
+              You're not a buyer. Please login as a buyer or create a new buyer account to continue downloading designs.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowNonBuyerPopup(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <a
+                href="/login?type=buyer"
+                className="flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-center"
+              >
+                Login / Sign Up
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* No Subscription Popup */}
+      {showNoSubscriptionPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6 space-y-4">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 mb-4">
+                <Download className="w-8 h-8 text-orange-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Subscription Required</h3>
+              <p className="text-gray-600 mb-6">
+                {subscription?.hasSubscription
+                  ? 'Your subscription has expired or you have no credits remaining. Please renew your plan to continue downloading.'
+                  : 'You need an active subscription to download designs. Choose a plan that fits your needs!'}
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-4 space-y-2">
+              <h4 className="font-semibold text-gray-900 text-sm">Available Plans:</h4>
+              <div className="space-y-1 text-sm text-gray-700">
+                <div className="flex justify-between">
+                  <span>Basic - 10 credits</span>
+                  <span className="font-semibold">₹600/month</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Premium - 100 credits</span>
+                  <span className="font-semibold">₹5,000/month</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Elite - 1200 credits</span>
+                  <span className="font-semibold">₹50,000/month</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowNoSubscriptionPopup(false)}
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <a
+                href="/pricing"
+                className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors text-center font-medium"
+              >
+                View Plans
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
