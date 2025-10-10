@@ -41,7 +41,7 @@ export async function sendEmailOTP(email, otp, userName = 'User') {
 
   try {
     // Create transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER, // Your Gmail
@@ -94,7 +94,7 @@ export async function sendEmailOTP(email, otp, userName = 'User') {
         </body>
         </html>
       `,
-    });
+    };
 
     // Send email
     await transporter.sendMail(mailOptions);
