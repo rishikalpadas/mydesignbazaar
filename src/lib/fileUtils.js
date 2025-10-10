@@ -44,7 +44,6 @@ export const isValidImageType = (mimetype) => {
 
 export const isValidRawFileType = (mimetype, filename) => {
   const rawTypes = {
-    'application/x-photoshop': 'psd',
     'application/pdf': 'pdf',
     'application/postscript': 'ai',
     'application/illustrator': 'ai',
@@ -52,12 +51,12 @@ export const isValidRawFileType = (mimetype, filename) => {
     'application/x-coreldraw': 'cdr',
     'application/eps': 'eps'
   }
-  
+
   if (rawTypes[mimetype]) return rawTypes[mimetype]
-  
+
   // Fallback to extension check
   const extension = getFileExtension(filename)
-  const validExtensions = ['psd', 'pdf', 'ai', 'cdr', 'eps', 'svg']
-  
+  const validExtensions = ['pdf', 'ai', 'cdr', 'eps', 'svg']
+
   return validExtensions.includes(extension) ? extension : null
 }

@@ -20,6 +20,9 @@ import {
   AlertCircle,
   User,
   Shield,
+  Globe,
+  Monitor,
+  X,
 } from "lucide-react"
 import Image from "next/image"
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
@@ -51,6 +54,8 @@ const AdminDesignsContent = () => {
   const [showFilters, setShowFilters] = useState(false)
   const [selectedDesign, setSelectedDesign] = useState(null)
   const [showActions, setShowActions] = useState(null)
+  const [showTrackingModal, setShowTrackingModal] = useState(false)
+  const [trackingDesign, setTrackingDesign] = useState(null)
 
   const fetchDesigns = useCallback(async () => {
     try {
@@ -236,6 +241,11 @@ const AdminDesignsContent = () => {
   const handleViewOnStore = (design) => {
     // Open design on public store
     window.open(`/design/${design._id}`, "_blank")
+  }
+
+  const handleViewTracking = (design) => {
+    setTrackingDesign(design)
+    setShowTrackingModal(true)
   }
 
   const handleDeleteDesign = async (design) => {
@@ -523,6 +533,16 @@ const AdminDesignsContent = () => {
                             View on Store
                           </button>
                         )}
+                        <button
+                          onClick={() => {
+                            handleViewTracking(design)
+                            setShowActions(null)
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-purple-600 hover:bg-purple-50 flex items-center cursor-pointer"
+                        >
+                          <Shield className="w-4 h-4 mr-3" />
+                          View Tracking Info
+                        </button>
                         <hr className="my-2" />
                         <button
                           onClick={() => handleDeleteDesign(design)}
@@ -654,6 +674,176 @@ const AdminDesignsContent = () => {
                 className="px-4 py-2 border border-orange-200 text-gray-700 rounded-xl hover:bg-orange-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Tracking Modal */}
+      {showTrackingModal && trackingDesign && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-8 max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-4 rounded-t-xl flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold flex items-center">
+                    <Shield className="w-6 h-6 mr-2" />
+                    Upload Tracking Information
+                  </h3>
+                  <p className="text-purple-100 text-sm mt-1">{trackingDesign.title}</p>
+                </div>
+                <button
+                  onClick={() => setShowTrackingModal(false)}
+                  className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">
+              {trackingDesign.uploadMetadata ? (
+                <div className="space-y-4">
+                  {/* Design Basic Info */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-gray-900 mb-3">Design Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Design ID:</span>
+                        <span className="font-mono font-medium text-gray-900">{trackingDesign.designId}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Designer:</span>
+                        <span className="font-medium text-gray-900">{trackingDesign.uploadedBy?.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          trackingDesign.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          trackingDesign.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {trackingDesign.status}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Uploaded:</span>
+                        <span className="font-medium text-gray-900">
+                          {new Date(trackingDesign.createdAt).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* IP Address */}
+                  {trackingDesign.uploadMetadata.ipAddress && (
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <Globe className="w-5 h-5 mr-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 mb-2">IP Address</h4>
+                          <p className="font-mono text-lg font-medium text-gray-900 break-all">
+                            {trackingDesign.uploadMetadata.ipAddress}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            Logged at upload time for copyright verification
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Device Information */}
+                  {trackingDesign.uploadMetadata.deviceInfo && (
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                      <div className="flex items-start">
+                        <Monitor className="w-5 h-5 mr-3 text-purple-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 mb-3">Device Information</h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            {trackingDesign.uploadMetadata.deviceInfo.browser && (
+                              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                <span className="text-gray-500 block mb-1">Browser</span>
+                                <span className="font-medium text-gray-900">
+                                  {trackingDesign.uploadMetadata.deviceInfo.browser}
+                                </span>
+                              </div>
+                            )}
+                            {trackingDesign.uploadMetadata.deviceInfo.os && (
+                              <div className="bg-white rounded-lg p-3 border border-purple-200">
+                                <span className="text-gray-500 block mb-1">Operating System</span>
+                                <span className="font-medium text-gray-900">
+                                  {trackingDesign.uploadMetadata.deviceInfo.os}
+                                </span>
+                              </div>
+                            )}
+                            {trackingDesign.uploadMetadata.deviceInfo.platform && (
+                              <div className="bg-white rounded-lg p-3 border border-purple-200 col-span-2">
+                                <span className="text-gray-500 block mb-1">Platform</span>
+                                <span className="font-medium text-gray-900">
+                                  {trackingDesign.uploadMetadata.deviceInfo.platform}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* User Agent (collapsible) */}
+                  {trackingDesign.uploadMetadata.userAgent && (
+                    <details className="bg-gray-50 border border-gray-200 rounded-lg">
+                      <summary className="cursor-pointer p-4 text-gray-700 hover:text-gray-900 font-medium flex items-center">
+                        <AlertCircle className="w-4 h-4 mr-2" />
+                        Full User Agent String (Click to expand)
+                      </summary>
+                      <div className="px-4 pb-4">
+                        <div className="bg-white rounded p-3 border border-gray-200">
+                          <p className="font-mono text-xs text-gray-700 break-all leading-relaxed">
+                            {trackingDesign.uploadMetadata.userAgent}
+                          </p>
+                        </div>
+                      </div>
+                    </details>
+                  )}
+
+                  {/* Footer Note */}
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm text-yellow-800">
+                        <p className="font-medium mb-1">Copyright Management</p>
+                        <p className="text-yellow-700">
+                          This tracking information is logged automatically during upload for copyright verification
+                          and dispute resolution purposes. MAC addresses cannot be obtained from web browsers for
+                          security and privacy reasons.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">No Tracking Data Available</h4>
+                  <p className="text-gray-600 text-sm">
+                    This design was uploaded before tracking was implemented, or tracking data is missing.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl flex justify-end flex-shrink-0">
+              <button
+                onClick={() => setShowTrackingModal(false)}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>

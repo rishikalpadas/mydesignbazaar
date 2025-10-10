@@ -286,11 +286,11 @@ const UploadContent = () => {
     }
 
     // Validate file type
-    const allowedExtensions = ['psd', 'pdf', 'ai', 'cdr', 'eps', 'svg']
+    const allowedExtensions = ['pdf', 'ai', 'cdr', 'eps', 'svg']
     const extension = file.name.split('.').pop().toLowerCase()
-    
+
     if (!allowedExtensions.includes(extension)) {
-      const error = 'Unsupported file format. Please use PSD, PDF, AI, CDR, EPS, or SVG'
+      const error = 'Unsupported file format. Please use PDF, AI, CDR, EPS, or SVG'
       setDesigns(prev => 
         prev.map((design, i) => 
           i === designIndex 
@@ -440,7 +440,6 @@ const UploadContent = () => {
     const iconClass = "w-4 h-4"
     
     switch(ext) {
-      case 'psd': return <Palette className={`${iconClass} text-blue-600`} />
       case 'pdf': return <FileText className={`${iconClass} text-red-600`} />
       case 'ai': return <Palette className={`${iconClass} text-orange-600`} />
       case 'cdr': return <Palette className={`${iconClass} text-green-600`} />
@@ -951,7 +950,7 @@ const DesignForm = ({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-4">
             <FileText className="w-4 h-4 inline mr-1" />
-            Raw File * (PSD, PDF, AI, CDR, EPS, SVG - Max 50MB)
+            Raw File * (PDF, AI, CDR, EPS, SVG - Max 50MB)
           </label>
           
           <div className="border-2 border-dashed border-orange-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-gradient-to-br from-orange-50 to-amber-50">
@@ -979,7 +978,7 @@ const DesignForm = ({
                 <p className="text-sm text-gray-500 mb-4">Source files for your design</p>
                 <input
                   type="file"
-                  accept=".psd,.pdf,.ai,.cdr,.eps,.svg"
+                  accept=".pdf,.ai,.cdr,.eps,.svg"
                   onChange={(e) => onRawFileChange(designIndex, e.target.files[0])}
                   className="hidden"
                   id={`raw-${designIndex}`}

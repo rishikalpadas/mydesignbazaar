@@ -59,7 +59,7 @@ const designSchema = new mongoose.Schema(
       mimetype: String,
       fileType: {
         type: String,
-        enum: ["psd", "pdf", "cdr", "ai", "eps", "svg"],
+        enum: ["pdf", "cdr", "ai", "eps", "svg"],
       },
     },
     // Keep the old rawFiles field for backward compatibility
@@ -72,7 +72,7 @@ const designSchema = new mongoose.Schema(
         mimetype: String,
         fileType: {
           type: String,
-          enum: ["psd", "pdf", "cdr", "ai", "eps", "svg"],
+          enum: ["pdf", "cdr", "ai", "eps", "svg"],
         },
       },
     ],
@@ -112,6 +112,24 @@ const designSchema = new mongoose.Schema(
     approvedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    // Upload tracking for copyright management
+    uploadMetadata: {
+      ipAddress: {
+        type: String,
+        trim: true,
+      },
+      userAgent: {
+        type: String,
+        trim: true,
+      },
+      deviceInfo: {
+        browser: String,
+        os: String,
+        platform: String,
+      },
+      // Note: MAC address cannot be reliably obtained from web browsers for security/privacy reasons
+      // We track IP, User Agent, and other device fingerprints instead
     },
   },
   {

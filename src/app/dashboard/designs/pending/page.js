@@ -18,6 +18,8 @@ import {
   FileCheck,
   Image as ImageIcon,
   Expand,
+  Globe,
+  Monitor,
 } from "lucide-react"
 import Image from "next/image"
 import DashboardPageWrapper from '../../../../components/dashboard/DashboardPageWrapper'
@@ -544,40 +546,53 @@ const PendingDesignsContent = () => {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => approveDesign(design.id)}
+                        disabled={approving[design.id]}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                      >
+                        {approving[design.id] ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                            Approving...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Approve
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => handleReject(design.id)}
+                        disabled={rejecting[design.id]}
+                        className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                      >
+                        {rejecting[design.id] ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                            Rejecting...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-4 h-4 mr-1" />
+                            Reject
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <button
-                      onClick={() => approveDesign(design.id)}
-                      disabled={approving[design.id]}
-                      className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                      onClick={() => {
+                        setVerifyingDesign(design)
+                        setShowVerifyModal(true)
+                        setCurrentPreviewIndex(0)
+                      }}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center cursor-pointer"
                     >
-                      {approving[design.id] ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                          Approving...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4 mr-1" />
-                          Approve
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleReject(design.id)}
-                      disabled={rejecting[design.id]}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
-                    >
-                      {rejecting[design.id] ? (
-                        <>
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
-                          Rejecting...
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-4 h-4 mr-1" />
-                          Reject
-                        </>
-                      )}
+                      <Shield className="w-4 h-4 mr-1" />
+                      View Tracking Info
                     </button>
                   </div>
                 </div>
@@ -858,6 +873,90 @@ const PendingDesignsContent = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Upload Tracking Info - Copyright Management */}
+                  {verifyingDesign.uploadMetadata && (
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                        <Shield className="w-5 h-5 mr-2 text-purple-600" />
+                        Upload Tracking (Copyright Management)
+                      </h4>
+                      <div className="space-y-3 text-sm">
+                        {/* IP Address */}
+                        {verifyingDesign.uploadMetadata.ipAddress && (
+                          <div className="bg-white rounded-lg p-3 border border-purple-200">
+                            <div className="flex items-start">
+                              <Globe className="w-4 h-4 mr-2 text-purple-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-gray-600 mb-1">IP Address</p>
+                                <p className="font-mono font-medium text-gray-900 break-all">
+                                  {verifyingDesign.uploadMetadata.ipAddress}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Device Information */}
+                        {verifyingDesign.uploadMetadata.deviceInfo && (
+                          <div className="bg-white rounded-lg p-3 border border-purple-200">
+                            <div className="flex items-start">
+                              <Monitor className="w-4 h-4 mr-2 text-purple-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <p className="text-gray-600 mb-2">Device Information</p>
+                                <div className="space-y-1">
+                                  {verifyingDesign.uploadMetadata.deviceInfo.browser && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Browser:</span>
+                                      <span className="font-medium text-gray-900">
+                                        {verifyingDesign.uploadMetadata.deviceInfo.browser}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {verifyingDesign.uploadMetadata.deviceInfo.os && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">OS:</span>
+                                      <span className="font-medium text-gray-900">
+                                        {verifyingDesign.uploadMetadata.deviceInfo.os}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {verifyingDesign.uploadMetadata.deviceInfo.platform && (
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Platform:</span>
+                                      <span className="font-medium text-gray-900">
+                                        {verifyingDesign.uploadMetadata.deviceInfo.platform}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* User Agent (collapsed by default) */}
+                        {verifyingDesign.uploadMetadata.userAgent && (
+                          <details className="bg-white rounded-lg border border-purple-200">
+                            <summary className="cursor-pointer p-3 text-gray-600 hover:text-gray-900 font-medium">
+                              Full User Agent (Click to expand)
+                            </summary>
+                            <div className="px-3 pb-3">
+                              <p className="font-mono text-xs text-gray-700 break-all leading-relaxed">
+                                {verifyingDesign.uploadMetadata.userAgent}
+                              </p>
+                            </div>
+                          </details>
+                        )}
+
+                        <div className="mt-3 pt-3 border-t border-purple-200">
+                          <p className="text-xs text-gray-500 italic">
+                            This information is logged for copyright verification and dispute resolution purposes.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

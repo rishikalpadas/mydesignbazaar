@@ -35,11 +35,11 @@ export default function MonetizationTermsPage() {
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div className="space-y-2">
-                <div className="text-3xl font-bold text-blue-600">45%</div>
+                <div className="text-3xl font-bold text-blue-600">50%</div>
                 <div className="text-gray-600">Designer Revenue</div>
               </div>
               <div className="space-y-2">
-                <div className="text-3xl font-bold text-purple-600">₹2,000</div>
+                <div className="text-3xl font-bold text-purple-600">₹1,000</div>
                 <div className="text-gray-600">Min. Payout</div>
               </div>
               <div className="space-y-2">
@@ -99,7 +99,7 @@ export default function MonetizationTermsPage() {
                   <div className="space-y-4">
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <span className="text-gray-700"><strong className="text-green-600">Vector formats:</strong> AI, EPS, SVG, CDR, PSD</span>
+                      <span className="text-gray-700"><strong className="text-green-600">Vector formats:</strong> AI, EPS, SVG, CDR</span>
                     </div>
                     <div className="flex items-start space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
@@ -153,11 +153,11 @@ export default function MonetizationTermsPage() {
                 </div>
                 <div className="space-y-4">
                   <div className="bg-white/15 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-orange-300 mb-1">45%</div>
+                    <div className="text-3xl font-bold text-orange-300 mb-1">50%</div>
                     <div className="text-sm opacity-80">Designer Share</div>
                   </div>
                   <div className="bg-white/15 rounded-lg p-4 text-center">
-                    <div className="text-3xl font-bold text-blue-300 mb-1">55%</div>
+                    <div className="text-3xl font-bold text-blue-300 mb-1">50%</div>
                     <div className="text-sm opacity-80">Platform Fee</div>
                   </div>
                   <p className="text-sm opacity-90 text-center">Platform handles marketing, hosting, customer acquisition, and payment processing</p>
@@ -204,7 +204,7 @@ export default function MonetizationTermsPage() {
                 </div>
                 <div className="space-y-4">
                   <div className="bg-white/15 rounded-lg p-4 text-center">
-                    <div className="text-2xl font-bold text-yellow-300 mb-1">₹2,000</div>
+                    <div className="text-2xl font-bold text-yellow-300 mb-1">₹1,000</div>
                     <div className="text-xs opacity-80">Minimum Payout Threshold</div>
                   </div>
                   <div className="space-y-2 text-sm">
@@ -477,8 +477,8 @@ export default function MonetizationTermsPage() {
                   <h3 className="text-xl font-bold">Revenue Structure</h3>
                 </div>
                 <div className="space-y-3 text-sm">
-                  <p>• 45% designer revenue per sale</p>
-                  <p>• Monthly payouts with ₹2,000 minimum</p>
+                  <p>• 50% designer revenue per sale</p>
+                  <p>• Monthly payouts with ₹1,000 minimum</p>
                   <p>• Platform handles pricing strategy</p>
                   <p>• Exclusive designs may have different rates</p>
                 </div>
@@ -494,7 +494,7 @@ export default function MonetizationTermsPage() {
                 <div className="space-y-3 text-sm">
                   <p>• Minimum 10 designs to start</p>
                   <p>• 100 designs for full monetization</p>
-                  <p>• Vector files only (AI/EPS/SVG/CDR/PSD)</p>
+                  <p>• Vector files only (AI/EPS/SVG/CDR)</p>
                   <p>• 3-7 day manual review process</p>
                 </div>
               </div>
@@ -689,8 +689,8 @@ export default function MonetizationTermsPage() {
                   📧
                 </div>
                 <h3 className="font-bold text-gray-800 mb-2">Email Support</h3>
-                <a href="mailto:mydesignbazaarindia@gmail.com" className="text-blue-600 hover:text-blue-700 font-medium block mb-2">
-                  mydesignbazaarindia@gmail.com
+                <a href="mailto:info@mydesignbazaar.com" className="text-blue-600 hover:text-blue-700 font-medium block mb-2">
+                  info@mydesignbazaar.com
                 </a>
                 <p className="text-xs text-gray-600">For design review queries and technical support</p>
               </div>
@@ -711,7 +711,7 @@ export default function MonetizationTermsPage() {
                   📱
                 </div>
                 <h3 className="font-bold text-gray-800 mb-2">Toll-Free Support</h3>
-                <div className="text-orange-600 font-medium mb-2">1800-33-4445</div>
+                <div className="text-orange-600 font-medium mb-2">Coming Soon...</div>
                 <p className="text-xs text-gray-600">Phone support for urgent monetization queries</p>
               </div>
             </div>

@@ -75,7 +75,7 @@ export default function RefundPolicyPage() {
                   <div className="text-center">
                     <div className="text-3xl mb-3">🎨</div>
                     <h4 className="font-semibold text-gray-800 mb-2">File Formats</h4>
-                    <p className="text-sm text-gray-600">CDR, EPS, PSD, AI, PNG, SVG</p>
+                    <p className="text-sm text-gray-600">CDR, EPS, AI, PNG, SVG, PDF</p>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl mb-3">⚡</div>

@@ -58,6 +58,15 @@ export async function GET(request) {
           totalSpent: buyer.totalSpent || 0,
           isVerified: user?.isVerified || false,
           createdAt: user?.createdAt,
+
+          // Complete profile information
+          address: buyer.address || {},
+          paymentMethods: buyer.paymentMethods || [],
+          billingCurrency: buyer.billingCurrency || 'INR',
+          interestedCategories: buyer.interestedCategories || [],
+          purchaseFrequency: buyer.purchaseFrequency || '',
+          agreements: buyer.agreements || {},
+
           subscription: activeSubscription ? {
             id: activeSubscription._id,
             planId: activeSubscription.planId,

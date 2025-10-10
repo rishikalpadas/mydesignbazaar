@@ -59,7 +59,7 @@ export default function PricingPage() {
       idealFor: "Small-to-medium garment manufacturers & exporters",
       features: [
         "100 premium design downloads per month",
-        "45 days validity",
+        "90 days validity",
         "Commercial usage rights included",
         "Access to AI-generated Beta designs (₹299/design)",
         "Priority email & WhatsApp support",
@@ -83,10 +83,10 @@ export default function PricingPage() {
       idealFor: "Larger production units, online brands, and fashion aggregators",
       features: [
         "1200 premium design downloads per month",
+        "365 days validity",
         "Full access to AI-generated Beta designs (up to 10/month free)",
         "15% off on Exclusive Designer Uploads",
         "Direct design request once/month (customizable by selected designers)",
-        "90 days validity",
         "Dedicated account manager",
         "Priority access to new launches"
       ],
@@ -205,7 +205,7 @@ export default function PricingPage() {
                       </div>
                       <div className="flex items-center justify-center mb-6">
                         <span className="text-4xl font-bold text-gray-900">₹{plan.price.toLocaleString()}</span>
-                        <span className="text-gray-600 ml-2">/{plan.period}</span>
+                        {/* <span className="text-gray-600 ml-2">/{plan.period}</span> */}
                       </div>
                     </div>
 

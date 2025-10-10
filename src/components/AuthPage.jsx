@@ -937,6 +937,17 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState({})
+
+  // OTP Verification States
+  const [emailOtp, setEmailOtp] = useState('')
+  const [mobileOtp, setMobileOtp] = useState('')
+  const [emailVerified, setEmailVerified] = useState(false)
+  const [mobileVerified, setMobileVerified] = useState(false)
+  const [sendingEmailOtp, setSendingEmailOtp] = useState(false)
+  const [sendingMobileOtp, setSendingMobileOtp] = useState(false)
+  const [verifyingEmailOtp, setVerifyingEmailOtp] = useState(false)
+  const [verifyingMobileOtp, setVerifyingMobileOtp] = useState(false)
+  const [userId, setUserId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")

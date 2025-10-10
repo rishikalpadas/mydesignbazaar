@@ -8,6 +8,7 @@ import path from "path"
 import { v4 as uuidv4 } from "uuid"
 import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
 import { batchWatermark } from "../../../../lib/watermark"
+import { captureUploadMetadata } from "../../../../lib/deviceTracking"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
@@ -18,7 +19,6 @@ const MAX_PREVIEW_IMAGES_PER_DESIGN = 5
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const RAW_TYPES = {
-  "application/x-photoshop": "psd",
   "application/pdf": "pdf",
   "application/postscript": "ai",
   "application/illustrator": "ai",
@@ -46,7 +46,6 @@ function getRawFileType(mimetype, filename) {
   // Fallback to extension-based detection
   const ext = getFileExtension(filename)
   const extensionMap = {
-    psd: "psd",
     pdf: "pdf",
     ai: "ai",
     eps: "eps",
@@ -140,6 +139,9 @@ export async function POST(request) {
 
     const uploadedDesigns = []
     const errors = []
+
+    // Capture upload metadata for copyright tracking (same for all designs in this batch)
+    const uploadMetadata = captureUploadMetadata(request)
 
     // Process each design
     for (let i = 0; i < designCount; i++) {
@@ -244,6 +246,7 @@ export async function POST(request) {
           tags: tags.slice(0, 10), // Limit to 10 tags
           uploadedBy: user._id,
           status: "pending",
+          uploadMetadata,
         })
 
         await design.save()

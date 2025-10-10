@@ -178,7 +178,7 @@ export default function AboutPage() {
                   📥
                 </div>
                 <h3 className="text-xl font-bold text-gray-800 mb-3">Multiple Formats</h3>
-                <p className="text-gray-600 leading-relaxed">Downloadable in PSD, CDR, AI, SVG, PNG & EPS formats.</p>
+                <p className="text-gray-600 leading-relaxed">Downloadable in CDR, AI, SVG, PNG, EPS & PDF formats.</p>
               </div>
 
               <div className="group bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-2">

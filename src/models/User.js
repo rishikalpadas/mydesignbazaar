@@ -25,6 +25,23 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false, // For designers, needs admin approval
   },
+  // OTP Verification
+  emailOtp: {
+    code: String,
+    expiresAt: Date,
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  mobileOtp: {
+    code: String,
+    expiresAt: Date,
+    verified: {
+      type: Boolean,
+      default: false,
+    },
+  },
   createdAt: {
     type: Date,
     default: Date.now,
