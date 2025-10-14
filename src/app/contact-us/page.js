@@ -58,7 +58,7 @@ export default function ContactUsPage() {
                 Contact Us
               </h1>
               <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-3xl mx-auto leading-relaxed">
-                We're Here to Help You Create, Collaborate, and Conquer the Fashion World.
+                We&apos;re Here to Help You Create, Collaborate, and Conquer the Fashion World.
               </p>
               <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
@@ -74,7 +74,7 @@ export default function ContactUsPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-800 mb-6">Get in Touch</h2>
               <p className="text-xl text-gray-600 leading-relaxed">
-                At My Design Bazaar, we believe that every great design begins with a meaningful connection. Whether you're a fashion designer, a garment manufacturer, or a creative entrepreneur, our team is here to assist you at every step — from design downloads to uploads, subscriptions, and creative collaborations.
+                At My Design Bazaar, we believe that every great design begins with a meaningful connection. Whether you&apos;re a fashion designer, a garment manufacturer, or a creative entrepreneur, our team is here to assist you at every step — from design downloads to uploads, subscriptions, and creative collaborations.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function ContactUsPage() {
                   <Globe className="w-8 h-8" />
                 </div>
                 <h3 className="font-bold text-gray-800 mb-2">Global Platform</h3>
-                <p className="text-gray-600 text-sm">India's first AI-powered marketplace</p>
+                <p className="text-gray-600 text-sm">India&apos;s first AI-powered marketplace</p>
               </div>
             </div>
           </div>
@@ -403,7 +403,7 @@ export default function ContactUsPage() {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">🧭 Why Contact My Design Bazaar?</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                We're not just a platform — we're your creative business partner.
+                We&apos;re not just a platform — we're your creative business partner.
               </p>
             </div>
 
@@ -412,7 +412,7 @@ export default function ContactUsPage() {
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white text-xl mb-4">
                   🌍
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-3">India's First AI-Powered Marketplace</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-3">India&apos;s First AI-Powered Marketplace</h3>
                 <p className="text-gray-600 text-sm">Leading the future of digital garment design</p>
               </div>
 
@@ -507,7 +507,7 @@ export default function ContactUsPage() {
             <div className="text-center mb-12 text-white">
               <Send className="w-16 h-16 mx-auto mb-4" />
               <h2 className="text-4xl font-bold mb-4">Send Us a Message</h2>
-              <p className="text-xl opacity-90">Have a question? Fill out the form below and we'll get back to you soon.</p>
+              <p className="text-xl opacity-90">Have a question? Fill out the form below and we&apos;ll get back to you soon.</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-2xl p-8 md:p-12">
