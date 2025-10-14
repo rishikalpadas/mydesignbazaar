@@ -403,7 +403,7 @@ export default function ContactUsPage() {
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold text-gray-800 mb-4">🧭 Why Contact My Design Bazaar?</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                We&apos;re not just a platform — we're your creative business partner.
+                We&apos;re not just a platform — we&apos;re your creative business partner.
               </p>
             </div>
 
