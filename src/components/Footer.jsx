@@ -24,6 +24,7 @@ const Footer = () => {
 
   const quickLinks = [
     { name: "About Us", href: "/about-us" },
+    { name: "Contact Us", href: "/contact-us" },
     { name: "Brand Guidelines", href: "/brand-guidelines" },
     { name: "Copyright Terms", href: "/copyright-terms" },
     { name: "Licensing Policy", href: "/licensing-policy" },
