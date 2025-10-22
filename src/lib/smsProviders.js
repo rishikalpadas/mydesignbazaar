@@ -172,6 +172,101 @@ export async function sendMSG91SMS(phoneNumber, otp) {
 }
 
 /**
+ * MSG91 WhatsApp OTP Provider
+ * Send OTP via WhatsApp using MSG91 API
+ * Docs: https://docs.msg91.com/p/tf9GTextGzo7yQ8yP0wKe7/e/d-NaBQElA5B8qTAFEYw8o/MSG91-WhatsApp-API
+ */
+export async function sendMSG91WhatsApp(phoneNumber, otp, userName = 'User') {
+  try {
+    const authKey = process.env.MSG91_AUTH_KEY;
+    const whatsappTemplateId = process.env.MSG91_WHATSAPP_TEMPLATE_ID;
+
+    if (!authKey) {
+      throw new Error('MSG91 Auth Key not configured');
+    }
+
+    if (!whatsappTemplateId) {
+      throw new Error('MSG91 WhatsApp Template ID not configured');
+    }
+
+    // Remove +91 if present, keep 10 digits
+    const mobile = phoneNumber.replace(/^\+91/, '').replace(/\s+/g, '');
+
+    // Ensure it's a valid 10-digit number
+    if (!/^\d{10}$/.test(mobile)) {
+      throw new Error('Invalid mobile number format. Expected 10 digits.');
+    }
+
+    // MSG91 WhatsApp API endpoint
+    const response = await fetch('https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/', {
+      method: 'POST',
+      headers: {
+        'authkey': authKey,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        integrated_number: process.env.MSG91_WHATSAPP_NUMBER || '', // Your registered WhatsApp number
+        content_type: 'template',
+        payload: {
+          to: `91${mobile}`, // Include country code
+          type: 'template',
+          template: {
+            name: whatsappTemplateId,
+            language: {
+              code: 'en',
+              policy: 'deterministic'
+            },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  {
+                    type: 'text',
+                    text: userName
+                  },
+                  {
+                    type: 'text',
+                    text: otp
+                  }
+                ]
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: 0,
+                parameters: [
+                  {
+                    type: 'text',
+                    text: otp
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    console.log('[MSG91 WhatsApp] Response:', JSON.stringify(data, null, 2));
+
+    // MSG91 success responses
+    if (data.type === 'success' || response.status === 200 || response.status === 202) {
+      return { success: true, messageId: data.message_id };
+    } else {
+      return {
+        success: false,
+        error: data.message || data.error || 'Failed to send WhatsApp OTP'
+      };
+    }
+  } catch (error) {
+    console.error('[MSG91 WhatsApp] Error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Simple Console Logger for Development
  * Perfect for testing without actual SMS
  */

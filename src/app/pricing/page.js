@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Check,
   Crown,
@@ -14,6 +14,7 @@ import {
   Sparkles,
   ArrowRight,
   X,
+  Info,
 } from "lucide-react";
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -21,6 +22,39 @@ import Newsletter from '../../components/Newsletter';
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState("monthly");
+  const [gstPercentage, setGstPercentage] = useState(18); // Default 18%
+  const [loadingGST, setLoadingGST] = useState(true);
+
+  // Fetch GST percentage from backend
+  useEffect(() => {
+    const fetchGST = async () => {
+      try {
+        const response = await fetch('/api/admin/settings?public=true');
+        const data = await response.json();
+        if (data.success && data.settings.gst_percentage) {
+          setGstPercentage(data.settings.gst_percentage);
+        }
+      } catch (error) {
+        console.error('Error fetching GST:', error);
+        // Keep default 18% on error
+      } finally {
+        setLoadingGST(false);
+      }
+    };
+
+    fetchGST();
+  }, []);
+
+  // Calculate price with GST
+  const calculatePriceWithGST = (basePrice) => {
+    const gstAmount = (basePrice * gstPercentage) / 100;
+    const totalPrice = basePrice + gstAmount;
+    return {
+      basePrice,
+      gstAmount: Math.round(gstAmount),
+      totalPrice: Math.round(totalPrice),
+    };
+  };
 
   const subscriptionPlans = [
     {
@@ -159,6 +193,14 @@ export default function PricingPage() {
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                 <span className="text-sm font-medium">Cancel anytime • No hidden fees • Commercial license included</span>
               </div>
+              {!loadingGST && (
+                <div className="mt-4 inline-flex items-center space-x-2 bg-orange-100/80 backdrop-blur-sm rounded-lg px-4 py-2">
+                  <Info className="w-4 h-4 text-orange-800" />
+                  <span className="text-sm font-medium text-orange-900">
+                    All prices include {gstPercentage}% GST
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -203,9 +245,34 @@ export default function PricingPage() {
                         <span className="text-sm text-gray-500 font-medium">Ideal for:</span>
                         <p className="text-sm text-gray-700 mt-1">{plan.idealFor}</p>
                       </div>
-                      <div className="flex items-center justify-center mb-6">
-                        <span className="text-4xl font-bold text-gray-900">₹{plan.price.toLocaleString()}</span>
-                        {/* <span className="text-gray-600 ml-2">/{plan.period}</span> */}
+
+                      {/* Pricing with GST */}
+                      <div className="mb-6">
+                        {loadingGST ? (
+                          <div className="animate-pulse">
+                            <div className="h-10 bg-gray-200 rounded w-32 mx-auto"></div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-center mb-2">
+                              <span className="text-4xl font-bold text-gray-900">
+                                ₹{calculatePriceWithGST(plan.price).totalPrice.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div className="flex items-center justify-center">
+                                <span className="text-gray-500">Base Price:</span>
+                                <span className="ml-2 font-medium">₹{plan.price.toLocaleString()}</span>
+                              </div>
+                              <div className="flex items-center justify-center">
+                                <span className="text-gray-500">GST ({gstPercentage}%):</span>
+                                <span className="ml-2 font-medium text-orange-600">
+                                  +₹{calculatePriceWithGST(plan.price).gstAmount.toLocaleString()}
+                                </span>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -280,7 +347,23 @@ export default function PricingPage() {
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">{item.type}</h3>
                     <p className="text-gray-600 text-sm mb-6">{item.description}</p>
-                    <div className="text-3xl font-bold text-gray-900 mb-6">₹{item.price}</div>
+
+                    {/* Price with GST */}
+                    {loadingGST ? (
+                      <div className="animate-pulse mb-6">
+                        <div className="h-8 bg-gray-200 rounded w-24 mx-auto"></div>
+                      </div>
+                    ) : (
+                      <div className="mb-6">
+                        <div className="text-3xl font-bold text-gray-900 mb-2">
+                          ₹{calculatePriceWithGST(item.price).totalPrice}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          <div>Base: ₹{item.price} + GST ({gstPercentage}%): ₹{calculatePriceWithGST(item.price).gstAmount}</div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-3 text-sm text-gray-700">
                       <div className="flex items-center justify-center">
                         <Check className="w-4 h-4 text-green-500 mr-2" />

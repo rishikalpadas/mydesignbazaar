@@ -1,7 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Users, Palette, ShoppingBag, TrendingUp, DollarSign, FileText, UserCheck, AlertCircle } from "lucide-react"
+import { Users, Palette, ShoppingBag, TrendingUp, DollarSign, FileText, UserCheck, AlertCircle, Settings } from "lucide-react"
 
 const AdminDashboard = ({ user }) => {
   const [stats, setStats] = useState({
@@ -130,6 +130,14 @@ const AdminDashboard = ({ user }) => {
                   <TrendingUp className="h-8 w-8 text-purple-500 mb-2" />
                   <h3 className="font-semibold text-gray-900">View Analytics</h3>
                   <p className="text-sm text-gray-500">Platform performance metrics</p>
+                </button>
+                <button
+                  onClick={() => router.push("/dashboard/settings")}
+                  className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 text-left transition-all duration-300 hover:shadow-lg"
+                >
+                  <Settings className="h-8 w-8 text-blue-500 mb-2" />
+                  <h3 className="font-semibold text-gray-900">System Settings</h3>
+                  <p className="text-sm text-gray-500">Configure GST, payments & more</p>
                 </button>
               </>
             )}

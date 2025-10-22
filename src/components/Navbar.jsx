@@ -370,6 +370,15 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
 
           {/* Right: Action buttons */}
           <div className="flex items-center gap-2 lg:gap-4">
+            {/* Pricing Button - Desktop */}
+            <button
+              onClick={() => router.push('/pricing')}
+              className="hidden lg:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm font-semibold rounded-full hover:shadow-lg transition-all duration-300 hover:scale-105"
+            >
+              <Package size={16} />
+              <span>View Plans</span>
+            </button>
+
             {/* Search icon for mobile */}
             <button onClick={toggleMenu} className="lg:hidden text-gray-700 hover:text-amber-500 transition-colors p-2">
               <Search size={20} />

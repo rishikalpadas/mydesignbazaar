@@ -7,6 +7,7 @@ import {
   sendFast2SMS,
   sendTextLocalSMS,
   sendMSG91SMS,
+  sendMSG91WhatsApp,
   sendConsoleSMS
 } from './smsProviders';
 
@@ -106,10 +107,24 @@ export async function sendEmailOTP(email, otp, userName = 'User') {
 }
 
 /**
- * Send OTP via WhatsApp using Twilio
- * Alternative: Use other WhatsApp Business API providers
+ * Send OTP via WhatsApp using MSG91
+ * This is the recommended WhatsApp OTP method
  */
 export async function sendWhatsAppOTP(phoneNumber, otp, userName = 'User') {
+  try {
+    // Use MSG91 WhatsApp API
+    return await sendMSG91WhatsApp(phoneNumber, otp, userName);
+  } catch (error) {
+    console.error('WhatsApp OTP sending error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send OTP via WhatsApp using Twilio (Alternative)
+ * Use this if you prefer Twilio over MSG91
+ */
+export async function sendTwilioWhatsAppOTP(phoneNumber, otp, userName = 'User') {
   try {
     // Using Twilio for WhatsApp
     const twilio = require('twilio');
@@ -132,7 +147,7 @@ export async function sendWhatsAppOTP(phoneNumber, otp, userName = 'User') {
 
     return { success: true };
   } catch (error) {
-    console.error('WhatsApp OTP sending error:', error);
+    console.error('Twilio WhatsApp OTP sending error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -148,8 +163,13 @@ export async function sendMobileOTP(phoneNumber, otp, userName = 'User') {
 
   try {
     switch (provider.toLowerCase()) {
-      case 'twilio-whatsapp':
+      case 'msg91-whatsapp':
+        // Primary: MSG91 WhatsApp (Recommended for Indian market)
         return await sendWhatsAppOTP(phoneNumber, otp, userName);
+
+      case 'twilio-whatsapp':
+        // Alternative: Twilio WhatsApp
+        return await sendTwilioWhatsAppOTP(phoneNumber, otp, userName);
 
       case 'twilio-sms':
         return await sendSMSOTP(phoneNumber, otp, userName);
@@ -164,6 +184,7 @@ export async function sendMobileOTP(phoneNumber, otp, userName = 'User') {
         return await sendTextLocalSMS(phoneNumber, otp);
 
       case 'msg91':
+      case 'msg91-sms':
         return await sendMSG91SMS(phoneNumber, otp);
 
       case 'console':

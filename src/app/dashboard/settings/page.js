@@ -1,0 +1,263 @@
+'use client'
+
+import { useState, useEffect } from 'react';
+import { Settings, Percent, DollarSign, Shield, Save, RefreshCw } from 'lucide-react';
+
+export default function SettingsPage() {
+  const [settings, setSettings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [editedValues, setEditedValues] = useState({});
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/settings');
+      const data = await response.json();
+
+      if (data.success) {
+        setSettings(data.settings);
+        // Initialize edited values
+        const initialValues = {};
+        data.settings.forEach(s => {
+          initialValues[s.key] = s.rawValue;
+        });
+        setEditedValues(initialValues);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to fetch settings' });
+      }
+    } catch (error) {
+      console.error('Fetch settings error:', error);
+      setMessage({ type: 'error', text: 'Failed to load settings' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleValueChange = (key, value) => {
+    setEditedValues(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const handleSave = async (key) => {
+    try {
+      setSaving(true);
+      const value = editedValues[key];
+
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ key, value }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({ type: 'success', text: `${data.setting.label} updated successfully!` });
+        await fetchSettings(); // Refresh settings
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to update setting' });
+      }
+    } catch (error) {
+      console.error('Save setting error:', error);
+      setMessage({ type: 'error', text: 'Failed to save setting' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initializeDefaults = async () => {
+    try {
+      setSaving(true);
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'initialize' }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({ type: 'success', text: 'Default settings initialized!' });
+        await fetchSettings();
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to initialize' });
+      }
+    } catch (error) {
+      console.error('Initialize error:', error);
+      setMessage({ type: 'error', text: 'Failed to initialize settings' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'tax':
+        return <Percent className="w-5 h-5 text-orange-600" />;
+      case 'payment':
+        return <DollarSign className="w-5 h-5 text-green-600" />;
+      case 'security':
+        return <Shield className="w-5 h-5 text-blue-600" />;
+      default:
+        return <Settings className="w-5 h-5 text-gray-600" />;
+    }
+  };
+
+  const groupedSettings = settings.reduce((acc, setting) => {
+    if (!acc[setting.category]) {
+      acc[setting.category] = [];
+    }
+    acc[setting.category].push(setting);
+    return acc;
+  }, {});
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
+            <p className="text-gray-600">Manage platform-wide configuration settings</p>
+          </div>
+          <button
+            onClick={initializeDefaults}
+            disabled={saving}
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${saving ? 'animate-spin' : ''}`} />
+            Initialize Defaults
+          </button>
+        </div>
+      </div>
+
+      {/* Message */}
+      {message.text && (
+        <div
+          className={`mb-6 p-4 rounded-lg ${
+            message.type === 'success'
+              ? 'bg-green-100 text-green-800 border border-green-200'
+              : 'bg-red-100 text-red-800 border border-red-200'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      {/* Settings by Category */}
+      <div className="space-y-6">
+        {Object.keys(groupedSettings).map((category) => (
+          <div key={category} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+            {/* Category Header */}
+            <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-orange-100">
+              <div className="flex items-center">
+                {getCategoryIcon(category)}
+                <h2 className="text-xl font-bold text-gray-900 ml-3 capitalize">{category} Settings</h2>
+              </div>
+            </div>
+
+            {/* Settings List */}
+            <div className="p-6 space-y-6">
+              {groupedSettings[category].map((setting) => (
+                <div key={setting.key} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <label className="block text-lg font-semibold text-gray-900 mb-2">
+                        {setting.label}
+                      </label>
+                      {setting.description && (
+                        <p className="text-sm text-gray-600 mb-4">{setting.description}</p>
+                      )}
+
+                      <div className="flex items-center space-x-4">
+                        {setting.dataType === 'boolean' ? (
+                          <label className="flex items-center space-x-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={editedValues[setting.key] === 'true'}
+                              onChange={(e) => handleValueChange(setting.key, e.target.checked ? 'true' : 'false')}
+                              disabled={!setting.isEditable || saving}
+                              className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                              {editedValues[setting.key] === 'true' ? 'Enabled' : 'Disabled'}
+                            </span>
+                          </label>
+                        ) : (
+                          <input
+                            type={setting.dataType === 'number' ? 'number' : 'text'}
+                            value={editedValues[setting.key] || ''}
+                            onChange={(e) => handleValueChange(setting.key, e.target.value)}
+                            disabled={!setting.isEditable || saving}
+                            step={setting.dataType === 'number' ? '0.01' : undefined}
+                            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            placeholder={`Enter ${setting.label.toLowerCase()}`}
+                          />
+                        )}
+
+                        {setting.dataType === 'number' && setting.key.includes('percentage') && (
+                          <span className="text-gray-600 font-medium">%</span>
+                        )}
+
+                        <button
+                          onClick={() => handleSave(setting.key)}
+                          disabled={!setting.isEditable || saving || editedValues[setting.key] === setting.rawValue}
+                          className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save
+                        </button>
+                      </div>
+
+                      <div className="mt-3 text-xs text-gray-500">
+                        Last updated: {new Date(setting.updatedAt).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {settings.length === 0 && (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+          <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Settings Found</h3>
+          <p className="text-gray-600 mb-6">Initialize default settings to get started</p>
+          <button
+            onClick={initializeDefaults}
+            disabled={saving}
+            className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
+          >
+            Initialize Default Settings
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
