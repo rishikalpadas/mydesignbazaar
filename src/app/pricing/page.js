@@ -22,39 +22,38 @@ import Newsletter from '../../components/Newsletter';
 
 export default function PricingPage() {
   const [billingPeriod, setBillingPeriod] = useState("monthly");
-  const [gstPercentage, setGstPercentage] = useState(18); // Default 18%
-  const [loadingGST, setLoadingGST] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [planPrices, setPlanPrices] = useState({
+    basic: 600,
+    premium: 5000,
+    elite: 50000
+  });
+  const [downloadPrices, setDownloadPrices] = useState({
+    standard: 199,
+    exclusive: 399,
+    ai: 499
+  });
 
-  // Fetch GST percentage from backend
+  // Fetch pricing from backend
   useEffect(() => {
-    const fetchGST = async () => {
+    const fetchSettings = async () => {
       try {
         const response = await fetch('/api/admin/settings?public=true');
         const data = await response.json();
-        if (data.success && data.settings.gst_percentage) {
-          setGstPercentage(data.settings.gst_percentage);
+        if (data.success && data.settings.pricing) {
+          setPlanPrices(data.settings.pricing.plans);
+          setDownloadPrices(data.settings.pricing.payPerDownload);
         }
       } catch (error) {
-        console.error('Error fetching GST:', error);
-        // Keep default 18% on error
+        console.error('Error fetching settings:', error);
+        // Keep defaults on error
       } finally {
-        setLoadingGST(false);
+        setLoading(false);
       }
     };
 
-    fetchGST();
+    fetchSettings();
   }, []);
-
-  // Calculate price with GST
-  const calculatePriceWithGST = (basePrice) => {
-    const gstAmount = (basePrice * gstPercentage) / 100;
-    const totalPrice = basePrice + gstAmount;
-    return {
-      basePrice,
-      gstAmount: Math.round(gstAmount),
-      totalPrice: Math.round(totalPrice),
-    };
-  };
 
   const subscriptionPlans = [
     {
@@ -62,7 +61,7 @@ export default function PricingPage() {
       name: "Basic",
       icon: Package,
       description: "Perfect for small boutique owners and startups",
-      price: 600,
+      priceKey: "basic",
       originalPrice: null,
       period: "month",
       color: "blue",
@@ -85,7 +84,7 @@ export default function PricingPage() {
       name: "Premium",
       icon: Star,
       description: "Ideal for small-to-medium manufacturers & exporters",
-      price: 5000,
+      priceKey: "premium",
       originalPrice: null,
       period: "month",
       color: "purple",
@@ -109,7 +108,7 @@ export default function PricingPage() {
       name: "Elite",
       icon: Crown,
       description: "Perfect for larger production units and fashion brands",
-      price: 50000,
+      priceKey: "elite",
       originalPrice: null,
       period: "month",
       color: "orange",
@@ -133,17 +132,17 @@ export default function PricingPage() {
   const payPerDownloadPrices = [
     {
       type: "Premium Standard Design",
-      price: 199,
+      priceKey: "standard",
       description: "High-quality curated designs from our standard collection"
     },
     {
       type: "Exclusive Designer Upload",
-      price: 399,
+      priceKey: "exclusive",
       description: "Unique designs from featured designers"
     },
     {
       type: "AI-Generated Beta Phase Design",
-      price: 499,
+      priceKey: "ai",
       description: "Cutting-edge AI-created designs (Beta access)"
     }
   ];
@@ -193,14 +192,12 @@ export default function PricingPage() {
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                 <span className="text-sm font-medium">Cancel anytime • No hidden fees • Commercial license included</span>
               </div>
-              {!loadingGST && (
-                <div className="mt-4 inline-flex items-center space-x-2 bg-orange-100/80 backdrop-blur-sm rounded-lg px-4 py-2">
-                  <Info className="w-4 h-4 text-orange-800" />
-                  <span className="text-sm font-medium text-orange-900">
-                    All prices include {gstPercentage}% GST
-                  </span>
-                </div>
-              )}
+              {/* <div className="mt-4 inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-5 py-3">
+                <Info className="w-5 h-5 text-white" />
+                <span className="text-sm font-medium text-white">
+                  * All prices exclude GST
+                </span>
+              </div> */}
             </div>
           </div>
         </section>
@@ -212,9 +209,10 @@ export default function PricingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                 Subscription Plans
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-3">
                 Prepaid plans with auto-renewal. All subscriptions include commercial usage rights and can be canceled anytime.
               </p>
+              <p className="text-sm text-orange-600 italic">* Prices exclude GST</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -246,32 +244,22 @@ export default function PricingPage() {
                         <p className="text-sm text-gray-700 mt-1">{plan.idealFor}</p>
                       </div>
 
-                      {/* Pricing with GST */}
+                      {/* Pricing */}
                       <div className="mb-6">
-                        {loadingGST ? (
+                        {loading ? (
                           <div className="animate-pulse">
                             <div className="h-10 bg-gray-200 rounded w-32 mx-auto"></div>
                           </div>
                         ) : (
-                          <>
-                            <div className="flex items-center justify-center mb-2">
-                              <span className="text-4xl font-bold text-gray-900">
-                                ₹{calculatePriceWithGST(plan.price).totalPrice.toLocaleString()}
+                          <div className="text-center">
+                            <div className="flex items-baseline justify-center">
+                              <span className="text-5xl font-bold text-gray-900">
+                                ₹{planPrices[plan.priceKey].toLocaleString()}
                               </span>
+                              <span className="text-orange-600 text-2xl font-bold ml-1">*</span>
+                              <span className="text-gray-500 text-lg ml-2">/{plan.period}</span>
                             </div>
-                            <div className="text-sm text-gray-600 space-y-1">
-                              <div className="flex items-center justify-center">
-                                <span className="text-gray-500">Base Price:</span>
-                                <span className="ml-2 font-medium">₹{plan.price.toLocaleString()}</span>
-                              </div>
-                              <div className="flex items-center justify-center">
-                                <span className="text-gray-500">GST ({gstPercentage}%):</span>
-                                <span className="ml-2 font-medium text-orange-600">
-                                  +₹{calculatePriceWithGST(plan.price).gstAmount.toLocaleString()}
-                                </span>
-                              </div>
-                            </div>
-                          </>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -333,9 +321,10 @@ export default function PricingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
                 Pay-Per-Download
               </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-3">
                 No subscription? No problem. Get flexible pricing without any commitment.
               </p>
+              <p className="text-sm text-orange-600 italic">* Prices exclude GST</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
@@ -348,18 +337,21 @@ export default function PricingPage() {
                     <h3 className="text-xl font-bold text-gray-900 mb-3">{item.type}</h3>
                     <p className="text-gray-600 text-sm mb-6">{item.description}</p>
 
-                    {/* Price with GST */}
-                    {loadingGST ? (
+                    {/* Price */}
+                    {loading ? (
                       <div className="animate-pulse mb-6">
                         <div className="h-8 bg-gray-200 rounded w-24 mx-auto"></div>
                       </div>
                     ) : (
                       <div className="mb-6">
-                        <div className="text-3xl font-bold text-gray-900 mb-2">
-                          ₹{calculatePriceWithGST(item.price).totalPrice}
+                        <div className="flex items-baseline justify-center">
+                          <span className="text-4xl font-bold text-gray-900">
+                            ₹{downloadPrices[item.priceKey]}
+                          </span>
+                          <span className="text-orange-600 text-xl font-bold ml-1">*</span>
                         </div>
-                        <div className="text-xs text-gray-600">
-                          <div>Base: ₹{item.price} + GST ({gstPercentage}%): ₹{calculatePriceWithGST(item.price).gstAmount}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          per design
                         </div>
                       </div>
                     )}

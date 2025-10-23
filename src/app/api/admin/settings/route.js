@@ -47,13 +47,45 @@ export async function GET(request) {
     const category = searchParams.get('category');
     const publicOnly = searchParams.get('public') === 'true';
 
-    // If public query, only return specific public settings (like GST)
+    // If public query, only return specific public settings (like GST and pricing)
     if (publicOnly) {
-      const gstSetting = await SystemSettings.findOne({ key: 'gst_percentage', isActive: true });
+      const publicSettings = await SystemSettings.find({
+        key: {
+          $in: [
+            'gst_percentage',
+            'price_basic_plan',
+            'price_premium_plan',
+            'price_elite_plan',
+            'price_standard_design',
+            'price_exclusive_design',
+            'price_ai_design'
+          ]
+        },
+        isActive: true
+      });
+
+      // Create a map of settings
+      const settingsMap = {};
+      publicSettings.forEach(setting => {
+        settingsMap[setting.key] = setting.getParsedValue();
+      });
+
       return NextResponse.json({
         success: true,
         settings: {
-          gst_percentage: gstSetting ? gstSetting.getParsedValue() : 18,
+          gst_percentage: settingsMap.gst_percentage || 18,
+          pricing: {
+            plans: {
+              basic: settingsMap.price_basic_plan || 600,
+              premium: settingsMap.price_premium_plan || 5000,
+              elite: settingsMap.price_elite_plan || 50000,
+            },
+            payPerDownload: {
+              standard: settingsMap.price_standard_design || 199,
+              exclusive: settingsMap.price_exclusive_design || 399,
+              ai: settingsMap.price_ai_design || 499,
+            }
+          }
         }
       });
     }

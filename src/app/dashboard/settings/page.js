@@ -1,14 +1,51 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Settings, Percent, DollarSign, Shield, Save, RefreshCw } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Settings, Percent, DollarSign, Shield, Save, RefreshCw, Package, ShoppingCart } from 'lucide-react';
+import DashboardLayout from '../../../components/dashboard/DashboardLayout';
+import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
 export default function SettingsPage() {
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
   const [settings, setSettings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [editedValues, setEditedValues] = useState({});
+  const router = useRouter();
+
+  // Check authentication and authorization
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.user.isAdmin && data.user.role === 'super_admin') {
+          setUser(data.user);
+        } else {
+          // Not a super admin, redirect
+          router.push('/dashboard');
+        }
+      } else {
+        // Not authenticated, redirect to login
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+      router.push('/dashboard');
+    } finally {
+      setUserLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchSettings();
@@ -104,6 +141,33 @@ export default function SettingsPage() {
     }
   };
 
+  const initializePricing = async () => {
+    try {
+      setSaving(true);
+      const response = await fetch('/api/admin/settings/init-pricing', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({ type: 'success', text: `Pricing settings initialized! ${data.stats.created} created, ${data.stats.skipped} already existed.` });
+        await fetchSettings();
+        setTimeout(() => setMessage({ type: '', text: '' }), 5000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to initialize pricing' });
+      }
+    } catch (error) {
+      console.error('Initialize pricing error:', error);
+      setMessage({ type: 'error', text: 'Failed to initialize pricing settings' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'tax':
@@ -112,12 +176,40 @@ export default function SettingsPage() {
         return <DollarSign className="w-5 h-5 text-green-600" />;
       case 'security':
         return <Shield className="w-5 h-5 text-blue-600" />;
+      case 'subscription':
+        return <DollarSign className="w-5 h-5 text-purple-600" />;
       default:
         return <Settings className="w-5 h-5 text-gray-600" />;
     }
   };
 
-  const groupedSettings = settings.reduce((acc, setting) => {
+  // Separate pricing settings from other settings
+  const pricingKeys = [
+    'price_basic_plan',
+    'price_premium_plan',
+    'price_elite_plan',
+    'price_standard_design',
+    'price_exclusive_design',
+    'price_ai_design'
+  ];
+
+  const subscriptionPriceKeys = ['price_basic_plan', 'price_premium_plan', 'price_elite_plan'];
+  const payPerDownloadKeys = ['price_standard_design', 'price_exclusive_design', 'price_ai_design'];
+
+  const pricingSettings = settings.filter(s => pricingKeys.includes(s.key));
+
+  // Sort subscription prices in the correct order (Basic, Premium, Elite)
+  const subscriptionPrices = subscriptionPriceKeys
+    .map(key => pricingSettings.find(s => s.key === key))
+    .filter(Boolean);
+
+  // Sort pay-per-download prices in the correct order (Standard, Exclusive, AI)
+  const payPerDownloadPrices = payPerDownloadKeys
+    .map(key => pricingSettings.find(s => s.key === key))
+    .filter(Boolean);
+  const otherSettings = settings.filter(s => !pricingKeys.includes(s.key));
+
+  const groupedSettings = otherSettings.reduce((acc, setting) => {
     if (!acc[setting.category]) {
       acc[setting.category] = [];
     }
@@ -125,16 +217,12 @@ export default function SettingsPage() {
     return acc;
   }, {});
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
-      </div>
-    );
+  if (userLoading || !user) {
+    return <LoadingSpinner />;
   }
 
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
+  const settingsContent = (
+    <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -142,14 +230,24 @@ export default function SettingsPage() {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
             <p className="text-gray-600">Manage platform-wide configuration settings</p>
           </div>
-          <button
-            onClick={initializeDefaults}
-            disabled={saving}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${saving ? 'animate-spin' : ''}`} />
-            Initialize Defaults
-          </button>
+          {/* <div className="flex space-x-3">
+            <button
+              onClick={initializePricing}
+              disabled={saving}
+              className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            >
+              <DollarSign className={`w-4 h-4 mr-2`} />
+              Add Pricing Settings
+            </button>
+            <button
+              onClick={initializeDefaults}
+              disabled={saving}
+              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${saving ? 'animate-spin' : ''}`} />
+              Initialize Defaults
+            </button>
+          </div> */}
         </div>
       </div>
 
@@ -163,6 +261,112 @@ export default function SettingsPage() {
           }`}
         >
           {message.text}
+        </div>
+      )}
+
+      {/* Subscription Plan Prices Section */}
+      {subscriptionPrices.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 px-6 py-4 border-b border-purple-100">
+            <div className="flex items-center">
+              <Package className="w-5 h-5 text-purple-600" />
+              <h2 className="text-xl font-bold text-gray-900 ml-3">Subscription Plan Prices</h2>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {subscriptionPrices.map((setting) => (
+              <div key={setting.key} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <label className="block text-lg font-semibold text-gray-900 mb-2">
+                      {setting.label}
+                    </label>
+                    {setting.description && (
+                      <p className="text-sm text-gray-600 mb-4">{setting.description}</p>
+                    )}
+
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="number"
+                        value={editedValues[setting.key] || ''}
+                        onChange={(e) => handleValueChange(setting.key, e.target.value)}
+                        disabled={!setting.isEditable || saving}
+                        step="0.01"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        placeholder={`Enter ${setting.label.toLowerCase()}`}
+                      />
+
+                      <button
+                        onClick={() => handleSave(setting.key)}
+                        disabled={!setting.isEditable || saving || editedValues[setting.key] === setting.rawValue}
+                        className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-xs text-gray-500">
+                      Last updated: {new Date(setting.updatedAt).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pay-Per-Download Prices Section */}
+      {payPerDownloadPrices.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-100">
+            <div className="flex items-center">
+              <ShoppingCart className="w-5 h-5 text-green-600" />
+              <h2 className="text-xl font-bold text-gray-900 ml-3">Pay-Per-Download Prices</h2>
+            </div>
+          </div>
+          <div className="p-6 space-y-6">
+            {payPerDownloadPrices.map((setting) => (
+              <div key={setting.key} className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <label className="block text-lg font-semibold text-gray-900 mb-2">
+                      {setting.label}
+                    </label>
+                    {setting.description && (
+                      <p className="text-sm text-gray-600 mb-4">{setting.description}</p>
+                    )}
+
+                    <div className="flex items-center space-x-4">
+                      <input
+                        type="number"
+                        value={editedValues[setting.key] || ''}
+                        onChange={(e) => handleValueChange(setting.key, e.target.value)}
+                        disabled={!setting.isEditable || saving}
+                        step="0.01"
+                        className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        placeholder={`Enter ${setting.label.toLowerCase()}`}
+                      />
+
+                      <button
+                        onClick={() => handleSave(setting.key)}
+                        disabled={!setting.isEditable || saving || editedValues[setting.key] === setting.rawValue}
+                        className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-xs text-gray-500">
+                      Last updated: {new Date(setting.updatedAt).toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -259,5 +463,17 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+  );
+
+  return (
+    <DashboardLayout user={user}>
+      {loading ? (
+        <div className="flex items-center justify-center h-96">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+        </div>
+      ) : (
+        settingsContent
+      )}
+    </DashboardLayout>
   );
 }

@@ -17,9 +17,14 @@ import AuthModal from "./AuthModal";
 
 const Footer = () => {
   const [hoveredSocial, setHoveredSocial] = useState(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBecomeDesigner = () => {
+    setAuthModalOpen(true);
   };
 
   const quickLinks = [
@@ -223,12 +228,12 @@ const Footer = () => {
 
               {/* CTA Button */}
               <div className="space-y-4">
-                <a
-                 
+                <button
+                  onClick={handleBecomeDesigner}
                   className="block w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold px-6 py-3 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-center shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
                 >
                   Become a Designer ✨
-                </a>
+                </button>
                 <a
                   href="/categories"
                   className="block w-full border border-gray-600 text-gray-300 text-sm font-medium px-6 py-3 rounded-xl hover:border-indigo-500 hover:text-white transition-all duration-300 text-center cursor-pointer"
@@ -287,6 +292,13 @@ const Footer = () => {
 
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultTab="signup"
+      />
     </footer>
   );
 };
