@@ -38,7 +38,7 @@ const systemSettingsSchema = new mongoose.Schema({
   // Category for grouping settings
   category: {
     type: String,
-    enum: ['tax', 'payment', 'email', 'general', 'subscription', 'design', 'security'],
+    enum: ['tax', 'payment', 'email', 'general', 'subscription', 'design', 'security', 'pricing'],
     default: 'general',
   },
 

@@ -68,15 +68,16 @@ export default function PricingPage() {
       popular: false,
       idealFor: "Small boutique owners, student startups, and print shops",
       features: [
-        "10 premium design downloads per month",
-        "15 days validity",
+        "10 premium design download credits",
+        "Valid for 15 days from purchase",
         "Commercial usage rights included",
         "Email support",
         "Standard design library access"
       ],
       limitations: [
-        "Unused downloads do not roll over",
-        "No access to exclusive/AI designs"
+        "Credits expire after 15 days or when exhausted",
+        "No access to exclusive/AI designs",
+        "Requires new purchase after expiry/exhaustion"
       ]
     },
     {
@@ -91,16 +92,17 @@ export default function PricingPage() {
       popular: true,
       idealFor: "Small-to-medium garment manufacturers & exporters",
       features: [
-        "100 premium design downloads per month",
-        "90 days validity",
+        "100 premium design download credits",
+        "Valid for 90 days from purchase",
         "Commercial usage rights included",
-        "Access to AI-generated Beta designs (₹299/design)",
+        "Access to AI-generated Designs (Beta)",
         "Priority email & WhatsApp support",
         "10% off on pay-per-download items",
         "Access to seasonal collection bundles"
       ],
       limitations: [
-        "Unused downloads do not roll over"
+        "Credits expire after 90 days or when exhausted",
+        "Requires new purchase after expiry/exhaustion"
       ]
     },
     {
@@ -115,16 +117,17 @@ export default function PricingPage() {
       popular: false,
       idealFor: "Larger production units, online brands, and fashion aggregators",
       features: [
-        "1200 premium design downloads per month",
-        "365 days validity",
-        "Full access to AI-generated Beta designs (up to 10/month free)",
+        "1200 premium design download credits",
+        "Valid for 365 days from purchase",
+        "Full access to AI-generated Designs (up to 10/month free)",
         "15% off on Exclusive Designer Uploads",
         "Direct design request once/month (customizable by selected designers)",
         "Dedicated account manager",
         "Priority access to new launches"
       ],
       limitations: [
-        "Unused downloads do not roll over"
+        "Credits expire after 365 days or when exhausted",
+        "Requires new purchase after expiry/exhaustion"
       ]
     }
   ];
@@ -141,9 +144,9 @@ export default function PricingPage() {
       description: "Unique designs from featured designers"
     },
     {
-      type: "AI-Generated Beta Phase Design",
+      type: "AI-Generated Designs (Beta)",
       priceKey: "ai",
-      description: "Cutting-edge AI-created designs (Beta access)"
+      description: "Cutting-edge AI-Generated designs"
     }
   ];
 
@@ -190,7 +193,7 @@ export default function PricingPage() {
               </p>
               <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span className="text-sm font-medium">Cancel anytime • No hidden fees • Commercial license included</span>
+                <span className="text-sm font-medium">One-time payment • Valid until expiry or credits exhausted • Commercial license included</span>
               </div>
               {/* <div className="mt-4 inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-5 py-3">
                 <Info className="w-5 h-5 text-white" />
@@ -210,7 +213,7 @@ export default function PricingPage() {
                 Subscription Plans
               </h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-3">
-                Prepaid plans with auto-renewal. All subscriptions include commercial usage rights and can be canceled anytime.
+                One-time purchase plans with credit-based downloads. Credits are valid for the specified period - no recurring charges.
               </p>
               <p className="text-sm text-orange-600 italic">* Prices exclude GST</p>
             </div>
@@ -257,8 +260,8 @@ export default function PricingPage() {
                                 ₹{planPrices[plan.priceKey].toLocaleString()}
                               </span>
                               <span className="text-orange-600 text-2xl font-bold ml-1">*</span>
-                              <span className="text-gray-500 text-lg ml-2">/{plan.period}</span>
                             </div>
+                            <div className="text-sm text-gray-500 mt-2">One-time payment</div>
                           </div>
                         )}
                       </div>
@@ -482,7 +485,7 @@ export default function PricingPage() {
                   </div>
                   <div className="flex items-center">
                     <Check className="w-5 h-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">Auto-renewal with easy cancellation</span>
+                    <span className="text-gray-700">No recurring charges or auto-renewal</span>
                   </div>
                 </div>
               </div>

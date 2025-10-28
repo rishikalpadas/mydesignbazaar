@@ -13,34 +13,32 @@ import {
 } from 'lucide-react';
 
 const PricingPreview = () => {
-  const [gstPercentage, setGstPercentage] = useState(18);
-  const [loadingGST, setLoadingGST] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [planPrices, setPlanPrices] = useState({
+    basic: 600,
+    premium: 5000,
+    elite: 50000
+  });
 
-  // Fetch GST percentage
+  // Fetch pricing from backend
   useEffect(() => {
-    const fetchGST = async () => {
+    const fetchSettings = async () => {
       try {
         const response = await fetch('/api/admin/settings?public=true');
         const data = await response.json();
-        if (data.success && data.settings.gst_percentage) {
-          setGstPercentage(data.settings.gst_percentage);
+        if (data.success && data.settings.pricing) {
+          setPlanPrices(data.settings.pricing.plans);
         }
       } catch (error) {
-        console.error('Error fetching GST:', error);
+        console.error('Error fetching settings:', error);
+        // Keep defaults on error
       } finally {
-        setLoadingGST(false);
+        setLoading(false);
       }
     };
 
-    fetchGST();
+    fetchSettings();
   }, []);
-
-  // Calculate price with GST
-  const calculatePriceWithGST = (basePrice) => {
-    const gstAmount = (basePrice * gstPercentage) / 100;
-    const totalPrice = basePrice + gstAmount;
-    return Math.round(totalPrice);
-  };
 
   const plans = [
     {
@@ -48,17 +46,17 @@ const PricingPreview = () => {
       name: 'Basic',
       icon: Package,
       tagline: 'Perfect for Startups',
-      basePrice: 600,
+      priceKey: 'basic',
       credits: 10,
       validity: '15 days',
       color: 'blue',
       gradient: 'from-blue-500 to-blue-600',
       popular: false,
       features: [
-        '10 design downloads',
+        '10 download credits',
+        'Valid for 15 days',
         'Commercial rights',
-        'Email support',
-        'Standard library access'
+        'Email support'
       ]
     },
     {
@@ -66,18 +64,18 @@ const PricingPreview = () => {
       name: 'Premium',
       icon: Star,
       tagline: 'Best for Growing Business',
-      basePrice: 5000,
+      priceKey: 'premium',
       credits: 100,
       validity: '90 days',
       color: 'purple',
       gradient: 'from-purple-500 to-purple-600',
       popular: true,
       features: [
-        '100 design downloads',
+        '100 download credits',
+        'Valid for 90 days',
         'AI designs access',
         'Priority support',
-        '10% off extras',
-        'Seasonal bundles'
+        '10% off extras'
       ]
     },
     {
@@ -85,18 +83,18 @@ const PricingPreview = () => {
       name: 'Elite',
       icon: Crown,
       tagline: 'For Large Enterprises',
-      basePrice: 50000,
+      priceKey: 'elite',
       credits: 1200,
       validity: '365 days',
       color: 'orange',
       gradient: 'from-orange-500 to-orange-600',
       popular: false,
       features: [
-        '1200 design downloads',
+        '1200 download credits',
+        'Valid for 365 days',
         'Full AI access',
         'Dedicated manager',
-        'Custom requests',
-        '15% off exclusives'
+        'Custom requests'
       ]
     }
   ];
@@ -114,8 +112,7 @@ const PricingPreview = () => {
             Start Creating Today
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose a plan that fits your business needs. From startups to enterprises,
-            we have flexible options with full commercial rights included.
+            One-time purchase plans with credit-based downloads. Credits valid for the specified period - no recurring charges.
           </p>
         </div>
 
@@ -123,7 +120,6 @@ const PricingPreview = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {plans.map((plan) => {
             const IconComponent = plan.icon;
-            const totalPrice = calculatePriceWithGST(plan.basePrice);
 
             return (
               <div
@@ -152,21 +148,22 @@ const PricingPreview = () => {
 
                   {/* Pricing */}
                   <div className="mb-6">
-                    {loadingGST ? (
+                    {loading ? (
                       <div className="animate-pulse">
                         <div className="h-10 bg-gray-200 rounded w-32 mb-2"></div>
                       </div>
                     ) : (
                       <>
                         <div className="flex items-baseline mb-2">
-                          <span className="text-4xl font-bold text-gray-900">₹{totalPrice.toLocaleString()}</span>
-                          <span className="text-gray-500 ml-2">+ GST</span>
+                          <span className="text-4xl font-bold text-gray-900">₹{planPrices[plan.priceKey].toLocaleString()}</span>
+                          <span className="text-orange-600 text-xl font-bold ml-1">*</span>
                         </div>
-                        <div className="text-sm text-gray-600">
-                          <span className="font-medium">{plan.credits} downloads</span>
+                        <div className="text-sm text-gray-600 mb-1">
+                          <span className="font-medium">{plan.credits} credits</span>
                           <span className="mx-2">•</span>
                           <span>{plan.validity}</span>
                         </div>
+                        <div className="text-xs text-orange-600 italic">* Prices exclude GST</div>
                       </>
                     )}
                   </div>
