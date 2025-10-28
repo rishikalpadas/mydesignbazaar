@@ -183,16 +183,60 @@ const DesignerSignupForm = ({
               placeholder="Optional - shown on profile"
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-            <input
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="Enter your email"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter your email"
+                required
+                disabled={formData.emailVerified}
+              />
+              {!formData.emailVerified && (
+                <button
+                  type="button"
+                  onClick={() => handleSendEmailOTP()}
+                  disabled={!formData.email || loading}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {formData.otpSent ? "Resend OTP" : "Send OTP"}
+                </button>
+              )}
+              {formData.emailVerified && (
+                <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                  <Check className="w-5 h-5 text-green-600 mr-1" />
+                  <span className="text-sm text-green-600 font-medium">Verified</span>
+                </div>
+              )}
+            </div>
+            {formData.otpSent && !formData.emailVerified && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-2">
+                  Enter the 6-digit OTP sent to your email
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.emailOtp || ""}
+                    onChange={(e) => handleInputChange("emailOtp", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-center text-lg tracking-widest font-mono"
+                    placeholder="000000"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyEmailOTP()}
+                    disabled={!formData.emailOtp || formData.emailOtp.length !== 6 || loading}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
@@ -600,15 +644,60 @@ const BuyerSignupForm = ({
               required
             />
           </div>
-          <div>
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-            <input
-              type="email"
-              value={formData.email || ""}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              required
-            />
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter your email"
+                required
+                disabled={formData.emailVerified}
+              />
+              {!formData.emailVerified && (
+                <button
+                  type="button"
+                  onClick={() => handleSendEmailOTP()}
+                  disabled={!formData.email || loading}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {formData.otpSent ? "Resend OTP" : "Send OTP"}
+                </button>
+              )}
+              {formData.emailVerified && (
+                <div className="flex items-center px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                  <Check className="w-5 h-5 text-green-600 mr-1" />
+                  <span className="text-sm text-green-600 font-medium">Verified</span>
+                </div>
+              )}
+            </div>
+            {formData.otpSent && !formData.emailVerified && (
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-2">
+                  Enter the 6-digit OTP sent to your email
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.emailOtp || ""}
+                    onChange={(e) => handleInputChange("emailOtp", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-center text-lg tracking-widest font-mono"
+                    placeholder="000000"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyEmailOTP()}
+                    disabled={!formData.emailOtp || formData.emailOtp.length !== 6 || loading}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
@@ -996,10 +1085,95 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
   }
 
+  const handleSendEmailOTP = async () => {
+    if (!formData.email) {
+      setError("Please enter your email address")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/send-email-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          userName: formData.fullName || formData.displayName || "User"
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("OTP sent to your email! Please check your inbox.")
+        handleInputChange("otpSent", true)
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "Failed to send OTP")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyEmailOTP = async () => {
+    if (!formData.emailOtp || formData.emailOtp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/verify-email-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          otp: formData.emailOtp
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("Email verified successfully!")
+        handleInputChange("emailVerified", true)
+        handleInputChange("otpSent", false)
+        handleInputChange("emailOtp", "")
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "Invalid OTP")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDesignerSignup = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    // Validate email verification
+    if (!formData.emailVerified) {
+      setError("Please verify your email address before submitting")
+      setLoading(false)
+      return
+    }
 
     // Validate password confirmation
     if (formData.password !== formData.confirmPassword) {
@@ -1094,6 +1268,13 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+
+    // Validate email verification
+    if (!formData.emailVerified) {
+      setError("Please verify your email address before submitting")
+      setLoading(false)
+      return
+    }
 
     // Validate password confirmation
     if (formData.password !== formData.confirmPassword) {

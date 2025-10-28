@@ -31,13 +31,18 @@ export async function POST(request) {
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user
+    // Create user (email verification will be done via OTP)
     const newUser = new User({
       email: email.toLowerCase(),
       password: hashedPassword,
       userType,
-      isVerified: false,
+      isVerified: false, // Will be set to true after email OTP verification
       isApproved: userType === 'buyer' ? true : false, // Buyers auto-approved, designers need approval
+      emailOtp: {
+        code: null,
+        expiresAt: null,
+        verified: false
+      }
     });
 
     const savedUser = await newUser.save();
