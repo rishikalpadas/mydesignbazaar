@@ -193,7 +193,7 @@ export default function PricingPage() {
               </p>
               <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3">
                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                <span className="text-sm font-medium">One-time payment • Valid until expiry or credits exhausted • Commercial license included</span>
+                <span className="text-sm font-medium">Commercial license included</span>
               </div>
               {/* <div className="mt-4 inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-lg px-5 py-3">
                 <Info className="w-5 h-5 text-white" />
@@ -215,7 +215,7 @@ export default function PricingPage() {
               <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-3">
                 One-time purchase plans with credit-based downloads. Credits are valid for the specified period - no recurring charges.
               </p>
-              <p className="text-sm text-orange-600 italic">* Prices exclude GST</p>
+              {/* <p className="text-sm text-orange-600 italic">* Prices exclude GST</p> */}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
@@ -242,10 +242,10 @@ export default function PricingPage() {
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                       <p className="text-gray-600 mb-4">{plan.description}</p>
-                      <div className="mb-4">
+                      {/* <div className="mb-4">
                         <span className="text-sm text-gray-500 font-medium">Ideal for:</span>
                         <p className="text-sm text-gray-700 mt-1">{plan.idealFor}</p>
-                      </div>
+                      </div> */}
 
                       {/* Pricing */}
                       <div className="mb-6">
@@ -261,7 +261,9 @@ export default function PricingPage() {
                               </span>
                               <span className="text-orange-600 text-2xl font-bold ml-1">*</span>
                             </div>
-                            <div className="text-sm text-gray-500 mt-2">One-time payment</div>
+                            {/* <div className="text-sm text-gray-500 mt-2">One-time payment</div> */}
+              <p className="text-sm text-orange-600 italic mt-2">* Prices exclude GST</p>
+
                           </div>
                         )}
                       </div>
@@ -327,10 +329,9 @@ export default function PricingPage() {
               <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-3">
                 No subscription? No problem. Get flexible pricing without any commitment.
               </p>
-              <p className="text-sm text-orange-600 italic">* Prices exclude GST</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-4">
               {payPerDownloadPrices.map((item, index) => (
                 <div key={index} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 p-8 hover:shadow-lg transition-all duration-300">
                   <div className="text-center">
@@ -377,6 +378,9 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
+
+              <p className="text-sm text-orange-600 italic text-center mb-4">* Prices exclude GST</p>
+
 
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-2xl p-6">
               <div className="flex items-start">

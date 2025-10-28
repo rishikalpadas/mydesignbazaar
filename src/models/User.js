@@ -37,11 +37,15 @@ const userSchema = new mongoose.Schema({
   mobileOtp: {
     code: String,
     expiresAt: Date,
+    phoneNumber: String, // Store the phone number being verified
     verified: {
       type: Boolean,
       default: false,
     },
   },
+  // Password Reset
+  passwordResetToken: String,
+  passwordResetExpires: Date,
   createdAt: {
     type: Date,
     default: Date.now,

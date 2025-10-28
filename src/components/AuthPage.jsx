@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   User,
   Mail,
@@ -84,12 +84,21 @@ const LoginForm = ({
 
       <div className="flex items-center justify-between">
         <label className="flex items-center">
-          <input type="checkbox" className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500" />
+          <input
+            type="checkbox"
+            checked={formData.rememberMe || false}
+            onChange={(e) => handleInputChange("rememberMe", e.target.checked)}
+            className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+          />
           <span className="ml-2 text-sm text-gray-600">Remember me</span>
         </label>
-        <a href="#" className="text-sm text-amber-600 hover:text-amber-700">
+        <button
+          type="button"
+          onClick={() => setCurrentView("forgot-password")}
+          className="text-sm text-amber-600 hover:text-amber-700"
+        >
           Forgot password?
-        </a>
+        </button>
       </div>
 
       <button
@@ -122,12 +131,101 @@ const LoginForm = ({
     </form>
   </div>
 )
+
+const ForgotPasswordForm = ({
+  formData,
+  handleInputChange,
+  handleForgotPassword,
+  loading,
+  error,
+  success,
+  setCurrentView,
+}) => (
+  <div className="max-w-md mx-auto">
+    <div className="text-center mb-8">
+      <button
+        onClick={() => setCurrentView("login")}
+        className="flex items-center text-gray-600 hover:text-gray-800 mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back to Login
+      </button>
+      <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        <Lock className="w-8 h-8 text-white" />
+      </div>
+      <h2 className="text-2xl font-bold text-gray-900">Forgot Password?</h2>
+      <p className="text-gray-600 mt-2">No worries! We'll send you reset instructions.</p>
+    </div>
+
+    {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{error}</div>}
+
+    {success && (
+      <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+        {success}
+        <p className="mt-2 text-xs">
+          Check your email inbox (and spam folder) for the password reset link.
+        </p>
+      </div>
+    )}
+
+    <form onSubmit={handleForgotPassword} className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="email"
+            value={formData.resetEmail || ""}
+            onChange={(e) => handleInputChange("resetEmail", e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+            placeholder="Enter your registered email"
+            required
+          />
+        </div>
+        <p className="mt-2 text-xs text-gray-500">
+          Enter the email address associated with your account and we'll send you a link to reset your password.
+        </p>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4 rounded-lg font-medium hover:from-amber-600 hover:to-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Sending Reset Link...
+          </>
+        ) : (
+          "Send Reset Link"
+        )}
+      </button>
+
+      <div className="text-center">
+        <p className="text-gray-600">
+          Remember your password?{" "}
+          <button
+            type="button"
+            onClick={() => setCurrentView("login")}
+            className="text-amber-600 hover:text-amber-700 font-medium"
+          >
+            Sign in here
+          </button>
+        </p>
+      </div>
+    </form>
+  </div>
+)
+
 const DesignerSignupForm = ({
   formData,
   handleInputChange,
   handleDesignerSignup,
   handleSendEmailOTP,
   handleVerifyEmailOTP,
+  handleSendMobileOTP,
+  handleVerifyMobileOTP,
   showPassword,
   setShowPassword,
   showConfirmPassword,
@@ -241,15 +339,58 @@ const DesignerSignupForm = ({
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
-            <input
-              type="tel"
-              value={formData.mobileNumber || ""}
-              onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="Enter mobile number"
-              required
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mobile Number (with WhatsApp) *
+              {formData.mobileVerified && (
+                <span className="ml-2 text-green-500 text-xs">✓ Verified</span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="tel"
+                value={formData.mobileNumber || ""}
+                onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter mobile number"
+                required
+                disabled={formData.mobileVerified}
+              />
+              {/* {!formData.mobileVerified && !formData.mobileOtpSent && (
+                <button
+                  type="button"
+                  onClick={() => handleSendMobileOTP()}
+                  disabled={!formData.mobileNumber || loading}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  Send OTP
+                </button>
+              )} */}
+            </div>
+            {formData.mobileOtpSent && !formData.mobileVerified && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 mb-2">
+                  Enter the 6-digit OTP sent to your WhatsApp/mobile
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.mobileOtp || ""}
+                    onChange={(e) => handleInputChange("mobileOtp", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-center text-lg tracking-widest font-mono"
+                    placeholder="000000"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyMobileOTP()}
+                    disabled={!formData.mobileOtp || formData.mobileOtp.length !== 6 || loading}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
@@ -291,7 +432,7 @@ const DesignerSignupForm = ({
               </button>
             </div>
           </div>
-          <div className="md:col-span-2">
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Alternative Contact</label>
             <input
               type="text"
@@ -602,6 +743,8 @@ const BuyerSignupForm = ({
   handleBuyerSignup,
   handleSendEmailOTP,
   handleVerifyEmailOTP,
+  handleSendMobileOTP,
+  handleVerifyMobileOTP,
   showPassword,
   setShowPassword,
   showConfirmPassword,
@@ -704,14 +847,58 @@ const BuyerSignupForm = ({
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile Number (with WhatsApp) *</label>
-            <input
-              type="tel"
-              value={formData.mobileNumber || ""}
-              onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              required
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Mobile Number (with WhatsApp) *
+              {formData.mobileVerified && (
+                <span className="ml-2 text-green-500 text-xs">✓ Verified</span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="tel"
+                value={formData.mobileNumber || ""}
+                onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter mobile number"
+                required
+                disabled={formData.mobileVerified}
+              />
+              {!formData.mobileVerified && !formData.mobileOtpSent && (
+                <button
+                  type="button"
+                  onClick={() => handleSendMobileOTP()}
+                  disabled={!formData.mobileNumber || loading}
+                  className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  Send OTP
+                </button>
+              )}
+            </div>
+            {formData.mobileOtpSent && !formData.mobileVerified && (
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 mb-2">
+                  Enter the 6-digit OTP sent to your WhatsApp/mobile
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={formData.mobileOtp || ""}
+                    onChange={(e) => handleInputChange("mobileOtp", e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent text-center text-lg tracking-widest font-mono"
+                    placeholder="000000"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyMobileOTP()}
+                    disabled={!formData.mobileOtp || formData.mobileOtp.length !== 6 || loading}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  >
+                    Verify
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Business Type *</label>
@@ -1045,6 +1232,18 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
+  // Load remembered email on component mount
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem('rememberedEmail')
+    if (rememberedEmail) {
+      setFormData(prev => ({
+        ...prev,
+        email: rememberedEmail,
+        rememberMe: true
+      }))
+    }
+  }, [])
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (error) setError("") // Clear error when user starts typing
@@ -1064,12 +1263,20 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
+          rememberMe: formData.rememberMe || false,
         }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
+        // Save email in localStorage if "Remember Me" is checked
+        if (formData.rememberMe) {
+          localStorage.setItem('rememberedEmail', formData.email)
+        } else {
+          localStorage.removeItem('rememberedEmail')
+        }
+
         setSuccess("Login successful!")
         // Call the success callback if provided
         if (onAuthSuccess) {
@@ -1081,6 +1288,39 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
         }, 1000)
       } else {
         setError(data.error || "Login failed")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.resetEmail,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(data.message || "Password reset link has been sent to your email!")
+        // Clear the email field after successful submission
+        handleInputChange("resetEmail", "")
+      } else {
+        setError(data.error || "Failed to send reset link")
       }
     } catch (err) {
       setError("Network error. Please try again.")
@@ -1167,6 +1407,84 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
   }
 
+  const handleSendMobileOTP = async () => {
+    if (!formData.mobileNumber) {
+      setError("Please enter your mobile number")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/send-mobile-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber: formData.mobileNumber,
+          userName: formData.fullName || formData.displayName || "User"
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("OTP sent to your WhatsApp/mobile! Please check your messages.")
+        handleInputChange("mobileOtpSent", true)
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "Failed to send OTP")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyMobileOTP = async () => {
+    if (!formData.mobileOtp || formData.mobileOtp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP")
+      return
+    }
+
+    setLoading(true)
+    setError("")
+
+    try {
+      const response = await fetch("/api/auth/verify-mobile-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber: formData.mobileNumber,
+          otp: formData.mobileOtp
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess("Mobile number verified successfully!")
+        handleInputChange("mobileVerified", true)
+        handleInputChange("mobileOtpSent", false)
+        handleInputChange("mobileOtp", "")
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(""), 3000)
+      } else {
+        setError(data.error || "Invalid OTP")
+      }
+    } catch (err) {
+      setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleDesignerSignup = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -1175,6 +1493,13 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     // Validate email verification
     if (!formData.emailVerified) {
       setError("Please verify your email address before submitting")
+      setLoading(false)
+      return
+    }
+
+    // Validate mobile verification
+    if (!formData.mobileVerified) {
+      setError("Please verify your mobile number before submitting")
       setLoading(false)
       return
     }
@@ -1276,6 +1601,13 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     // Validate email verification
     if (!formData.emailVerified) {
       setError("Please verify your email address before submitting")
+      setLoading(false)
+      return
+    }
+
+    // Validate mobile verification
+    if (!formData.mobileVerified) {
+      setError("Please verify your mobile number before submitting")
       setLoading(false)
       return
     }
@@ -1442,6 +1774,17 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             setCurrentView={setCurrentView}
           />
         )}
+        {currentView === "forgot-password" && (
+          <ForgotPasswordForm
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleForgotPassword={handleForgotPassword}
+            loading={loading}
+            error={error}
+            success={success}
+            setCurrentView={setCurrentView}
+          />
+        )}
         {currentView === "signup-choice" && <SignupChoice />}
         {currentView === "designer-signup" && (
           <DesignerSignupForm
@@ -1450,6 +1793,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             handleDesignerSignup={handleDesignerSignup}
             handleSendEmailOTP={handleSendEmailOTP}
             handleVerifyEmailOTP={handleVerifyEmailOTP}
+            handleSendMobileOTP={handleSendMobileOTP}
+            handleVerifyMobileOTP={handleVerifyMobileOTP}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
@@ -1467,6 +1812,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             handleBuyerSignup={handleBuyerSignup}
             handleSendEmailOTP={handleSendEmailOTP}
             handleVerifyEmailOTP={handleVerifyEmailOTP}
+            handleSendMobileOTP={handleSendMobileOTP}
+            handleVerifyMobileOTP={handleVerifyMobileOTP}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
