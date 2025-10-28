@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-db": "node src/scripts/setupDatabase.js"
+    "setup-db": "node src/scripts/setupDatabase.js",
+    "seed": "node scripts/seed-production.mjs",
+    "seed:prod": "NODE_ENV=production node scripts/seed-production.mjs"
   },
   "dependencies": {
     "axios": "^1.12.2",
