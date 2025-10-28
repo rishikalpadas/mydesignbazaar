@@ -4,7 +4,11 @@
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
       "Bash(dir:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
