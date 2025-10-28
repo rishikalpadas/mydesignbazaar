@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import {
   User,
   Mail,
@@ -1232,17 +1232,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
 
-  // Load remembered email on component mount
-  useEffect(() => {
-    const rememberedEmail = localStorage.getItem('rememberedEmail')
-    if (rememberedEmail) {
-      setFormData(prev => ({
-        ...prev,
-        email: rememberedEmail,
-        rememberMe: true
-      }))
-    }
-  }, [])
+  // Remember Me functionality now controls session duration via JWT cookies
+  // No need for localStorage - cookies handle persistence automatically
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -1270,13 +1261,7 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
       const data = await response.json()
 
       if (response.ok) {
-        // Save email in localStorage if "Remember Me" is checked
-        if (formData.rememberMe) {
-          localStorage.setItem('rememberedEmail', formData.email)
-        } else {
-          localStorage.removeItem('rememberedEmail')
-        }
-
+        // Remember Me is now handled by cookie/JWT expiry on the server
         setSuccess("Login successful!")
         // Call the success callback if provided
         if (onAuthSuccess) {

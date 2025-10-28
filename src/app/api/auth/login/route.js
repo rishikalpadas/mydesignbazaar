@@ -65,7 +65,7 @@ export async function POST(request) {
   try {
     await connectDB()
 
-    const { email, password } = await request.json()
+    const { email, password, rememberMe } = await request.json()
 
     // Validate input
     if (!email || !password) {
@@ -73,6 +73,10 @@ export async function POST(request) {
     }
 
     const emailLower = email.toLowerCase()
+
+    // Determine session duration based on rememberMe
+    const sessionDuration = rememberMe ? 7 * 24 * 60 * 60 : 24 * 60 * 60 // 7 days or 1 day
+    const jwtExpiry = rememberMe ? "7d" : "1d"
 
     // Get or create Admin model
     const Admin = mongoose.models.Admin || mongoose.model("Admin", AdminSchema)
@@ -106,7 +110,7 @@ export async function POST(request) {
           permissions: admin.permissions,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "7d" },
+        { expiresIn: jwtExpiry },
       )
 
       // Prepare admin response data
@@ -140,7 +144,7 @@ export async function POST(request) {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60, // 7 days
+        maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
         path: "/",
       })
 
@@ -182,7 +186,7 @@ export async function POST(request) {
         userType: user.userType,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" },
+      { expiresIn: jwtExpiry },
     )
 
     // Prepare regular user response data
@@ -220,7 +224,7 @@ export async function POST(request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
       path: "/",
     })
 
