@@ -126,6 +126,8 @@ const DesignerSignupForm = ({
   formData,
   handleInputChange,
   handleDesignerSignup,
+  handleSendEmailOTP,
+  handleVerifyEmailOTP,
   showPassword,
   setShowPassword,
   showConfirmPassword,
@@ -598,6 +600,8 @@ const BuyerSignupForm = ({
   formData,
   handleInputChange,
   handleBuyerSignup,
+  handleSendEmailOTP,
+  handleVerifyEmailOTP,
   showPassword,
   setShowPassword,
   showConfirmPassword,
@@ -1444,6 +1448,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             formData={formData}
             handleInputChange={handleInputChange}
             handleDesignerSignup={handleDesignerSignup}
+            handleSendEmailOTP={handleSendEmailOTP}
+            handleVerifyEmailOTP={handleVerifyEmailOTP}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
@@ -1459,6 +1465,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             formData={formData}
             handleInputChange={handleInputChange}
             handleBuyerSignup={handleBuyerSignup}
+            handleSendEmailOTP={handleSendEmailOTP}
+            handleVerifyEmailOTP={handleVerifyEmailOTP}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
