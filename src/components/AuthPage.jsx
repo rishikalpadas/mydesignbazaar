@@ -2119,11 +2119,11 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
 
     // Validate mobile verification
-    if (!formData.mobileVerified) {
-      setError("Please verify your mobile number before submitting")
-      setLoading(false)
-      return
-    }
+    // if (!formData.mobileVerified) {
+    //   setError("Please verify your mobile number before submitting")
+    //   setLoading(false)
+    //   return
+    // }
 
     // Validate password strength
     const passwordError = validatePassword(formData.password)
@@ -2265,11 +2265,11 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
 
     // Validate mobile verification
-    if (!formData.mobileVerified) {
-      setError("Please verify your mobile number before submitting")
-      setLoading(false)
-      return
-    }
+    // if (!formData.mobileVerified) {
+    //   setError("Please verify your mobile number before submitting")
+    //   setLoading(false)
+    //   return
+    // }
 
     // Validate password strength
     const passwordError = validatePassword(formData.password)
