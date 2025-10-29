@@ -19,33 +19,48 @@ export async function POST(request) {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists with this email' },
-        { status: 400 }
-      );
-    }
+    let existingUser = await User.findOne({ email: email.toLowerCase() });
 
     // Hash password
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create user (email verification will be done via OTP)
-    const newUser = new User({
-      email: email.toLowerCase(),
-      password: hashedPassword,
-      userType,
-      isVerified: false, // Will be set to true after email OTP verification
-      isApproved: userType === 'buyer' ? true : false, // Buyers auto-approved, designers need approval
-      emailOtp: {
-        code: null,
-        expiresAt: null,
-        verified: false
-      }
-    });
+    let savedUser;
 
-    const savedUser = await newUser.save();
+    if (existingUser) {
+      // User exists from OTP verification - update with registration data
+      // Only allow if this is a temporary user (password is still 'temporary')
+      if (existingUser.password !== 'temporary') {
+        return NextResponse.json(
+          { error: 'User already exists with this email' },
+          { status: 400 }
+        );
+      }
+
+      // Update temporary user with actual registration data
+      existingUser.password = hashedPassword;
+      existingUser.userType = userType;
+      existingUser.isVerified = existingUser.emailOtp?.verified || false;
+      existingUser.isApproved = userType === 'buyer' ? true : false;
+
+      savedUser = await existingUser.save();
+    } else {
+      // Create new user (shouldn't happen with OTP flow, but keep as fallback)
+      const newUser = new User({
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        userType,
+        isVerified: false,
+        isApproved: userType === 'buyer' ? true : false,
+        emailOtp: {
+          code: null,
+          expiresAt: null,
+          verified: false
+        }
+      });
+
+      savedUser = await newUser.save();
+    }
 
     // Create profile based on user type
     let profile;
@@ -56,6 +71,8 @@ export async function POST(request) {
         displayName: profileData.displayName,
         mobileNumber: profileData.mobileNumber,
         alternativeContact: profileData.alternativeContact,
+        aadhaarNumber: profileData.aadhaarNumber,
+        aadhaarFiles: profileData.aadhaarFiles || [],
         address: {
           street: profileData.address?.street,
           city: profileData.address?.city,
@@ -64,16 +81,19 @@ export async function POST(request) {
           country: profileData.address?.country,
         },
         panNumber: profileData.panNumber,
+        panCardFile: profileData.panCardFile,
         gstNumber: profileData.gstNumber,
         bankDetails: {
           accountHolderName: profileData.bankDetails?.accountHolderName,
           accountNumber: profileData.bankDetails?.accountNumber,
           bankName: profileData.bankDetails?.bankName,
+          branch: profileData.bankDetails?.branch,
           ifscCode: profileData.bankDetails?.ifscCode,
           upiId: profileData.bankDetails?.upiId,
           paypalId: profileData.bankDetails?.paypalId,
         },
         portfolioLink: profileData.portfolioLink,
+        portfolioLinks: profileData.portfolioLinks || [],
         specializations: profileData.specializations || [],
         otherSpecialization: profileData.otherSpecialization,
         agreements: {

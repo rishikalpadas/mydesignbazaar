@@ -16,11 +16,13 @@ export async function POST(request) {
       );
     }
 
-    // Check if user already exists with verified email
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser && existingUser.emailOtp?.verified) {
+    // Check if user already exists
+    let existingUser = await User.findOne({ email: email.toLowerCase() });
+
+    // Only block if this is a fully registered user (not a temporary one)
+    if (existingUser && existingUser.password !== 'temporary' && existingUser.emailOtp?.verified) {
       return NextResponse.json(
-        { error: 'Email already verified' },
+        { error: 'Email address already registered. Please login instead.' },
         { status: 400 }
       );
     }
@@ -29,13 +31,27 @@ export async function POST(request) {
     const otp = generateOTP();
     const expiresAt = getOTPExpiry();
 
-    // If user exists (registration in progress), update OTP
+    // Update OTP for existing user (including temporary users) or create new temporary user
     if (existingUser) {
+      // Reset verification status and update OTP (allows re-verification)
       existingUser.emailOtp = {
         code: otp,
         expiresAt,
         verified: false
       };
+      await existingUser.save();
+    } else {
+      // Create temporary user for OTP verification during registration
+      existingUser = new User({
+        email: email.toLowerCase(),
+        password: 'temporary', // Will be replaced during actual registration
+        userType: 'buyer', // Default, will be updated during registration
+        emailOtp: {
+          code: otp,
+          expiresAt,
+          verified: false
+        }
+      });
       await existingUser.save();
     }
 

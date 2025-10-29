@@ -70,7 +70,12 @@ const designerSchema = new mongoose.Schema({
     required: true,
   },
   alternativeContact: String,
-  
+  aadhaarNumber: {
+    type: String,
+    required: true,
+  },
+  aadhaarFiles: [String], // File paths for Aadhaar card (front & back)
+
   // Address
   address: {
     street: { type: String, required: true },
@@ -81,8 +86,12 @@ const designerSchema = new mongoose.Schema({
   },
   
   // Identity & Tax
-  governmentId: String, // File path
-  panNumber: String,
+  governmentId: String, // File path (deprecated, use aadhaarFiles)
+  panNumber: {
+    type: String,
+    required: true,
+  },
+  panCardFile: String, // File path for PAN card
   gstNumber: String,
   
   // Bank Details
@@ -90,6 +99,7 @@ const designerSchema = new mongoose.Schema({
     accountHolderName: String,
     accountNumber: String,
     bankName: String,
+    branch: String,
     ifscCode: String,
     upiId: String,
     paypalId: String,
@@ -97,7 +107,8 @@ const designerSchema = new mongoose.Schema({
   
   // Portfolio
   sampleDesigns: [String], // File paths
-  portfolioLink: String,
+  portfolioLink: String, // Deprecated, use portfolioLinks
+  portfolioLinks: [String], // Array of portfolio URLs
   specializations: [String],
   otherSpecialization: String,
   

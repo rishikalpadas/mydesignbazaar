@@ -7,7 +7,7 @@ export async function POST(request) {
   try {
     await connectDB();
 
-    const { phoneNumber, userName } = await request.json();
+    const { phoneNumber, userName, email } = await request.json();
 
     if (!phoneNumber) {
       return NextResponse.json(
@@ -25,15 +25,15 @@ export async function POST(request) {
       );
     }
 
-    // Check if user exists with this phone number and already verified
-    const existingUser = await User.findOne({
-      $or: [
-        { 'mobileOtp.phoneNumber': cleanPhone },
-        { email: { $exists: true } } // If looking up by email in future
-      ]
-    });
+    // Find user by email (preferred) or phone number
+    let existingUser;
+    if (email) {
+      existingUser = await User.findOne({ email: email.toLowerCase() });
+    } else {
+      existingUser = await User.findOne({ 'mobileOtp.phoneNumber': cleanPhone });
+    }
 
-    if (existingUser && existingUser.mobileOtp?.verified) {
+    if (existingUser && existingUser.mobileOtp?.verified && existingUser.mobileOtp?.phoneNumber === cleanPhone) {
       return NextResponse.json(
         { error: 'Phone number already verified' },
         { status: 400 }
@@ -44,7 +44,7 @@ export async function POST(request) {
     const otp = generateOTP();
     const expiresAt = getOTPExpiry();
 
-    // If user exists, update OTP
+    // Update or create user with mobile OTP
     if (existingUser) {
       existingUser.mobileOtp = {
         code: otp,
@@ -53,6 +53,13 @@ export async function POST(request) {
         phoneNumber: cleanPhone
       };
       await existingUser.save();
+    } else {
+      // This shouldn't happen during normal registration flow (email OTP should create user first)
+      // But handle it just in case
+      return NextResponse.json(
+        { error: 'Please verify your email first before verifying mobile number' },
+        { status: 400 }
+      );
     }
 
     // Send OTP via WhatsApp/SMS

@@ -16,7 +16,197 @@ import {
   ShoppingBag,
   FileText,
   Loader2,
+  Upload,
+  ChevronUp,
+  ChevronDown,
+  X,
 } from "lucide-react"
+
+// Validation helper functions (defined outside component for better performance)
+const formatEmail = (value) => {
+  return value.toLowerCase().trim()
+}
+
+const formatPAN = (value) => {
+  // PAN format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)
+  let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+
+  if (formatted.length > 10) {
+    formatted = formatted.slice(0, 10)
+  }
+
+  // Ensure first 5 are letters
+  if (formatted.length <= 5) {
+    formatted = formatted.replace(/[^A-Z]/g, "")
+  } else if (formatted.length <= 9) {
+    // Next 4 should be digits
+    const letters = formatted.slice(0, 5).replace(/[^A-Z]/g, "")
+    const digits = formatted.slice(5, 9).replace(/[^0-9]/g, "")
+    formatted = letters + digits
+  } else {
+    // Last one should be a letter
+    const letters = formatted.slice(0, 5).replace(/[^A-Z]/g, "")
+    const digits = formatted.slice(5, 9).replace(/[^0-9]/g, "")
+    const lastLetter = formatted.slice(9, 10).replace(/[^A-Z]/g, "")
+    formatted = letters + digits + lastLetter
+  }
+
+  return formatted
+}
+
+const formatGST = (value) => {
+  // GST format: 2 digits + 10 char PAN + 1 digit + Z + 1 digit (15 chars total)
+  let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+
+  if (formatted.length > 15) {
+    formatted = formatted.slice(0, 15)
+  }
+
+  // First 2 must be digits (state code)
+  if (formatted.length <= 2) {
+    formatted = formatted.replace(/[^0-9]/g, "")
+  } else if (formatted.length <= 12) {
+    // Next 10 are PAN (5 letters + 4 digits + 1 letter)
+    const stateCode = formatted.slice(0, 2).replace(/[^0-9]/g, "")
+    let pan = formatted.slice(2, 12)
+
+    // Format PAN part
+    if (pan.length <= 5) {
+      pan = pan.replace(/[^A-Z]/g, "")
+    } else if (pan.length <= 9) {
+      const letters = pan.slice(0, 5).replace(/[^A-Z]/g, "")
+      const digits = pan.slice(5, 9).replace(/[^0-9]/g, "")
+      pan = letters + digits
+    } else {
+      const letters = pan.slice(0, 5).replace(/[^A-Z]/g, "")
+      const digits = pan.slice(5, 9).replace(/[^0-9]/g, "")
+      const lastLetter = pan.slice(9, 10).replace(/[^A-Z]/g, "")
+      pan = letters + digits + lastLetter
+    }
+
+    formatted = stateCode + pan
+  } else if (formatted.length === 13) {
+    // 13th char is entity number (digit)
+    const base = formatted.slice(0, 12)
+    const entity = formatted.slice(12, 13).replace(/[^0-9]/g, "")
+    formatted = base + entity
+  } else if (formatted.length === 14) {
+    // 14th char is always 'Z'
+    const base = formatted.slice(0, 13)
+    formatted = base + 'Z'
+  } else {
+    // 15th char is checksum (digit)
+    const base = formatted.slice(0, 14)
+    const checksum = formatted.slice(14, 15).replace(/[^0-9]/g, "")
+    formatted = base + checksum
+  }
+
+  return formatted
+}
+
+const formatIFSC = (value) => {
+  // IFSC format: 4 letters + 0 + 6 alphanumeric (11 chars total)
+  let formatted = value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+
+  if (formatted.length > 11) {
+    formatted = formatted.slice(0, 11)
+  }
+
+  // First 4 must be letters
+  if (formatted.length <= 4) {
+    formatted = formatted.replace(/[^A-Z]/g, "")
+  } else if (formatted.length === 5) {
+    // 5th char must be 0
+    const bankCode = formatted.slice(0, 4).replace(/[^A-Z]/g, "")
+    formatted = bankCode + '0'
+  } else {
+    // Last 6 are alphanumeric
+    const bankCode = formatted.slice(0, 4).replace(/[^A-Z]/g, "")
+    const branch = formatted.slice(5, 11) // Keep alphanumeric
+    formatted = bankCode + '0' + branch
+  }
+
+  return formatted
+}
+
+const formatLettersOnly = (value) => {
+  return value.replace(/[^a-zA-Z\s]/g, "")
+}
+
+const formatNumbersOnly = (value) => {
+  return value.replace(/\D/g, "")
+}
+
+const validatePassword = (password) => {
+  const minLength = 8
+  const hasUppercase = /[A-Z]/.test(password)
+  const hasLowercase = /[a-z]/.test(password)
+  const hasNumber = /[0-9]/.test(password)
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+
+  if (password.length < minLength) {
+    return "Password must be at least 8 characters long"
+  }
+  if (!hasUppercase) {
+    return "Password must contain at least one uppercase letter"
+  }
+  if (!hasLowercase) {
+    return "Password must contain at least one lowercase letter"
+  }
+  if (!hasNumber) {
+    return "Password must contain at least one number"
+  }
+  if (!hasSpecialChar) {
+    return "Password must contain at least one special character"
+  }
+
+  return null
+}
+
+const validateEmail = (email) => {
+  const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+  return emailRegex.test(email)
+}
+
+const validateUPI = (upi) => {
+  // UPI format: username@bankcode (e.g., rishikalpa1234@ybl)
+  const upiRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z]+$/
+  return upiRegex.test(upi)
+}
+
+// Postal code validation patterns by country
+const postalCodePatterns = {
+  IN: { pattern: /^\d{6}$/, placeholder: "110001", label: "PIN Code" },
+  US: { pattern: /^\d{5}(-\d{4})?$/, placeholder: "12345", label: "ZIP Code" },
+  CA: { pattern: /^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/i, placeholder: "A1A 1A1", label: "Postal Code" },
+  GB: { pattern: /^[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}$/i, placeholder: "SW1A 1AA", label: "Postcode" },
+  AU: { pattern: /^\d{4}$/, placeholder: "2000", label: "Postcode" },
+  default: { pattern: /^.+$/, placeholder: "Enter code", label: "Postal Code" }
+}
+
+// Countries with their states/provinces
+const countriesData = {
+  IN: { name: "India", states: ["Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"] },
+  US: { name: "United States", states: ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"] },
+  CA: { name: "Canada", states: ["Alberta", "British Columbia", "Manitoba", "New Brunswick", "Newfoundland and Labrador", "Northwest Territories", "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec", "Saskatchewan", "Yukon"] },
+  GB: { name: "United Kingdom", states: ["England", "Scotland", "Wales", "Northern Ireland"] },
+  AU: { name: "Australia", states: ["Australian Capital Territory", "New South Wales", "Northern Territory", "Queensland", "South Australia", "Tasmania", "Victoria", "Western Australia"] },
+  DE: { name: "Germany", states: ["Baden-Württemberg", "Bavaria", "Berlin", "Brandenburg", "Bremen", "Hamburg", "Hesse", "Lower Saxony", "Mecklenburg-Vorpommern", "North Rhine-Westphalia", "Rhineland-Palatinate", "Saarland", "Saxony", "Saxony-Anhalt", "Schleswig-Holstein", "Thuringia"] },
+  FR: { name: "France", states: ["Auvergne-Rhône-Alpes", "Bourgogne-Franche-Comté", "Brittany", "Centre-Val de Loire", "Corsica", "Grand Est", "Hauts-de-France", "Île-de-France", "Normandy", "Nouvelle-Aquitaine", "Occitanie", "Pays de la Loire", "Provence-Alpes-Côte d'Azur"] },
+  JP: { name: "Japan", states: ["Hokkaido", "Aomori", "Iwate", "Miyagi", "Akita", "Yamagata", "Fukushima", "Ibaraki", "Tochigi", "Gunma", "Saitama", "Chiba", "Tokyo", "Kanagawa", "Niigata", "Toyama", "Ishikawa", "Fukui", "Yamanashi", "Nagano", "Gifu", "Shizuoka", "Aichi", "Mie", "Shiga", "Kyoto", "Osaka", "Hyogo", "Nara", "Wakayama", "Tottori", "Shimane", "Okayama", "Hiroshima", "Yamaguchi", "Tokushima", "Kagawa", "Ehime", "Kochi", "Fukuoka", "Saga", "Nagasaki", "Kumamoto", "Oita", "Miyazaki", "Kagoshima", "Okinawa"] },
+  CN: { name: "China", states: ["Anhui", "Beijing", "Chongqing", "Fujian", "Gansu", "Guangdong", "Guangxi", "Guizhou", "Hainan", "Hebei", "Heilongjiang", "Henan", "Hong Kong", "Hubei", "Hunan", "Inner Mongolia", "Jiangsu", "Jiangxi", "Jilin", "Liaoning", "Macau", "Ningxia", "Qinghai", "Shaanxi", "Shandong", "Shanghai", "Shanxi", "Sichuan", "Tianjin", "Tibet", "Xinjiang", "Yunnan", "Zhejiang"] },
+  BR: { name: "Brazil", states: ["Acre", "Alagoas", "Amapá", "Amazonas", "Bahia", "Ceará", "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão", "Mato Grosso", "Mato Grosso do Sul", "Minas Gerais", "Pará", "Paraíba", "Paraná", "Pernambuco", "Piauí", "Rio de Janeiro", "Rio Grande do Norte", "Rio Grande do Sul", "Rondônia", "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"] },
+  MX: { name: "Mexico", states: ["Aguascalientes", "Baja California", "Baja California Sur", "Campeche", "Chiapas", "Chihuahua", "Coahuila", "Colima", "Durango", "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Mexico City", "México", "Michoacán", "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla", "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa", "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz", "Yucatán", "Zacatecas"] },
+  IT: { name: "Italy", states: ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna", "Friuli-Venezia Giulia", "Lazio", "Liguria", "Lombardy", "Marche", "Molise", "Piedmont", "Apulia", "Sardinia", "Sicily", "Tuscany", "Trentino-Alto Adige", "Umbria", "Aosta Valley", "Veneto"] },
+  ES: { name: "Spain", states: ["Andalusia", "Aragon", "Asturias", "Balearic Islands", "Basque Country", "Canary Islands", "Cantabria", "Castile and León", "Castile-La Mancha", "Catalonia", "Extremadura", "Galicia", "La Rioja", "Madrid", "Murcia", "Navarre", "Valencia"] },
+  NL: { name: "Netherlands", states: ["Drenthe", "Flevoland", "Friesland", "Gelderland", "Groningen", "Limburg", "North Brabant", "North Holland", "Overijssel", "South Holland", "Utrecht", "Zeeland"] },
+  Other: { name: "Other Country", states: [] }
+}
+
+const validatePostalCode = (code, countryCode) => {
+  const pattern = postalCodePatterns[countryCode] || postalCodePatterns.default
+  return pattern.pattern.test(code)
+}
 
 const LoginForm = ({
   formData,
@@ -226,6 +416,8 @@ const DesignerSignupForm = ({
   handleVerifyEmailOTP,
   handleSendMobileOTP,
   handleVerifyMobileOTP,
+  handleAadhaarFileUpload,
+  handlePanFileUpload,
   showPassword,
   setShowPassword,
   showConfirmPassword,
@@ -267,10 +459,11 @@ const DesignerSignupForm = ({
             <input
               type="text"
               value={formData.fullName || ""}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
+              onChange={(e) => handleInputChange("fullName", formatLettersOnly(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               placeholder="Enter your full name"
               required
+              pattern="[A-Za-z\s]+"
             />
           </div>
           <div>
@@ -286,15 +479,29 @@ const DesignerSignupForm = ({
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
             <div className="flex gap-2">
-              <input
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                placeholder="Enter your email"
-                required
-                disabled={formData.emailVerified}
-              />
+              <div className="flex-1">
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => {
+                    handleInputChange("email", formatEmail(e.target.value))
+                    handleInputChange("emailError", "")
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value && !validateEmail(e.target.value)) {
+                      handleInputChange("emailError", "Please enter a valid email address")
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                  disabled={formData.emailVerified}
+                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                />
+                {formData.emailError && (
+                  <p className="text-xs text-red-600 mt-1">{formData.emailError}</p>
+                )}
+              </div>
               {!formData.emailVerified && (
                 <button
                   type="button"
@@ -349,11 +556,13 @@ const DesignerSignupForm = ({
               <input
                 type="tel"
                 value={formData.mobileNumber || ""}
-                onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
+                onChange={(e) => handleInputChange("mobileNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                placeholder="Enter mobile number"
+                placeholder="Enter 10-digit mobile number"
                 required
                 disabled={formData.mobileVerified}
+                maxLength="10"
+                pattern="[0-9]{10}"
               />
               {/* {!formData.mobileVerified && !formData.mobileOtpSent && (
                 <button
@@ -402,6 +611,7 @@ const DesignerSignupForm = ({
                 className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                 placeholder="Enter your password"
                 required
+                minLength="8"
               />
               <button
                 type="button"
@@ -411,6 +621,9 @@ const DesignerSignupForm = ({
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Min 8 characters with uppercase, lowercase, number, and special character
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password *</label>
@@ -422,6 +635,7 @@ const DesignerSignupForm = ({
                 className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                 placeholder="Confirm your password"
                 required
+                minLength="8"
               />
               <button
                 type="button"
@@ -431,16 +645,234 @@ const DesignerSignupForm = ({
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
+              <p className="text-xs text-red-600 mt-1">Passwords do not match</p>
+            )}
           </div>
           <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Alternative Contact</label>
             <input
-              type="text"
+              type="tel"
               value={formData.alternativeContact || ""}
-              onChange={(e) => handleInputChange("alternativeContact", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="Optional alternative contact"
+              onChange={(e) => handleInputChange("alternativeContact", e.target.value.replace(/\D/g, "").slice(0, 10))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder="Optional 10-digit contact number"
+              maxLength="10"
+              pattern="[0-9]{10}"
             />
+          </div>
+
+          {/* Aadhaar Number */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Aadhaar Number *</label>
+            <input
+              type="text"
+              value={formData.aadhaarNumber || ""}
+              onChange={(e) => handleInputChange("aadhaarNumber", e.target.value.replace(/\D/g, "").slice(0, 12))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder="12-digit Aadhaar number"
+              required
+              maxLength="12"
+              pattern="[0-9]{12}"
+            />
+          </div>
+
+          {/* PAN Card Number */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card Number *</label>
+            <input
+              type="text"
+              value={formData.panNumber || ""}
+              onChange={(e) => handleInputChange("panNumber", formatPAN(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder="ABCDE1234F"
+              required
+              maxLength="10"
+              pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
+            />
+            <p className="text-xs text-gray-500 mt-1">Format: 5 letters + 4 digits + 1 letter</p>
+          </div>
+
+          {/* Aadhaar Card Upload */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Aadhaar Card (Front & Back) *
+            </label>
+            <p className="text-xs text-gray-500 mb-3">Upload both sides of your Aadhaar card (max 2 files, PDF/JPG/PNG, max 5MB each)</p>
+
+            <div className="space-y-3">
+              {/* File Upload Area */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const files = Array.from(e.dataTransfer.files)
+                  handleAadhaarFileUpload(files)
+                }}
+                className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-amber-400 transition-colors cursor-pointer"
+                onClick={() => document.getElementById('aadhaar-upload').click()}
+              >
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600 mb-1">
+                  Drag & drop files here or click to browse
+                </p>
+                <p className="text-xs text-gray-500">
+                  Accepted formats: PDF, JPG, PNG (max 2 files)
+                </p>
+                <input
+                  id="aadhaar-upload"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  multiple
+                  onChange={(e) => handleAadhaarFileUpload(Array.from(e.target.files))}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Uploaded Files Display */}
+              {formData.aadhaarFiles && formData.aadhaarFiles.length > 0 && (
+                <div className="space-y-2">
+                  {formData.aadhaarFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3 flex-1">
+                        <FileText className="w-5 h-5 text-amber-500" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {/* Move Up */}
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const files = [...formData.aadhaarFiles]
+                              const temp = files[index]
+                              files[index] = files[index - 1]
+                              files[index - 1] = temp
+                              handleInputChange("aadhaarFiles", files)
+                            }}
+                            className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
+                            title="Move up"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                        )}
+                        {/* Move Down */}
+                        {index < formData.aadhaarFiles.length - 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const files = [...formData.aadhaarFiles]
+                              const temp = files[index]
+                              files[index] = files[index + 1]
+                              files[index + 1] = temp
+                              handleInputChange("aadhaarFiles", files)
+                            }}
+                            className="p-1 text-gray-400 hover:text-amber-600 transition-colors"
+                            title="Move down"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                        )}
+                        {/* Remove */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const files = formData.aadhaarFiles.filter((_, i) => i !== index)
+                            handleInputChange("aadhaarFiles", files)
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Remove"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* PAN Card Upload */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              PAN Card Copy *
+            </label>
+            <p className="text-xs text-gray-500 mb-3">Upload your PAN card (1 file, PDF/JPG/PNG, max 5MB)</p>
+
+            <div className="space-y-3">
+              {/* File Upload Area */}
+              {(!formData.panCardFile || formData.panCardFile.length === 0) && (
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    const files = Array.from(e.dataTransfer.files)
+                    handlePanFileUpload(files)
+                  }}
+                  className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-amber-400 transition-colors cursor-pointer"
+                  onClick={() => document.getElementById('pan-upload').click()}
+                >
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600 mb-1">
+                    Drag & drop file here or click to browse
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Accepted formats: PDF, JPG, PNG (max 1 file)
+                  </p>
+                  <input
+                    id="pan-upload"
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => handlePanFileUpload(Array.from(e.target.files))}
+                    className="hidden"
+                  />
+                </div>
+              )}
+
+              {/* Uploaded File Display */}
+              {formData.panCardFile && formData.panCardFile.length > 0 && (
+                <div className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center space-x-3 flex-1">
+                    <FileText className="w-5 h-5 text-amber-500" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {formData.panCardFile[0].name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(formData.panCardFile[0].size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleInputChange("panCardFile", [])}
+                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    title="Remove"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -463,6 +895,56 @@ const DesignerSignupForm = ({
               required
             />
           </div>
+
+          {/* Country - First so state can depend on it */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
+            <select
+              value={formData.country || ""}
+              onChange={(e) => {
+                handleInputChange("country", e.target.value)
+                handleInputChange("state", "") // Reset state when country changes
+                handleInputChange("postalCode", "") // Reset postal code
+                handleInputChange("postalCodeError", "")
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              required
+            >
+              <option value="">Select Country</option>
+              {Object.entries(countriesData).map(([code, data]) => (
+                <option key={code} value={code}>{data.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* State/Province - Dynamic based on country */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">State/Province *</label>
+            {formData.country && countriesData[formData.country]?.states.length > 0 ? (
+              <select
+                value={formData.state || ""}
+                onChange={(e) => handleInputChange("state", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                required
+              >
+                <option value="">Select State/Province</option>
+                {countriesData[formData.country].states.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={formData.state || ""}
+                onChange={(e) => handleInputChange("state", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder={formData.country ? "Enter state/province" : "Select country first"}
+                required
+                disabled={!formData.country}
+              />
+            )}
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
             <input
@@ -470,43 +952,43 @@ const DesignerSignupForm = ({
               value={formData.city || ""}
               onChange={(e) => handleInputChange("city", e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder="Enter city name"
               required
             />
           </div>
+
+          {/* Postal Code - Dynamic validation based on country */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">State/Province *</label>
-            <input
-              type="text"
-              value={formData.state || ""}
-              onChange={(e) => handleInputChange("state", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Postal/ZIP Code *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {formData.country && postalCodePatterns[formData.country]
+                ? postalCodePatterns[formData.country].label
+                : "Postal Code"} *
+            </label>
             <input
               type="text"
               value={formData.postalCode || ""}
-              onChange={(e) => handleInputChange("postalCode", e.target.value)}
+              onChange={(e) => {
+                handleInputChange("postalCode", e.target.value.toUpperCase())
+                handleInputChange("postalCodeError", "")
+              }}
+              onBlur={(e) => {
+                if (e.target.value && formData.country) {
+                  if (!validatePostalCode(e.target.value, formData.country)) {
+                    const pattern = postalCodePatterns[formData.country] || postalCodePatterns.default
+                    handleInputChange("postalCodeError", `Invalid format. Example: ${pattern.placeholder}`)
+                  }
+                }
+              }}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+              placeholder={formData.country && postalCodePatterns[formData.country]
+                ? postalCodePatterns[formData.country].placeholder
+                : "Enter postal code"}
               required
+              disabled={!formData.country}
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
-            <select
-              value={formData.country || ""}
-              onChange={(e) => handleInputChange("country", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              required
-            >
-              <option value="">Select Country</option>
-              <option value="IN">India</option>
-              <option value="US">United States</option>
-              <option value="GB">United Kingdom</option>
-              <option value="CA">Canada</option>
-            </select>
+            {formData.postalCodeError && (
+              <p className="text-xs text-red-600 mt-1">{formData.postalCodeError}</p>
+            )}
           </div>
         </div>
       </div>
@@ -517,27 +999,19 @@ const DesignerSignupForm = ({
           <FileText className="w-5 h-5 mr-2 text-amber-500" />
           Identity & Tax Information
         </h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">PAN Card Number *</label>
-            <input
-              type="text"
-              value={formData.panNumber || ""}
-              onChange={(e) => handleInputChange("panNumber", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="India only"
-              required
-            />
-          </div>
+        <div className="grid md:grid-cols-1 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">GST Number</label>
             <input
               type="text"
               value={formData.gstNumber || ""}
-              onChange={(e) => handleInputChange("gstNumber", e.target.value)}
+              onChange={(e) => handleInputChange("gstNumber", formatGST(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="Optional for Indian businesses"
+              placeholder="27ABCDE1234F1Z5"
+              maxLength="15"
+              pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}Z[0-9]{1}"
             />
+            <p className="text-xs text-gray-500 mt-1">Format: 2 digits + PAN (10 chars) + entity digit + Z + checksum digit (optional)</p>
           </div>
         </div>
 
@@ -550,26 +1024,59 @@ const DesignerSignupForm = ({
               <input
                 type="text"
                 value={formData.accountHolderName || ""}
-                onChange={(e) => handleInputChange("accountHolderName", e.target.value)}
+                onChange={(e) => handleInputChange("accountHolderName", formatLettersOnly(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Full name as per bank account"
+                pattern="[A-Za-z\s]+"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
+              <input
+                type="password"
+                value={formData.accountNumber || ""}
+                onChange={(e) => handleInputChange("accountNumber", formatNumbersOnly(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Enter your bank account number"
+                required
+                pattern="[0-9]+"
+              />
+              <p className="text-xs text-gray-500 mt-1">Account number will be masked for security (numbers only)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Account Number *</label>
               <input
                 type="text"
-                value={formData.accountNumber || ""}
-                onChange={(e) => handleInputChange("accountNumber", e.target.value)}
+                value={formData.confirmAccountNumber || ""}
+                onChange={(e) => handleInputChange("confirmAccountNumber", formatNumbersOnly(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Re-enter your bank account number"
+                required
+                pattern="[0-9]+"
               />
+              {formData.accountNumber && formData.confirmAccountNumber && formData.accountNumber !== formData.confirmAccountNumber && (
+                <p className="text-xs text-red-600 mt-1">Account numbers do not match</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
               <input
                 type="text"
                 value={formData.bankName || ""}
-                onChange={(e) => handleInputChange("bankName", e.target.value)}
+                onChange={(e) => handleInputChange("bankName", formatLettersOnly(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Bank name"
+                pattern="[A-Za-z\s]+"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+              <input
+                type="text"
+                value={formData.branch || ""}
+                onChange={(e) => handleInputChange("branch", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="Bank branch name or location"
               />
             </div>
             <div>
@@ -577,8 +1084,9 @@ const DesignerSignupForm = ({
               <input
                 type="text"
                 value={formData.ifscCode || ""}
-                onChange={(e) => handleInputChange("ifscCode", e.target.value)}
+                onChange={(e) => handleInputChange("ifscCode", e.target.value.toUpperCase())}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                placeholder="SBIN0001234"
               />
             </div>
             <div>
@@ -586,10 +1094,21 @@ const DesignerSignupForm = ({
               <input
                 type="text"
                 value={formData.upiId || ""}
-                onChange={(e) => handleInputChange("upiId", e.target.value)}
+                onChange={(e) => {
+                  handleInputChange("upiId", e.target.value)
+                  handleInputChange("upiError", "")
+                }}
+                onBlur={(e) => {
+                  if (e.target.value && !validateUPI(e.target.value)) {
+                    handleInputChange("upiError", "Please enter a valid UPI ID (e.g., username@bankcode)")
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                placeholder="Optional"
+                placeholder="e.g., vivekkumar19@ybl"
               />
+              {formData.upiError && (
+                <p className="text-xs text-red-600 mt-1">{formData.upiError}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">PayPal ID (International)</label>
@@ -614,13 +1133,50 @@ const DesignerSignupForm = ({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Link to Online Portfolio</label>
-            <input
-              type="url"
-              value={formData.portfolioLink || ""}
-              onChange={(e) => handleInputChange("portfolioLink", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-              placeholder="Behance, Instagram, etc. (Optional)"
-            />
+            <div className="space-y-2">
+              {(formData.portfolioLinks || [""]).map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <input
+                    type="url"
+                    value={link}
+                    onChange={(e) => {
+                      const links = [...(formData.portfolioLinks || [""])]
+                      links[index] = e.target.value
+                      handleInputChange("portfolioLinks", links)
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                    placeholder="Behance, Instagram, Dribbble, etc."
+                  />
+                  {index > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const links = (formData.portfolioLinks || [""]).filter((_, i) => i !== index)
+                        handleInputChange("portfolioLinks", links.length > 0 ? links : [""])
+                      }}
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Remove link"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                  {index === (formData.portfolioLinks || [""]).length - 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const links = [...(formData.portfolioLinks || [""]), ""]
+                        handleInputChange("portfolioLinks", links)
+                      }}
+                      className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                      title="Add another link"
+                    >
+                      <Check className="w-5 h-5 rotate-45" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Add multiple portfolio links (optional)</p>
           </div>
 
           <div>
@@ -663,8 +1219,9 @@ const DesignerSignupForm = ({
               type="text"
               value={formData.otherSpecialization || ""}
               onChange={(e) => handleInputChange("otherSpecialization", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent mt-3"
-              placeholder="If others, please specify"
+              disabled={!formData.specializations?.includes("Others")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent mt-3 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder={formData.specializations?.includes("Others") ? "Please specify your specialization" : "Select 'Others' to enable this field"}
             />
           </div>
         </div>
@@ -794,15 +1351,29 @@ const BuyerSignupForm = ({
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
             <div className="flex gap-2">
-              <input
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => handleInputChange("email", e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                placeholder="Enter your email"
-                required
-                disabled={formData.emailVerified}
-              />
+              <div className="flex-1">
+                <input
+                  type="email"
+                  value={formData.email || ""}
+                  onChange={(e) => {
+                    handleInputChange("email", formatEmail(e.target.value))
+                    handleInputChange("emailError", "")
+                  }}
+                  onBlur={(e) => {
+                    if (e.target.value && !validateEmail(e.target.value)) {
+                      handleInputChange("emailError", "Please enter a valid email address")
+                    }
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
+                  placeholder="Enter your email"
+                  required
+                  disabled={formData.emailVerified}
+                  pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                />
+                {formData.emailError && (
+                  <p className="text-xs text-red-600 mt-1">{formData.emailError}</p>
+                )}
+              </div>
               {!formData.emailVerified && (
                 <button
                   type="button"
@@ -857,11 +1428,13 @@ const BuyerSignupForm = ({
               <input
                 type="tel"
                 value={formData.mobileNumber || ""}
-                onChange={(e) => handleInputChange("mobileNumber", e.target.value)}
+                onChange={(e) => handleInputChange("mobileNumber", e.target.value.replace(/\D/g, "").slice(0, 10))}
                 className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                placeholder="Enter mobile number"
+                placeholder="Enter 10-digit mobile number"
                 required
                 disabled={formData.mobileVerified}
+                maxLength="10"
+                pattern="[0-9]{10}"
               />
               {!formData.mobileVerified && !formData.mobileOtpSent && (
                 <button
@@ -1240,6 +1813,68 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     if (error) setError("") // Clear error when user starts typing
   }
 
+  // Aadhaar file upload handler (max 2 files)
+  const handleAadhaarFileUpload = (files) => {
+    if (!files || files.length === 0) return
+
+    const validFormats = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    const maxFiles = 2
+
+    const currentFiles = formData.aadhaarFiles || []
+    const remainingSlots = maxFiles - currentFiles.length
+
+    if (remainingSlots <= 0) {
+      setError("You can only upload a maximum of 2 Aadhaar card files")
+      return
+    }
+
+    const validFiles = []
+    for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
+      const file = files[i]
+
+      if (!validFormats.includes(file.type)) {
+        setError(`${file.name} is not a valid format. Only PDF, JPG, and PNG are allowed.`)
+        continue
+      }
+
+      if (file.size > maxSize) {
+        setError(`${file.name} exceeds 5MB size limit.`)
+        continue
+      }
+
+      validFiles.push(file)
+    }
+
+    if (validFiles.length > 0) {
+      handleInputChange("aadhaarFiles", [...currentFiles, ...validFiles])
+      setError("")
+    }
+  }
+
+  // PAN card file upload handler (max 1 file)
+  const handlePanFileUpload = (files) => {
+    if (!files || files.length === 0) return
+
+    const validFormats = ["application/pdf", "image/jpeg", "image/jpg", "image/png"]
+    const maxSize = 5 * 1024 * 1024 // 5MB
+
+    const file = files[0] // Only take the first file
+
+    if (!validFormats.includes(file.type)) {
+      setError(`${file.name} is not a valid format. Only PDF, JPG, and PNG are allowed.`)
+      return
+    }
+
+    if (file.size > maxSize) {
+      setError(`${file.name} exceeds 5MB size limit.`)
+      return
+    }
+
+    handleInputChange("panCardFile", [file])
+    setError("")
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -1409,7 +2044,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
         },
         body: JSON.stringify({
           phoneNumber: formData.mobileNumber,
-          userName: formData.fullName || formData.displayName || "User"
+          userName: formData.fullName || formData.displayName || "User",
+          email: formData.email // Pass email to find the temporary user
         }),
       })
 
@@ -1489,9 +2125,38 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
       return
     }
 
+    // Validate password strength
+    const passwordError = validatePassword(formData.password)
+    if (passwordError) {
+      setError(passwordError)
+      setLoading(false)
+      return
+    }
+
     // Validate password confirmation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
+
+    // Validate account number confirmation
+    if (formData.accountNumber !== formData.confirmAccountNumber) {
+      setError("Account numbers do not match")
+      setLoading(false)
+      return
+    }
+
+    // Validate Aadhaar files (must have 2 files)
+    if (!formData.aadhaarFiles || formData.aadhaarFiles.length !== 2) {
+      setError("Please upload both front and back sides of your Aadhaar card (2 files required)")
+      setLoading(false)
+      return
+    }
+
+    // Validate PAN card file (must have 1 file)
+    if (!formData.panCardFile || formData.panCardFile.length === 0) {
+      setError("Please upload your PAN card")
       setLoading(false)
       return
     }
@@ -1515,6 +2180,11 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
 
     try {
+      // TODO: Handle file uploads to cloud storage (Cloudinary/AWS S3)
+      // For now, we'll pass the file metadata
+      const aadhaarFileNames = formData.aadhaarFiles.map(f => f.name)
+      const panCardFileName = formData.panCardFile[0].name
+
       const signupData = {
         userType: "designer",
         email: formData.email,
@@ -1523,6 +2193,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
         displayName: formData.displayName,
         mobileNumber: formData.mobileNumber,
         alternativeContact: formData.alternativeContact,
+        aadhaarNumber: formData.aadhaarNumber,
+        aadhaarFiles: aadhaarFileNames, // TODO: Upload files and store paths
         address: {
           street: formData.streetAddress,
           city: formData.city,
@@ -1531,16 +2203,18 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
           country: formData.country,
         },
         panNumber: formData.panNumber,
+        panCardFile: panCardFileName, // TODO: Upload file and store path
         gstNumber: formData.gstNumber,
         bankDetails: {
           accountHolderName: formData.accountHolderName,
           accountNumber: formData.accountNumber,
           bankName: formData.bankName,
+          branch: formData.branch,
           ifscCode: formData.ifscCode,
           upiId: formData.upiId,
           paypalId: formData.paypalId,
         },
-        portfolioLink: formData.portfolioLink,
+        portfolioLinks: (formData.portfolioLinks || [""]).filter(link => link.trim() !== ""),
         specializations: formData.specializations || [],
         otherSpecialization: formData.otherSpecialization,
         agreements: {
@@ -1593,6 +2267,14 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     // Validate mobile verification
     if (!formData.mobileVerified) {
       setError("Please verify your mobile number before submitting")
+      setLoading(false)
+      return
+    }
+
+    // Validate password strength
+    const passwordError = validatePassword(formData.password)
+    if (passwordError) {
+      setError(passwordError)
       setLoading(false)
       return
     }
@@ -1780,6 +2462,8 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
             handleVerifyEmailOTP={handleVerifyEmailOTP}
             handleSendMobileOTP={handleSendMobileOTP}
             handleVerifyMobileOTP={handleVerifyMobileOTP}
+            handleAadhaarFileUpload={handleAadhaarFileUpload}
+            handlePanFileUpload={handlePanFileUpload}
             showPassword={showPassword}
             setShowPassword={setShowPassword}
             showConfirmPassword={showConfirmPassword}
