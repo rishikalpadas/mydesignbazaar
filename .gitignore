@@ -44,4 +44,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# uploaded files
+/public/uploads/aadhaar/
+/public/uploads/pan/
+/public/uploads/sample-designs/
+/public/uploads/general/
+
 nul

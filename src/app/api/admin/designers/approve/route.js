@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import connectDB from "../../../../../lib/mongodb"
-import { User } from "../../../../../models/User"
+import { User, Designer } from "../../../../../models/User"
 import { withPermission } from "../../../../../middleware/auth"
+import { sendApprovalWelcomeEmail } from "../../../../../lib/emailTemplates"
 
 async function handler(request) {
   try {
@@ -20,8 +21,25 @@ async function handler(request) {
       return NextResponse.json({ error: "Target user is not a designer" }, { status: 400 })
     }
 
+    const wasApproved = user.isApproved
     user.isApproved = !!approve
     await user.save()
+
+    // Send welcome email only when approving (not when revoking) and if not already approved
+    if (approve && !wasApproved) {
+      // Get designer profile for full name
+      const designer = await Designer.findOne({ userId: user._id })
+      const designerName = designer?.fullName || designer?.displayName || 'Designer'
+
+      // Send email in background (non-blocking)
+      sendApprovalWelcomeEmail({
+        email: user.email,
+        designerName: designerName,
+      }).catch(emailError => {
+        console.error('Failed to send approval welcome email:', emailError)
+        // Continue anyway - email failure shouldn't block the approval
+      })
+    }
 
     return NextResponse.json({
       success: true,

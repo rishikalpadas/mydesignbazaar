@@ -46,11 +46,6 @@ const userSchema = new mongoose.Schema({
   // Password Reset
   passwordResetToken: String,
   passwordResetExpires: Date,
-  // Credit Points (for buyers to purchase designs)
-  creditPoints: {
-    type: Number,
-    default: 0,
-  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -131,31 +126,6 @@ const designerSchema = new mongoose.Schema({
   totalDesigns: { type: Number, default: 0 },
   approvedDesigns: { type: Number, default: 0 },
   totalEarnings: { type: Number, default: 0 },
-
-  // Account Status
-  accountStatus: {
-    type: String,
-    enum: ['active', 'blocked', 'deleted'],
-    default: 'active',
-  },
-  blockedAt: Date,
-  blockedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  blockReason: String,
-  unblockedAt: Date,
-  unblockedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  unblockRemarks: String,
-  deletedAt: Date,
-  deletedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-  deleteReason: String,
 });
 
 // Buyer Schema

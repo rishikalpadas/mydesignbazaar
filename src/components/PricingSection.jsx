@@ -1,52 +1,55 @@
 'use client'
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react'
 import {
   Crown,
   Star,
   Package,
   Check,
-  ArrowRight,
   Sparkles,
-  TrendingUp
-} from 'lucide-react';
+} from 'lucide-react'
+import RazorpayButton from './RazorpayButton'
 
-const PricingPreview = () => {
-  const [loading, setLoading] = useState(true);
+const PricingSection = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [planPrices, setPlanPrices] = useState({
     basic: 600,
     premium: 5000,
     elite: 50000
-  });
+  })
 
-  // Fetch pricing from backend
+  // Fetch dynamic pricing and check authentication
   useEffect(() => {
-    const fetchSettings = async () => {
+    const init = async () => {
       try {
-        const response = await fetch('/api/admin/settings?public=true');
-        const data = await response.json();
-        if (data.success && data.settings.pricing) {
-          setPlanPrices(data.settings.pricing.plans);
+        // Check authentication
+        const authResponse = await fetch('/api/auth/me', { credentials: 'include' })
+        setIsAuthenticated(authResponse.ok)
+
+        // Fetch dynamic pricing
+        const priceResponse = await fetch('/api/admin/settings?public=true')
+        const priceData = await priceResponse.json()
+        if (priceData.success && priceData.settings.pricing) {
+          setPlanPrices(priceData.settings.pricing.plans)
         }
       } catch (error) {
-        console.error('Error fetching settings:', error);
-        // Keep defaults on error
+        console.error('Error fetching data:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
+    init()
+  }, [])
 
-    fetchSettings();
-  }, []);
-
+  // Pricing plans - using dynamic prices from admin settings
   const plans = [
     {
       id: 'basic',
       name: 'Basic',
       icon: Package,
       tagline: 'Perfect for Startups',
-      priceKey: 'basic',
+      price: planPrices.basic,
       credits: 10,
       validity: '15 days',
       color: 'blue',
@@ -64,7 +67,7 @@ const PricingPreview = () => {
       name: 'Premium',
       icon: Star,
       tagline: 'Best for Growing Business',
-      priceKey: 'premium',
+      price: planPrices.premium,
       credits: 100,
       validity: '90 days',
       color: 'purple',
@@ -83,7 +86,7 @@ const PricingPreview = () => {
       name: 'Elite',
       icon: Crown,
       tagline: 'For Large Enterprises',
-      priceKey: 'elite',
+      price: planPrices.elite,
       credits: 1200,
       validity: '365 days',
       color: 'orange',
@@ -97,7 +100,17 @@ const PricingPreview = () => {
         'Custom requests'
       ]
     }
-  ];
+  ]
+
+  const handlePaymentSuccess = (data) => {
+    alert(`🎉 Payment Successful!\n\n${data.creditPoints} credits have been added to your account.\n\nNew Balance: ${data.newBalance} credits`)
+    // Redirect to dashboard or designs page
+    window.location.href = '/dashboard/credits'
+  }
+
+  const handlePaymentFailure = (error) => {
+    console.error('Payment failed:', error)
+  }
 
   return (
     <section className="py-20 px-4 bg-gradient-to-br from-gray-50 via-orange-50/30 to-amber-50/30">
@@ -106,20 +119,20 @@ const PricingPreview = () => {
         <div className="text-center mb-16">
           <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-sm font-semibold mb-4">
             <Sparkles className="w-4 h-4" />
-            <span>Unlock Your Creativity</span>
+            <span>Credit-Based Pricing</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Start Creating Today
+            Choose Your Perfect Plan
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            One-time purchase plans with credit-based downloads. Credits valid for the specified period - no recurring charges.
+            Purchase credit points and use them to download premium designs. No subscriptions, just pay once and use anytime.
           </p>
         </div>
 
         {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {plans.map((plan) => {
-            const IconComponent = plan.icon;
+            const IconComponent = plan.icon
 
             return (
               <div
@@ -151,11 +164,12 @@ const PricingPreview = () => {
                     {loading ? (
                       <div className="animate-pulse">
                         <div className="h-10 bg-gray-200 rounded w-32 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-40"></div>
                       </div>
                     ) : (
                       <>
                         <div className="flex items-baseline mb-2">
-                          <span className="text-4xl font-bold text-gray-900">₹{planPrices[plan.priceKey].toLocaleString()}</span>
+                          <span className="text-4xl font-bold text-gray-900">₹{plan.price.toLocaleString()}</span>
                           <span className="text-orange-600 text-xl font-bold ml-1">*</span>
                         </div>
                         <div className="text-sm text-gray-600 mb-1">
@@ -179,45 +193,66 @@ const PricingPreview = () => {
                   </ul>
 
                   {/* CTA Button */}
-                  <a
-                    href="/auth?view=login"
-                    className={`block w-full text-center py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:scale-105'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                    }`}
-                  >
-                    Get Started
-                  </a>
+                  {isAuthenticated ? (
+                    <RazorpayButton
+                      planType={plan.id}
+                      planName={plan.name}
+                      amount={plan.price}
+                      credits={plan.credits}
+                      onSuccess={handlePaymentSuccess}
+                      onFailure={handlePaymentFailure}
+                      className={`block w-full text-center py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:scale-105'
+                          : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:shadow-lg hover:scale-105'
+                      }`}
+                    >
+                      Get Started
+                    </RazorpayButton>
+                  ) : (
+                    <a
+                      href="/auth?view=login"
+                      className={`block w-full text-center py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:shadow-lg hover:scale-105'
+                          : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      }`}
+                    >
+                      Login to Purchase
+                    </a>
+                  )}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
-        {/* Bottom CTA */}
-        <div className="text-center">
-          <div className="inline-flex flex-col sm:flex-row items-center gap-4 bg-white rounded-2xl shadow-lg p-6">
-            <div className="flex-1 text-left">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
-                Not sure which plan to choose?
-              </h3>
-              <p className="text-gray-600">
-                View detailed comparison and pay-per-download options
-              </p>
+        {/* Info Section */}
+        <div className="text-center bg-white rounded-2xl shadow-lg p-8">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            How Credit Points Work
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <div>
+              <div className="text-3xl font-bold text-orange-500 mb-2">1</div>
+              <h4 className="font-bold text-gray-900 mb-2">Purchase Credits</h4>
+              <p className="text-gray-600 text-sm">Choose a plan and buy credit points securely via Razorpay</p>
             </div>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all duration-300 group"
-            >
-              View All Plans
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <div>
+              <div className="text-3xl font-bold text-orange-500 mb-2">2</div>
+              <h4 className="font-bold text-gray-900 mb-2">Browse Designs</h4>
+              <p className="text-gray-600 text-sm">Explore thousands of premium designs across categories</p>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-orange-500 mb-2">3</div>
+              <h4 className="font-bold text-gray-900 mb-2">Download & Use</h4>
+              <p className="text-gray-600 text-sm">Use credits to download designs and get full commercial rights</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default PricingPreview;
+export default PricingSection

@@ -2180,10 +2180,45 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
     }
 
     try {
-      // TODO: Handle file uploads to cloud storage (Cloudinary/AWS S3)
-      // For now, we'll pass the file metadata
-      const aadhaarFileNames = formData.aadhaarFiles.map(f => f.name)
-      const panCardFileName = formData.panCardFile[0].name
+      // Upload Aadhaar files
+      setError("Uploading documents...")
+      const aadhaarFileUrls = []
+      for (const file of formData.aadhaarFiles) {
+        const fileFormData = new FormData()
+        fileFormData.append('file', file)
+        fileFormData.append('category', 'aadhaar')
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: fileFormData,
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload Aadhaar file')
+        }
+
+        const uploadData = await uploadResponse.json()
+        aadhaarFileUrls.push(uploadData.url)
+      }
+
+      // Upload PAN card file
+      const panFileFormData = new FormData()
+      panFileFormData.append('file', formData.panCardFile[0])
+      panFileFormData.append('category', 'pan')
+
+      const panUploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: panFileFormData,
+      })
+
+      if (!panUploadResponse.ok) {
+        throw new Error('Failed to upload PAN card file')
+      }
+
+      const panUploadData = await panUploadResponse.json()
+      const panCardFileUrl = panUploadData.url
+
+      setError("") // Clear upload message
 
       const signupData = {
         userType: "designer",
@@ -2194,7 +2229,7 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
         mobileNumber: formData.mobileNumber,
         alternativeContact: formData.alternativeContact,
         aadhaarNumber: formData.aadhaarNumber,
-        aadhaarFiles: aadhaarFileNames, // TODO: Upload files and store paths
+        aadhaarFiles: aadhaarFileUrls,
         address: {
           street: formData.streetAddress,
           city: formData.city,
@@ -2203,7 +2238,7 @@ const AuthPage = ({ onAuthSuccess, initialView = "login" }) => {
           country: formData.country,
         },
         panNumber: formData.panNumber,
-        panCardFile: panCardFileName, // TODO: Upload file and store path
+        panCardFile: panCardFileUrl,
         gstNumber: formData.gstNumber,
         bankDetails: {
           accountHolderName: formData.accountHolderName,

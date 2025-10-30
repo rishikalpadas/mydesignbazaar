@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import connectDB from '../../../../lib/mongodb';
 import { User, Designer, Buyer } from '../../../../models/User';
+import { validateRegistrationCredentials } from '../../../../middleware/blockedCredentialsCheck';
 
 export async function POST(request) {
   try {
@@ -9,6 +10,27 @@ export async function POST(request) {
     
     const body = await request.json();
     const { userType, email, password, ...profileData } = body;
+
+    // Check if any credentials are blocked (only for designers)
+    if (userType === 'designer') {
+      const validationResult = await validateRegistrationCredentials({
+        userType,
+        email,
+        ...profileData
+      });
+
+      if (!validationResult.allowed) {
+        return NextResponse.json(
+          {
+            error: 'Account Blocked',
+            message: validationResult.message,
+            blocked: true
+          },
+          { status: 403 }
+        );
+      }
+    }
+
 
     // Validate required fields
     if (!email || !password || !userType) {

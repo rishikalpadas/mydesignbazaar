@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import Navbar from "../components/Navbar"
 import AuthModal from "../components/AuthModal"
 import HeroSlider from "../components/HeroSlider"
-import PricingPreview from "../components/PricingPreview"
+import PricingSection from "../components/PricingSection"
 import CategoriesSection from "../components/CategoriesSection"
 import FeaturedDesigns from "../components/FeaturedDesigns"
 import FeaturedDesigners from "../components/FeaturedDesigners"
@@ -95,7 +95,7 @@ export default function Home() {
       <FeaturedDesigns />
       <FeaturedDesigners />
       <HowItWorks />
-      <PricingPreview />
+      <PricingSection />
       <CTABanners />
       <Testimonials />
       <AppPromo />

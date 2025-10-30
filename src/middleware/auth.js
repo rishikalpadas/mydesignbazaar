@@ -112,7 +112,7 @@ export async function verifyToken(request) {
 
 // Middleware for protected API routes
 export function withAuth(handler) {
-  return async (request) => {
+  return async (request, context) => {
     const authResult = await verifyToken(request)
 
     if (authResult.error) {
@@ -123,28 +123,28 @@ export function withAuth(handler) {
     request.user = authResult.user
     request.decoded = authResult.decoded
 
-    return handler(request)
+    return handler(request, context)
   }
 }
 
 // Role-based access control
 export function withRole(roles) {
   return (handler) =>
-    withAuth(async (request) => {
+    withAuth(async (request, context) => {
       const userType = request.user.userType
 
       if (!roles.includes(userType)) {
         return NextResponse.json({ error: "Access denied. Insufficient permissions." }, { status: 403 })
       }
 
-      return handler(request)
+      return handler(request, context)
     })
 }
 
 // Admin permission-based access control
 export function withPermission(requiredPermissions) {
   return (handler) =>
-    withAuth(async (request) => {
+    withAuth(async (request, context) => {
       const user = request.user
 
       // If not admin, deny access
@@ -161,6 +161,6 @@ export function withPermission(requiredPermissions) {
         return NextResponse.json({ error: "Access denied. Insufficient permissions." }, { status: 403 })
       }
 
-      return handler(request)
+      return handler(request, context)
     })
 }

@@ -9,8 +9,13 @@ import {
   Mail,
   User,
   Calendar,
+  Ban,
+  Trash2,
+  UnlockKeyhole,
 } from "lucide-react";
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper";
+import DesignerDetailView from "../../../components/dashboard/DesignerDetailView";
+import BlockDeleteDesignerModal from "../../../components/dashboard/BlockDeleteDesignerModal";
 import { useRouter } from "next/navigation";
 
 const DesignersContent = () => {
@@ -25,6 +30,11 @@ const DesignersContent = () => {
     pending: 0,
     thisWeek: 0,
   });
+  const [blockModalOpen, setBlockModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedDesigner, setSelectedDesigner] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState(null);
 
   const fetchDesigners = useCallback(async () => {
     try {
@@ -66,9 +76,74 @@ const DesignersContent = () => {
     }
   }, [sortBy, searchTerm]);
 
-  const viewDesigner=(id)=>{
-    router.push(`/dashboard/designers/${id}`)
+  const viewDesigner=(designer)=>{
+    setSelectedDesigner(designer)
+    setShowDetailModal(true)
   }
+
+  const closeDetailModal = () => {
+    setShowDetailModal(false)
+    setSelectedDesigner(null)
+  }
+
+  const handleBlockClick = (designer) => {
+    setSelectedDesigner(designer);
+    setBlockModalOpen(true);
+  };
+
+  const handleDeleteClick = (designer) => {
+    setSelectedDesigner(designer);
+    setDeleteModalOpen(true);
+  };
+
+  const handleActionSuccess = (data) => {
+    const actionType = blockModalOpen ? 'block' : 'delete';
+
+    // If blocking, redirect to blocked designers page
+    // if (actionType === 'block') {
+    //   router.push('/dashboard/designers/blocked');
+    //   return;
+    // }
+
+    // For delete action, show success message and refresh
+    setActionSuccess({
+      type: actionType,
+      message: data.message,
+    });
+    fetchDesigners();
+    setTimeout(() => setActionSuccess(null), 5000);
+  };
+
+  const handleUnblock = async (designer) => {
+    const remarks = prompt("Optional: Add remarks for unblocking this designer:");
+    
+    try {
+      const response = await fetch("/api/admin/designers/unblock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          userId: designer._id,
+          unblockRemarks: remarks && remarks.trim() ? remarks.trim() : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to unblock designer");
+      }
+
+      setActionSuccess({ message: "Designer account unblocked successfully" });
+      fetchDesigners();
+      setTimeout(() => setActionSuccess(null), 5000);
+    } catch (err) {
+      console.error("Error unblocking designer:", err);
+      alert(err.message || "Failed to unblock designer account");
+    }
+  };
 
   useEffect(() => {
     fetchDesigners();
@@ -124,13 +199,32 @@ const DesignersContent = () => {
           <div>
             <h1 className="text-3xl font-bold mb-2">Designers</h1>
           </div>
-          <div className="hidden md:flex items-center space-x-4">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-3">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/dashboard/designers/blocked')}
+              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 transition-colors"
+            >
+              <Ban className="w-5 h-5" />
+              <span className="font-medium">View Blocked</span>
+            </button>
+            <div className="hidden md:flex bg-white/20 backdrop-blur-sm rounded-lg p-3">
               <Users className="w-8 h-8" />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Success Message */}
+      {actionSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+            <p className="text-green-700">
+              <strong>Success:</strong> {actionSuccess.message}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl shadow-md p-6 border border-gray-100">
@@ -268,12 +362,45 @@ const DesignersContent = () => {
 
                     <div className="flex items-center space-x-2 ml-4">
                       <button
-                        onClick={() => viewDesigner(designer._id)}
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors cursor-pointer "
+                        onClick={() => viewDesigner(designer)}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        View
+                        View Details
                       </button>
+
+                      {designer.isApproved && designer.profile?.accountStatus !== 'blocked' && (
+                        <>
+                          <button
+                            onClick={() => handleBlockClick(designer)}
+                            className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors cursor-pointer"
+                            title="Block this designer and their credentials"
+                          >
+                            <Ban className="w-4 h-4 mr-2" />
+                            Block
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteClick(designer)}
+                            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors cursor-pointer"
+                            title="Delete this designer account"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </button>
+                        </>
+                      )}
+
+                      {designer.profile?.accountStatus === 'blocked' && (
+                        <button
+                          onClick={() => handleUnblock(designer)}
+                          className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors cursor-pointer"
+                          title="Unblock this designer"
+                        >
+                          <UnlockKeyhole className="w-4 h-4 mr-2" />
+                          Unblock
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -282,6 +409,36 @@ const DesignersContent = () => {
           </div>
         )}
       </div>
+
+      {/* Designer Detail View Modal */}
+      <DesignerDetailView
+        designer={selectedDesigner}
+        isOpen={showDetailModal}
+        onClose={closeDetailModal}
+      />
+
+      {/* Block/Delete Modals */}
+      <BlockDeleteDesignerModal
+        isOpen={blockModalOpen}
+        onClose={() => {
+          setBlockModalOpen(false);
+          setSelectedDesigner(null);
+        }}
+        designer={selectedDesigner}
+        actionType="block"
+        onSuccess={handleActionSuccess}
+      />
+
+      <BlockDeleteDesignerModal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedDesigner(null);
+        }}
+        designer={selectedDesigner}
+        actionType="delete"
+        onSuccess={handleActionSuccess}
+      />
     </div>
   );
 };

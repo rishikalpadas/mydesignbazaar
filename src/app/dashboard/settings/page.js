@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Settings, Percent, DollarSign, Shield, Save, RefreshCw, Package, ShoppingCart } from 'lucide-react';
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
@@ -17,11 +17,7 @@ export default function SettingsPage() {
   const router = useRouter();
 
   // Check authentication and authorization
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await fetch('/api/user/profile', {
         credentials: 'include',
@@ -45,11 +41,7 @@ export default function SettingsPage() {
     } finally {
       setUserLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchSettings();
-  }, []);
+  }, [router]);
 
   const fetchSettings = async () => {
     try {
@@ -62,19 +54,27 @@ export default function SettingsPage() {
         // Initialize edited values
         const initialValues = {};
         data.settings.forEach(s => {
-          initialValues[s.key] = s.rawValue;
+          initialValues[s.key] = s.value;
         });
         setEditedValues(initialValues);
       } else {
-        setMessage({ type: 'error', text: data.error || 'Failed to fetch settings' });
+        setMessage({ type: 'error', text: data.message || 'Failed to fetch settings' });
       }
     } catch (error) {
-      console.error('Fetch settings error:', error);
-      setMessage({ type: 'error', text: 'Failed to load settings' });
+      console.error('Error fetching settings:', error);
+      setMessage({ type: 'error', text: 'Error fetching settings' });
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
 
   const handleValueChange = (key, value) => {
     setEditedValues(prev => ({
