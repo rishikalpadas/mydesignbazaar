@@ -138,7 +138,7 @@ const designSchema = new mongoose.Schema(
 )
 
 // Indexes for better query performance
-designSchema.index({ designId: 1 })
+// Note: designId already has a unique index from schema definition
 designSchema.index({ uploadedBy: 1 })
 designSchema.index({ status: 1 })
 designSchema.index({ category: 1 })

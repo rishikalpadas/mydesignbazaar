@@ -65,7 +65,7 @@ const systemSettingsSchema = new mongoose.Schema({
 });
 
 // Index for fast lookups
-systemSettingsSchema.index({ key: 1 });
+// Note: key already has a unique index from schema definition
 systemSettingsSchema.index({ category: 1 });
 
 // Method to get parsed value based on dataType

@@ -1,169 +1,268 @@
 "use client"
-import { useState } from "react"
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Trash2, ShoppingBag, ArrowLeft, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
-
+import Navbar from "../../components/Navbar"
+import Footer from "../../components/Footer"
 
 const CartPage = () => {
   const router = useRouter()
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Traditional Paisley Design",
-      designer: "Priya Sharma",
-      price: 299,
-      quantity: 2,
-      image: "/traditional-paisley.png",
-      category: "Ethnic",
-    },
-    {
-      id: 2,
-      name: "Modern Geometric Pattern",
-      designer: "Arjun Patel",
-      price: 199,
-      quantity: 1,
-      image: "/modern-geometric-pattern.png",
-      category: "Contemporary",
-    },
-  ])
+  const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [removing, setRemoving] = useState(null)
+  const [error, setError] = useState(null)
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity === 0) {
-      setCartItems(cartItems.filter((item) => item.id !== id))
-    } else {
-      setCartItems(cartItems.map((item) => (item.id === id ? { ...item, quantity: newQuantity } : item)))
+  useEffect(() => {
+    fetchCart()
+  }, [])
+
+  const fetchCart = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/cart", {
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/")
+          return
+        }
+        throw new Error("Failed to fetch cart")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setCartItems(data.cart.items || [])
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error)
+      setError("Failed to load cart. Please try again.")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id))
+  const removeItem = async (designId) => {
+    try {
+      setRemoving(designId)
+      const response = await fetch(`/api/cart?designId=${designId}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to remove item")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setCartItems(data.cart.items || [])
+      }
+    } catch (error) {
+      console.error("Error removing item:", error)
+      alert("Failed to remove item. Please try again.")
+    } finally {
+      setRemoving(null)
+    }
   }
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const shipping = subtotal > 500 ? 0 : 50
-  const total = subtotal + shipping
+  const getDesignerName = (item) => {
+    if (!item?.designId?.uploadedBy) return "Unknown Designer"
+
+    const designer = item.designId.uploadedBy.userId
+    if (designer?.displayName) return designer.displayName
+    if (designer?.fullName) return designer.fullName
+    return item.designId.uploadedBy.email?.split("@")[0] || "Unknown Designer"
+  }
+
+  const getPreviewImage = (design) => {
+    if (design?.previewImages && design.previewImages.length > 0) {
+      const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
+      return `/api/uploads/designs/${design.designId}/preview/${primary.filename}`
+    }
+    if (design?.previewImage?.filename) {
+      return `/api/uploads/designs/${design.designId}/preview/${design.previewImage.filename}`
+    }
+    return "/placeholder.svg"
+  }
+
+  const handleCheckout = () => {
+    // Navigate to pricing or checkout page
+    router.push("/pricing")
+  }
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-amber-500 mx-auto mb-4" />
+            <p className="text-gray-600">Loading your cart...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-4">
-            <button onClick={() => router.back()} className="text-gray-600 hover:text-amber-500 transition-colors cursor-pointer">
-              <ArrowLeft size={24} />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
-              <p className="text-gray-600">{cartItems.length} items in your cart</p>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="text-gray-600 hover:text-amber-500 transition-colors cursor-pointer"
+                aria-label="Go back"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
+                <p className="text-gray-600">{cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {cartItems.length === 0 ? (
-          <div className="text-center py-16">
-            <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
-            <p className="text-gray-600 mb-6">Start shopping to add items to your cart</p>
-            <button
-              onClick={() => router.push("/")}
-              className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all cursor-pointer"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Cart Items */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-sm border">
-                <div className="p-6 border-b">
-                  <h2 className="text-lg font-semibold text-gray-900">Cart Items</h2>
-                </div>
-                <div className="divide-y">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="p-6 flex gap-4">
-                      <Image
-  src={item.image || "/placeholder.svg"}
-  alt={item.name}
-  width={80}
-  height={80}
-  className="w-20 h-20 rounded-lg object-cover"
-/>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              {error}
+            </div>
+          )}
 
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                        <p className="text-sm text-gray-600">by {item.designer}</p>
-                        <p className="text-xs text-amber-600 font-medium">{item.category}</p>
-                        <div className="flex items-center justify-between mt-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 cursor-pointer"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <span className="w-8 text-center font-medium">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 cursor-pointer"
-                            >
-                              <Plus size={14} />
-                            </button>
+          {cartItems.length === 0 ? (
+            <div className="text-center py-16">
+              <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
+              <p className="text-gray-600 mb-6">Start shopping to add items to your cart</p>
+              <button
+                onClick={() => router.push("/")}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all cursor-pointer"
+              >
+                Continue Shopping
+              </button>
+            </div>
+          ) : (
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Cart Items */}
+              <div className="lg:col-span-2">
+                <div className="bg-white rounded-xl shadow-sm border">
+                  <div className="p-6 border-b">
+                    <h2 className="text-lg font-semibold text-gray-900">Cart Items</h2>
+                  </div>
+                  <div className="divide-y">
+                    {cartItems.map((item) => {
+                      const design = item.designId
+                      if (!design) return null
+
+                      return (
+                        <div key={item._id} className="p-6 flex gap-4">
+                          <div className="relative w-20 h-20 flex-shrink-0">
+                            <Image
+                              src={getPreviewImage(design)}
+                              alt={design.title || "Design"}
+                              fill
+                              className="rounded-lg object-cover"
+                              onError={(e) => {
+                                e.target.src = "/placeholder.svg"
+                              }}
+                            />
                           </div>
-                          <div className="flex items-center gap-4">
-                            <span className="font-semibold text-gray-900">₹{item.price * item.quantity}</span>
+
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 truncate">
+                              {design.title || "Untitled Design"}
+                            </h3>
+                            <p className="text-sm text-gray-600 truncate">
+                              by {getDesignerName(item)}
+                            </p>
+                            <p className="text-xs text-amber-600 font-medium mt-1">
+                              {design.category}
+                            </p>
+                            {design.tags && design.tags.length > 0 && (
+                              <div className="flex gap-1 mt-2 flex-wrap">
+                                {design.tags.slice(0, 3).map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-col items-end justify-between">
                             <button
-                              onClick={() => removeItem(item.id)}
-                              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                              onClick={() => removeItem(design._id)}
+                              disabled={removing === design._id}
+                              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              aria-label="Remove from cart"
                             >
-                              <Trash2 size={16} />
+                              {removing === design._id ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                              ) : (
+                                <Trash2 size={18} />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => router.push(`/product/details/${design._id}`)}
+                              className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+                            >
+                              View Details
                             </button>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  ))}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Order Summary */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
-                <div className="space-y-3 mb-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">₹{subtotal}</span>
+              {/* Summary */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-24">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Cart Summary</h2>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total Designs</span>
+                      <span className="font-medium">{cartItems.length}</span>
+                    </div>
+                    <div className="border-t pt-3">
+                      <p className="text-sm text-gray-500 mb-2">
+                        Subscribe to a plan to download these designs
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">{shipping === 0 ? "Free" : `₹${shipping}`}</span>
-                  </div>
-                  {shipping === 0 && <p className="text-xs text-green-600">Free shipping on orders over ₹500</p>}
-                  <div className="border-t pt-3 flex justify-between text-lg font-semibold">
-                    <span>Total</span>
-                    <span>₹{total}</span>
-                  </div>
+                  <button
+                    onClick={handleCheckout}
+                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all mb-3 cursor-pointer"
+                  >
+                    View Subscription Plans
+                  </button>
+                  <button
+                    onClick={() => router.push("/")}
+                    className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all cursor-pointer"
+                  >
+                    Continue Shopping
+                  </button>
                 </div>
-                <button className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 rounded-lg font-semibold hover:from-amber-600 hover:to-orange-600 transition-all mb-3 cursor-pointer">
-                  Proceed to Checkout
-                </button>
-                <button
-                  onClick={() => router.push("/")}
-                  className="w-full border border-gray-300 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-all cursor-pointer"
-                >
-                  Continue Shopping
-                </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   )
 }
 

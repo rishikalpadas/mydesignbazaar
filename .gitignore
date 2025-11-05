@@ -44,10 +44,32 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# uploaded files
-/public/uploads/aadhaar/
-/public/uploads/pan/
-/public/uploads/sample-designs/
-/public/uploads/general/
+# uploaded files - ignore all files but keep directories with .gitkeep
+/public/uploads/**/*
+!/public/uploads/**/.gitkeep
+!/public/uploads/.gitkeep
+!/public/uploads/README.md
+
+# Keep the uploads directory structure
+!/public/uploads/
+!/public/uploads/aadhaar/
+!/public/uploads/pan/
+!/public/uploads/sample-designs/
+!/public/uploads/general/
+!/public/uploads/designs/
+
+# Specifically exclude sensitive documents
+*.jpg
+*.jpeg
+*.png
+*.pdf
+*.ai
+*.cdr
+*.eps
+*.svg
+*.webp
+
+# But allow .gitkeep files
+!.gitkeep
 
 nul

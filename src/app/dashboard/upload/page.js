@@ -411,24 +411,32 @@ const UploadContent = () => {
       const result = await response.json()
       setUploadResults(result)
 
+      console.log('Upload result:', result)
+
       if (!result.success && result.totalUploaded === 0) {
-        throw new Error('All uploads failed')
+        // All uploads failed
+        const errorMessages = result.errors?.map(err => err.message || err.error).join('\n') || 'All uploads failed'
+        throw new Error(errorMessages)
       }
 
       // Complete progress
       clearInterval(progressInterval)
       setUploadProgress(100)
-      
+
+      // Show success even if some failed
       setTimeout(() => {
         setSuccess(true)
+        // Stay on success screen longer if there were failures
+        const delay = result.totalFailed > 0 ? 5000 : 3000
         setTimeout(() => {
           router.push('/dashboard/my-designs')
-        }, 3000)
+        }, delay)
       }, 500)
 
     } catch (error) {
       clearInterval(progressInterval)
       setUploadProgress(0)
+      console.error('Upload error:', error)
       setGlobalErrors({ submit: error.message })
     } finally {
       setLoading(false)
@@ -451,26 +459,54 @@ const UploadContent = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center max-w-md">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center max-w-2xl w-full">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Successful!</h2>
-          
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Complete!</h2>
+
           {uploadResults && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-green-800 font-medium">
-                {uploadResults.totalUploaded} design(s) uploaded successfully
-              </p>
-              {uploadResults.totalFailed > 0 && (
-                <p className="text-orange-600 text-sm mt-1">
-                  {uploadResults.totalFailed} design(s) failed to upload
+            <div className="space-y-4 mb-6">
+              {/* Success Summary */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p className="text-green-800 font-medium">
+                  {uploadResults.totalUploaded} design(s) uploaded successfully
                 </p>
+              </div>
+
+              {/* Failure Summary */}
+              {uploadResults.totalFailed > 0 && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <p className="text-orange-800 font-medium mb-2">
+                    {uploadResults.totalFailed} design(s) failed to upload
+                  </p>
+                  {uploadResults.errors && uploadResults.errors.length > 0 && (
+                    <div className="mt-3 text-left">
+                      <p className="text-sm text-orange-700 font-medium mb-2">Failed designs:</p>
+                      <ul className="text-sm text-orange-600 space-y-1 max-h-40 overflow-y-auto">
+                        {uploadResults.errors.map((err, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <span className="text-orange-500 mt-0.5">•</span>
+                            <span>{err.message || err.error}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
-          
-          <p className="text-gray-600 mb-4">Your design(s) have been uploaded and are pending approval.</p>
-          <p className="text-sm text-gray-500">Redirecting to your designs...</p>
+
+          <p className="text-gray-600 mb-2">
+            {uploadResults?.totalUploaded > 0
+              ? 'Your uploaded design(s) are pending approval.'
+              : 'Please check the errors and try again.'}
+          </p>
+          <p className="text-sm text-gray-500">
+            {uploadResults?.totalUploaded > 0
+              ? 'Redirecting to your designs...'
+              : 'You can fix the issues and re-upload.'}
+          </p>
         </div>
       </div>
     )

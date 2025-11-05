@@ -27,6 +27,8 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const [internalIsAuthenticated, setInternalIsAuthenticated] = useState(false)
   const [internalUser, setInternalUser] = useState(null)
   const [subscription, setSubscription] = useState(null)
+  const [cartCount, setCartCount] = useState(0)
+  const [wishlistCount, setWishlistCount] = useState(0)
   const router = useRouter()
 
   const mobileSearchRef = useRef(null)
@@ -53,6 +55,17 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       fetchSubscriptionStatus()
     }
   }, [user])
+
+  // Fetch cart and wishlist counts when authentication changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCartCount()
+      fetchWishlistCount()
+    } else {
+      setCartCount(0)
+      setWishlistCount(0)
+    }
+  }, [isAuthenticated])
 
   const checkAuthStatus = async () => {
     try {
@@ -95,6 +108,34 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       }
     } catch (error) {
       console.error("Failed to fetch subscription:", error)
+    }
+  }
+
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch("/api/cart/count", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setCartCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error("Failed to fetch cart count:", error)
+    }
+  }
+
+  const fetchWishlistCount = async () => {
+    try {
+      const response = await fetch("/api/wishlist/count", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setWishlistCount(data.count || 0)
+      }
+    } catch (error) {
+      console.error("Failed to fetch wishlist count:", error)
     }
   }
 
@@ -388,11 +429,14 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
             <button
               onClick={handleWishlistClick}
               className="hidden sm:flex text-gray-700 hover:text-amber-500 transition-colors p-2 relative"
+              aria-label="Wishlist"
             >
               <Heart size={20} />
-              <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                3
-              </span>
+              {wishlistCount > 0 && (
+                <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                  {wishlistCount > 99 ? '99+' : wishlistCount}
+                </span>
+              )}
             </button>
 
             {/* User account with dropdown */}
@@ -413,11 +457,14 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
             <button
               onClick={handleCartClick}
               className="relative text-gray-700 hover:text-amber-500 transition-colors p-2 group"
+              aria-label="Shopping cart"
             >
               <ShoppingCart size={20} />
-              <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
-                2
-              </span>
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
+                  {cartCount > 99 ? '99+' : cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -527,21 +574,29 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
                   onClick={handleWishlistClick}
                   className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative"
                 >
-                  <Heart size={20} />
+                  <div className="relative">
+                    <Heart size={20} />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                        {wishlistCount > 9 ? '9+' : wishlistCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs font-medium">Wishlist</span>
-                  {/* <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                    3
-                  </span> */}
                 </button>
                 <button
                   onClick={handleCartClick}
                   className="flex flex-col items-center gap-1 text-gray-600 hover:text-amber-500 transition-colors relative"
                 >
-                  <ShoppingCart size={20} />
+                  <div className="relative">
+                    <ShoppingCart size={20} />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                        {cartCount > 9 ? '9+' : cartCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs font-medium">Cart</span>
-                  {/* <span className="absolute -top-1 -right-2 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
-                    2
-                  </span> */}
                 </button>
               </div>
             )}

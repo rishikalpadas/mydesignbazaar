@@ -1,0 +1,185 @@
+import { NextResponse } from 'next/server';
+import connectDB from '../../../lib/mongodb';
+import Cart from '../../../models/Cart';
+import Design from '../../../models/Design';
+import { verifyToken } from '../../../middleware/auth';
+
+// GET - Fetch user's cart with populated design details
+export async function GET(request) {
+  try {
+    await connectDB();
+
+    const authResult = await verifyToken(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { success: false, message: authResult.message },
+        { status: 401 }
+      );
+    }
+
+    const userId = authResult.user.id;
+
+    // Get or create cart
+    let cart = await Cart.getOrCreateCart(userId);
+
+    // Populate design details
+    cart = await cart.populate({
+      path: 'items.designId',
+      select: 'designId title description category previewImages previewImage tags uploadedBy status',
+      populate: {
+        path: 'uploadedBy',
+        select: 'email',
+        populate: {
+          path: 'userId',
+          model: 'Designer',
+          select: 'fullName displayName'
+        }
+      }
+    });
+
+    // Filter out any null designs (in case design was deleted)
+    cart.items = cart.items.filter(item => item.designId !== null);
+    await cart.save();
+
+    return NextResponse.json({
+      success: true,
+      cart: {
+        items: cart.items,
+        count: cart.items.length,
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching cart:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to fetch cart' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Add item to cart
+export async function POST(request) {
+  try {
+    await connectDB();
+
+    const authResult = await verifyToken(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { success: false, message: authResult.message },
+        { status: 401 }
+      );
+    }
+
+    const userId = authResult.user.id;
+    const { designId } = await request.json();
+
+    if (!designId) {
+      return NextResponse.json(
+        { success: false, message: 'Design ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if design exists and is approved
+    const design = await Design.findById(designId);
+    if (!design) {
+      return NextResponse.json(
+        { success: false, message: 'Design not found' },
+        { status: 404 }
+      );
+    }
+
+    if (design.status !== 'approved') {
+      return NextResponse.json(
+        { success: false, message: 'Design is not available for purchase' },
+        { status: 400 }
+      );
+    }
+
+    // Get or create cart and add item
+    const cart = await Cart.getOrCreateCart(userId);
+    await cart.addItem(designId);
+
+    // Populate and return updated cart
+    await cart.populate({
+      path: 'items.designId',
+      select: 'designId title description category previewImages previewImage tags uploadedBy status',
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Design added to cart',
+      cart: {
+        items: cart.items,
+        count: cart.items.length,
+      }
+    });
+
+  } catch (error) {
+    console.error('Error adding to cart:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to add to cart' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE - Remove item from cart
+export async function DELETE(request) {
+  try {
+    await connectDB();
+
+    const authResult = await verifyToken(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { success: false, message: authResult.message },
+        { status: 401 }
+      );
+    }
+
+    const userId = authResult.user.id;
+    const { searchParams } = new URL(request.url);
+    const designId = searchParams.get('designId');
+
+    if (!designId) {
+      return NextResponse.json(
+        { success: false, message: 'Design ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return NextResponse.json(
+        { success: false, message: 'Cart not found' },
+        { status: 404 }
+      );
+    }
+
+    await cart.removeItem(designId);
+
+    // Populate and return updated cart
+    await cart.populate({
+      path: 'items.designId',
+      select: 'designId title description category previewImages previewImage tags uploadedBy status',
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Design removed from cart',
+      cart: {
+        items: cart.items,
+        count: cart.items.length,
+      }
+    });
+
+  } catch (error) {
+    console.error('Error removing from cart:', error);
+    return NextResponse.json(
+      { success: false, message: 'Failed to remove from cart' },
+      { status: 500 }
+    );
+  }
+}

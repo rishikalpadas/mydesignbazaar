@@ -16,6 +16,17 @@ const MAX_RAW_SIZE = 50 * 1024 * 1024 // 50MB per raw file
 const MAX_DESIGNS_PER_BATCH = 25
 const MAX_PREVIEW_IMAGES_PER_DESIGN = 5
 
+// Configure route for larger payloads and longer timeouts
+export const config = {
+  api: {
+    bodyParser: false,
+    responseLimit: false,
+  },
+}
+
+// Increase max duration for API route (in seconds) - for Vercel
+export const maxDuration = 300 // 5 minutes
+
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const RAW_TYPES = {
@@ -146,11 +157,15 @@ export async function POST(request) {
     // Process each design
     for (let i = 0; i < designCount; i++) {
       try {
+        console.log(`Processing design ${i + 1}/${designCount}...`)
+
         // Extract design-specific fields
         const title = formData.get(`design_${i}_title`)
         const description = formData.get(`design_${i}_description`)
         const category = formData.get(`design_${i}_category`)
         const tagsString = formData.get(`design_${i}_tags`)
+
+        console.log(`Design ${i + 1} - Title: "${title?.substring(0, 30)}...", Category: ${category}`)
 
         // Validate required fields
         if (!title || !description || !category) {
@@ -188,13 +203,15 @@ export async function POST(request) {
         }
 
         // Validate each preview image
+        let hasPreviewErrors = false
         for (const [index, previewFile] of previewImages.entries()) {
           if (previewFile.size > MAX_PREVIEW_SIZE) {
             errors.push({
               designIndex: i,
               error: `Preview image ${index + 1} must be less than 5MB`
             })
-            continue
+            hasPreviewErrors = true
+            break // Stop checking this design's previews
           }
 
           if (!validateFileType(previewFile, PREVIEW_TYPES)) {
@@ -202,8 +219,14 @@ export async function POST(request) {
               designIndex: i,
               error: `Preview image ${index + 1} must be JPG, PNG, or WebP`
             })
-            continue
+            hasPreviewErrors = true
+            break // Stop checking this design's previews
           }
+        }
+
+        // Skip this design if preview validation failed
+        if (hasPreviewErrors) {
+          continue
         }
 
         // Get raw file for this design
@@ -236,6 +259,7 @@ export async function POST(request) {
         }
 
         // If we got here, all validations passed, create the design
+        console.log(`Design ${i + 1} - All validations passed, creating database entry...`)
         const customDesignId = await generateUniqueDesignId()
 
         const design = new Design({
@@ -250,21 +274,26 @@ export async function POST(request) {
         })
 
         await design.save()
+        console.log(`Design ${i + 1} - Database entry created with ID: ${customDesignId}`)
         const designId = design._id.toString()
         const customId = design.designId
 
         try {
+          console.log(`Design ${i + 1} - Starting file uploads...`)
           // Save preview images
           const previewImagesData = []
           for (const [index, previewFile] of previewImages.entries()) {
+            console.log(`Design ${i + 1} - Uploading preview image ${index + 1}/${previewImages.length}...`)
             const previewImageData = await saveFile(previewFile, customId, "preview")
             previewImageData.isPrimary = index === 0 // First image is primary
             previewImagesData.push(previewImageData)
           }
           design.previewImages = previewImagesData
+          console.log(`Design ${i + 1} - All preview images uploaded successfully`)
 
           // Generate watermarked versions of preview images
           try {
+            console.log(`Design ${i + 1} - Generating watermarked versions...`)
             const watermarkedDir = path.join(process.cwd(), "public", "uploads", "designs", customId, "preview", "watermarked")
             await mkdir(watermarkedDir, { recursive: true })
 
@@ -274,9 +303,9 @@ export async function POST(request) {
             }))
 
             await batchWatermark(watermarkPairs)
-            console.log(`Generated ${watermarkPairs.length} watermarked previews for design ${customId}`)
+            console.log(`Design ${i + 1} - Generated ${watermarkPairs.length} watermarked previews`)
           } catch (watermarkError) {
-            console.error("Watermark generation error:", watermarkError)
+            console.error(`Design ${i + 1} - Watermark generation error:`, watermarkError)
             // Continue without watermarks if generation fails
           }
 
@@ -286,15 +315,17 @@ export async function POST(request) {
           }
 
           // Save raw file
+          console.log(`Design ${i + 1} - Uploading raw file...`)
           const rawFileData = await saveFile(rawFile, customId, "raw")
           rawFileData.fileType = fileType
           design.rawFile = rawFileData
-          
+
           // For backward compatibility, also set rawFiles array
           design.rawFiles = [rawFileData]
 
           // Save updated design
           await design.save()
+          console.log(`Design ${i + 1} - Upload completed successfully!`)
 
           uploadedDesigns.push({
             id: design._id,
@@ -305,19 +336,30 @@ export async function POST(request) {
 
         } catch (fileError) {
           // If file operations fail, delete the design document
+          console.error(`Design ${i + 1} - File operations failed:`, fileError)
           await Design.findByIdAndDelete(design._id)
           errors.push({
             designIndex: i,
-            error: `Failed to save files for design: ${fileError.message}`
+            error: `Failed to save files: ${fileError.message}`,
+            title: title || `Design ${i + 1}`
           })
         }
 
       } catch (designError) {
+        console.error(`Design ${i + 1} - Processing failed:`, designError)
         errors.push({
           designIndex: i,
-          error: `Failed to process design: ${designError.message}`
+          error: `Failed to process design: ${designError.message}`,
+          title: formData.get(`design_${i}_title`) || `Design ${i + 1}`
         })
       }
+    }
+
+    console.log(`\nBatch upload complete:`)
+    console.log(`- Successfully uploaded: ${uploadedDesigns.length}`)
+    console.log(`- Failed: ${errors.length}`)
+    if (errors.length > 0) {
+      console.log('Failed designs:', errors)
     }
 
     // Return results
@@ -326,16 +368,26 @@ export async function POST(request) {
       message: `${uploadedDesigns.length} design(s) uploaded successfully`,
       uploadedDesigns,
       totalUploaded: uploadedDesigns.length,
-      totalFailed: errors.length
+      totalFailed: errors.length,
+      totalProcessed: designCount
     }
 
     if (errors.length > 0) {
-      response.errors = errors
+      response.errors = errors.map(err => ({
+        ...err,
+        message: `Design #${err.designIndex + 1}${err.title ? ` (${err.title})` : ''}: ${err.error}`
+      }))
       response.message += `, ${errors.length} failed`
+
+      // Log detailed error info
+      console.error('\nDetailed error information:')
+      response.errors.forEach(err => {
+        console.error(`  - ${err.message}`)
+      })
     }
 
-    return NextResponse.json(response, { 
-      status: uploadedDesigns.length > 0 ? 200 : 400 
+    return NextResponse.json(response, {
+      status: uploadedDesigns.length > 0 ? 200 : 400
     })
 
   } catch (error) {

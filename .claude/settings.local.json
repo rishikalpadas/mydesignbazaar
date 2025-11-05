@@ -10,7 +10,19 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(cat:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(nul)",
+      "Bash(npx next build:*)",
+      "Bash(if [ -d \"node_modules\" ])",
+      "Bash(then echo \"node_modules exists\")",
+      "Bash(else echo \"node_modules not found - need to install\")",
+      "Bash(fi)",
+      "Bash(git add:*)",
+      "Bash(public/uploads/aadhaar/test-aadhaar.jpg)",
+      "Bash(public/uploads/pan/test-pan.pdf)",
+      "Bash(public/uploads/designs/test-design.ai)",
+      "Bash(public/uploads/designs/test.jpg)",
+      "Bash(public/uploads/aadhaar/test.pdf)"
     ],
     "deny": [],
     "ask": []
