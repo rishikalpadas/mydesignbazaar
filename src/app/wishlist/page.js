@@ -14,10 +14,6 @@ const WishlistPage = () => {
   const [addingToCart, setAddingToCart] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    fetchWishlist()
-  }, [fetchWishlist])
-
   const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true)
@@ -44,6 +40,10 @@ const WishlistPage = () => {
       setLoading(false)
     }
   }, [router])
+
+  useEffect(() => {
+    fetchWishlist()
+  }, [fetchWishlist])
 
   const removeFromWishlist = async (designId) => {
     try {

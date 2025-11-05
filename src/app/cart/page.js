@@ -13,10 +13,6 @@ const CartPage = () => {
   const [removing, setRemoving] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    fetchCart()
-  }, [fetchCart])
-
   const fetchCart = useCallback(async () => {
     try {
       setLoading(true)
@@ -43,6 +39,10 @@ const CartPage = () => {
       setLoading(false)
     }
   }, [router])
+
+  useEffect(() => {
+    fetchCart()
+  }, [fetchCart])
 
   const removeItem = async (designId) => {
     try {
