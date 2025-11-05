@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Trash2, ShoppingBag, ArrowLeft, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -15,9 +15,9 @@ const CartPage = () => {
 
   useEffect(() => {
     fetchCart()
-  }, [])
+  }, [fetchCart])
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/cart", {
@@ -42,7 +42,7 @@ const CartPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
 
   const removeItem = async (designId) => {
     try {

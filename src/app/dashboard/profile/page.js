@@ -97,7 +97,7 @@ const ProfileContent = () => {
             <Clock className="w-6 h-6 text-orange-600 flex-shrink-0" />
             <div>
               <h3 className="font-semibold text-orange-900">Account Pending Approval</h3>
-              <p className="text-sm text-orange-700">Your designer account is pending admin approval. You'll be notified once approved.</p>
+              <p className="text-sm text-orange-700">Your designer account is pending admin approval. You&apos;ll be notified once approved.</p>
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ const ProfileContent = () => {
                   <h4 className="font-semibold text-amber-900 mb-1">Keep Going!</h4>
                   <p className="text-sm text-amber-700">
                     You need <strong>{profile.monetization.remainingDesigns} more approved design{profile.monetization.remainingDesigns !== 1 ? 's' : ''}</strong> to become eligible for monetization.
-                    Once eligible, you'll earn commission on every design sale!
+                    Once eligible, you&apos;ll earn commission on every design sale!
                   </p>
                 </div>
               </div>
@@ -207,7 +207,7 @@ const ProfileContent = () => {
                 <div>
                   <h4 className="font-semibold text-green-900 mb-1">Congratulations!</h4>
                   <p className="text-sm text-green-700">
-                    You're now eligible for monetization! You'll earn commission on every design sale.
+                    You&apos;re now eligible for monetization! You&apos;ll earn commission on every design sale.
                     Your earnings will be tracked in your wallet and can be redeemed to your bank account.
                   </p>
                 </div>

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Heart, ShoppingCart, ArrowLeft, Trash2, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -16,9 +16,9 @@ const WishlistPage = () => {
 
   useEffect(() => {
     fetchWishlist()
-  }, [])
+  }, [fetchWishlist])
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch("/api/wishlist", {
@@ -43,7 +43,7 @@ const WishlistPage = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
 
   const removeFromWishlist = async (designId) => {
     try {
