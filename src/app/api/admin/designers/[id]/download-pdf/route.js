@@ -56,12 +56,9 @@ async function handler(request, { params }) {
   let browser = null
 
   try {
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Starting PDF generation for designer:", params.id)
-    }
     await connectDB()
 
-    const { id } = params
+    const { id } = await params
     if (!id) {
       console.error("No designer ID provided")
       return NextResponse.json({ error: "Designer ID is required" }, { status: 400 })
@@ -73,10 +70,9 @@ async function handler(request, { params }) {
       return NextResponse.json({ error: "Invalid designer ID format" }, { status: 400 })
     }
 
+    console.log("Fetching designer data for ID:", id)
+    
     // Get designer information
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Fetching user data for ID:", id)
-    }
     const user = await User.findById(id).select("email createdAt userType").lean()
     if (!user) {
       console.error("User not found for ID:", id)
@@ -88,59 +84,54 @@ async function handler(request, { params }) {
       return NextResponse.json({ error: "User is not a designer" }, { status: 404 })
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Fetching designer profile for user ID:", id)
-    }
     const designer = await Designer.findOne({ userId: id }).lean()
     if (!designer) {
       console.error("Designer profile not found for user ID:", id)
       return NextResponse.json({ error: "Designer profile not found" }, { status: 404 })
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Generating HTML content for PDF")
-    }
-    // Create HTML content for PDF (now async to handle image conversion)
-    const htmlContent = await generateDesignerPDFHTML(user, designer)
-    if (process.env.NODE_ENV === 'development') {
-      console.log("HTML content generated, length:", htmlContent.length)
-    }
+    console.log("Designer data fetched successfully, generating PDF...")
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Launching puppeteer browser")
-    }
-    // Generate PDF using puppeteer with better configuration for Windows
-    browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ]
-    })
+    // Create HTML content for PDF
+    const htmlContent = await generateDesignerPDFHTML(user, designer)
+
+    console.log("Launching Puppeteer browser...")
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Creating new page")
+    // Generate PDF using puppeteer with better error handling
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--single-process', // Important for serverless
+          '--disable-extensions'
+        ],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
+      })
+    } catch (launchError) {
+      console.error("Failed to launch browser:", launchError)
+      return NextResponse.json({ 
+        error: "PDF generation is not available on this server. Please contact support.",
+        details: "Browser launch failed"
+      }, { status: 503 })
     }
+    
+    console.log("Browser launched, creating page...")
     const page = await browser.newPage()
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Setting page content")
-    }
-    // Use 'load' which is faster than networkidle for base64 embedded images
+    console.log("Setting page content...")
     await page.setContent(htmlContent, {
       waitUntil: 'load',
-      timeout: 90000
+      timeout: 60000
     })
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Page content loaded, waiting for any rendering...")
-      console.log("Generating PDF")
-    }
+    console.log("Generating PDF...")
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -153,9 +144,7 @@ async function handler(request, { params }) {
       timeout: 30000
     })
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log("PDF generated successfully, size:", pdfBuffer.length, "bytes")
-    }
+    console.log("PDF generated successfully, size:", pdfBuffer.length, "bytes")
 
     // Clean filename for download
     const cleanName = (designer.fullName || user.email || 'designer')
@@ -176,28 +165,37 @@ async function handler(request, { params }) {
   } catch (error) {
     console.error("PDF generation error:", error)
     console.error("Error stack:", error.stack)
+    console.error("Error name:", error.name)
+    console.error("Error message:", error.message)
     
-    // Return more specific error information
+    // Return detailed error information for debugging
     let errorMessage = "Failed to generate PDF"
+    let errorDetails = error.message
+    
     if (error.message.includes("Protocol error")) {
-      errorMessage = "Browser error - please try again"
-    } else if (error.message.includes("Navigation timeout")) {
-      errorMessage = "PDF generation timeout - please try again"
-    } else if (error.message.includes("not found")) {
-      errorMessage = "Designer information not found"
+      errorMessage = "Browser communication error"
+      errorDetails = "The PDF generation browser encountered a protocol error. This may be due to server resource limitations."
+    } else if (error.message.includes("Navigation timeout") || error.message.includes("timeout")) {
+      errorMessage = "PDF generation timeout"
+      errorDetails = "The PDF took too long to generate. Please try again or contact support."
+    } else if (error.message.includes("not found") || error.message.includes("Cannot find module")) {
+      errorMessage = "Required component not found"
+      errorDetails = "A required component for PDF generation is missing on the server."
+    } else if (error.message.includes("Failed to launch")) {
+      errorMessage = "Browser launch failed"
+      errorDetails = "The PDF generation browser could not be started. This server may not support PDF generation."
     }
     
     return NextResponse.json({ 
       error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: errorDetails,
+      timestamp: new Date().toISOString()
     }, { status: 500 })
   } finally {
     // Always close browser
     if (browser) {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log("Closing browser")
-        }
+        console.log("Closing browser...")
         await browser.close()
       } catch (closeError) {
         console.error("Error closing browser:", closeError)

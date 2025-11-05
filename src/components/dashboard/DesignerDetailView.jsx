@@ -14,9 +14,11 @@ import {
   CheckCircle, 
   XCircle,
   Eye,
-  Calendar
+  Calendar,
+  Printer
 } from "lucide-react"
 import DocumentLightbox from "./DocumentLightbox"
+import DesignerPrintView from "./DesignerPrintView"
 
 const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) => {
   const [activeTab, setActiveTab] = useState("personal")
@@ -24,6 +26,7 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxDocuments, setLightboxDocuments] = useState([])
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0)
+  const [showPrintView, setShowPrintView] = useState(false)
 
   if (!isOpen || !designer) return null
 
@@ -47,15 +50,35 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       if (!response.ok) {
         // Try to get error message from response
         let errorMessage = 'Failed to download PDF'
+        let shouldFallbackToPrint = false
+        
         try {
           const errorData = await response.json()
           errorMessage = errorData.error || errorData.message || errorMessage
           if (errorData.details) {
             errorMessage += `: ${errorData.details}`
           }
+          // Check if it's a server capability issue
+          if (response.status === 503 || 
+              errorMessage.includes('not available') || 
+              errorMessage.includes('Browser launch failed')) {
+            shouldFallbackToPrint = true
+          }
         } catch (e) {
           errorMessage += ` (Status: ${response.status})`
         }
+        
+        // Offer print-to-PDF as fallback
+        if (shouldFallbackToPrint) {
+          const usePrint = confirm(
+            'Server PDF generation is not available. Would you like to use your browser\'s Print to PDF instead?'
+          )
+          if (usePrint) {
+            setShowPrintView(true)
+            return
+          }
+        }
+        
         throw new Error(errorMessage)
       }
       
@@ -84,6 +107,10 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
     } finally {
       setDownloadingPDF(false)
     }
+  }
+
+  const handlePrintPDF = () => {
+    setShowPrintView(true)
   }
 
   const viewFile = (fileUrl, fileName, fileType = 'document') => {
@@ -196,6 +223,13 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
               >
                 <Download className="w-4 h-4 mr-2" />
                 {downloadingPDF ? 'Generating...' : 'Download PDF'}
+              </button>
+              <button
+                onClick={handlePrintPDF}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                Print to PDF
               </button>
               <button
                 onClick={onClose}
@@ -628,6 +662,18 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
         documents={lightboxDocuments}
         initialIndex={lightboxInitialIndex}
       />
+
+      {/* Print View */}
+      {showPrintView && (
+        <DesignerPrintView
+          designer={designer.profile || designer}
+          user={{
+            email: designer.email,
+            createdAt: designer.createdAt
+          }}
+          onClose={() => setShowPrintView(false)}
+        />
+      )}
     </div>
   )
 }
