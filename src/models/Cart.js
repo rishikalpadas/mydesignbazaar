@@ -22,9 +22,9 @@ const cartSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-// Note: userId already has an index from compound unique index
 cartSchema.index({ userId: 1 });
-cartSchema.index({ 'items.designId': 1 });
+// Note: items.designId automatically gets an index because it's a reference
+// Removing explicit index to avoid duplicate index warning
 
 // Method to add item to cart
 cartSchema.methods.addItem = function(designId) {

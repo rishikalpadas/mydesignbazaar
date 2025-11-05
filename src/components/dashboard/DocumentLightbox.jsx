@@ -114,126 +114,171 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[100]"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
     >
-      {/* Close button */}
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 p-2 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all text-white z-10"
-        aria-label="Close"
-      >
-        <X className="w-6 h-6" />
-      </button>
+      {/* Modal Container */}
+      <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4 flex-1 min-w-0">
+            {/* Document counter */}
+            {documents.length > 1 && (
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-white font-medium text-sm">
+                {currentIndex + 1} / {documents.length}
+              </div>
+            )}
+            
+            {/* Document name */}
+            {currentDoc.name && (
+              <div className="text-white font-medium truncate">
+                {currentDoc.name}
+              </div>
+            )}
+          </div>
 
-      {/* Controls */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-10 backdrop-blur-sm rounded-lg p-2 flex items-center space-x-2 z-10">
-        <button
-          onClick={handleZoomOut}
-          disabled={zoom <= 0.5}
-          className="p-2 hover:bg-white hover:bg-opacity-20 rounded transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Zoom out"
-        >
-          <ZoomOut className="w-5 h-5" />
-        </button>
-        
-        <span className="text-white font-medium px-2 min-w-[60px] text-center">
-          {Math.round(zoom * 100)}%
-        </span>
-        
-        <button
-          onClick={handleZoomIn}
-          disabled={zoom >= 3}
-          className="p-2 hover:bg-white hover:bg-opacity-20 rounded transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Zoom in"
-        >
-          <ZoomIn className="w-5 h-5" />
-        </button>
+          {/* Controls */}
+          <div className="flex items-center space-x-2 ml-4">
+            {!isPDF && (
+              <>
+                <button
+                  onClick={handleZoomOut}
+                  disabled={zoom <= 0.5}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Zoom out"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-5 h-5" />
+                </button>
+                
+                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2 text-white font-medium text-sm min-w-[60px] text-center">
+                  {Math.round(zoom * 100)}%
+                </div>
+                
+                <button
+                  onClick={handleZoomIn}
+                  disabled={zoom >= 3}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Zoom in"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-5 h-5" />
+                </button>
 
-        {!isPDF && (
-          <button
-            onClick={handleRotate}
-            className="p-2 hover:bg-white hover:bg-opacity-20 rounded transition-all text-white ml-2"
-            aria-label="Rotate"
-          >
-            <RotateCw className="w-5 h-5" />
-          </button>
-        )}
+                <button
+                  onClick={handleRotate}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+                  aria-label="Rotate"
+                  title="Rotate 90°"
+                >
+                  <RotateCw className="w-5 h-5" />
+                </button>
+              </>
+            )}
 
-        <button
-          onClick={handleDownload}
-          className="p-2 hover:bg-white hover:bg-opacity-20 rounded transition-all text-white ml-2"
-          aria-label="Download"
-        >
-          <Download className="w-5 h-5" />
-        </button>
-      </div>
+            <button
+              onClick={handleDownload}
+              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+              aria-label="Download"
+              title="Download"
+            >
+              <Download className="w-5 h-5" />
+            </button>
 
-      {/* Document counter */}
-      {documents.length > 1 && (
-        <div className="absolute top-4 left-4 bg-white bg-opacity-10 backdrop-blur-sm rounded-lg px-4 py-2 text-white font-medium">
-          {currentIndex + 1} / {documents.length}
+            <button
+              onClick={onClose}
+              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+              aria-label="Close"
+              title="Close (Esc)"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      )}
 
-      {/* Navigation buttons */}
-      {documents.length > 1 && (
-        <>
-          <button
-            onClick={handlePrevious}
-            disabled={currentIndex === 0}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Previous document"
+        {/* Document viewer */}
+        <div className="flex-1 bg-gray-100 relative overflow-hidden flex items-center justify-center">
+          {/* Navigation buttons */}
+          {documents.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-white hover:bg-gray-100 rounded-lg shadow-lg transition-all text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                aria-label="Previous document"
+                title="Previous (←)"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              <button
+                onClick={handleNext}
+                disabled={currentIndex === documents.length - 1}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-white hover:bg-gray-100 rounded-lg shadow-lg transition-all text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed z-10"
+                aria-label="Next document"
+                title="Next (→)"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          {/* Content */}
+          <div
+            className="w-full h-full flex items-center justify-center p-8 overflow-auto"
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ cursor: zoom > 1 && !isPDF ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
           >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+            {isPDF ? (
+              <iframe
+                src={currentDoc.url}
+                className="w-full h-full bg-white rounded-lg shadow-lg"
+                title={currentDoc.name || 'Document'}
+              />
+            ) : (
+              <img
+                src={currentDoc.url}
+                alt={currentDoc.name || 'Document'}
+                className="max-w-full max-h-full object-contain select-none shadow-2xl"
+                style={{
+                  transform: `scale(${zoom}) rotate(${rotation}deg) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                  transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+                }}
+                draggable={false}
+              />
+            )}
+          </div>
 
-          <button
-            onClick={handleNext}
-            disabled={currentIndex === documents.length - 1}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-white bg-opacity-10 hover:bg-opacity-20 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Next document"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-        </>
-      )}
-
-      {/* Document viewer */}
-      <div
-        className="max-w-[90vw] max-h-[90vh] flex items-center justify-center overflow-hidden"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
-      >
-        {isPDF ? (
-          <iframe
-            src={currentDoc.url}
-            className="w-full h-[90vh] bg-white rounded-lg"
-            title={currentDoc.name || 'Document'}
-          />
-        ) : (
-          <img
-            src={currentDoc.url}
-            alt={currentDoc.name || 'Document'}
-            className="max-w-full max-h-full object-contain select-none"
-            style={{
-              transform: `scale(${zoom}) rotate(${rotation}deg) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
-              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-            }}
-            draggable={false}
-          />
-        )}
-      </div>
-
-      {/* Document name */}
-      {currentDoc.name && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-10 backdrop-blur-sm rounded-lg px-4 py-2 text-white font-medium max-w-md truncate">
-          {currentDoc.name}
+          {/* Zoom hint */}
+          {!isPDF && zoom <= 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white text-sm px-4 py-2 rounded-lg">
+              Use zoom controls to enlarge the document
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Footer with instructions */}
+        <div className="bg-gray-50 px-4 py-3 border-t border-gray-200">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center space-x-4">
+              {!isPDF && (
+                <>
+                  <span>💡 Tip: Zoom in and drag to move the image</span>
+                </>
+              )}
+            </div>
+            <div className="flex items-center space-x-4">
+              <span>Press <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">ESC</kbd> to close</span>
+              {documents.length > 1 && (
+                <span>Use <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">←</kbd> <kbd className="px-2 py-1 bg-gray-200 rounded text-xs">→</kbd> to navigate</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
