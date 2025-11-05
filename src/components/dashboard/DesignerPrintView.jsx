@@ -3,6 +3,9 @@ import { useEffect } from "react"
 
 const DesignerPrintView = ({ designer, user, onClose }) => {
   useEffect(() => {
+    // Debug the data structure
+    console.log('DesignerPrintView received:', { designer, user })
+    
     // Auto-trigger print dialog after a short delay
     const timer = setTimeout(() => {
       window.print()
@@ -11,18 +14,61 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [onClose])
+  }, [onClose, designer, user])
 
-  if (!designer || !user) return null
+  if (!designer || !user) {
+    console.error('DesignerPrintView: Missing required props', { designer, user })
+    return null
+  }
+
+  // Safely extract designer data with fallbacks
+  const designerData = {
+    fullName: designer.fullName || designer.profile?.fullName || 'N/A',
+    phoneNumber: designer.phoneNumber || designer.profile?.phoneNumber || 'N/A',
+    dob: designer.dob || designer.profile?.dob || 'N/A',
+    gender: designer.gender || designer.profile?.gender || 'N/A',
+    address: designer.address || designer.profile?.address || 'N/A',
+    city: designer.city || designer.profile?.city || 'N/A',
+    state: designer.state || designer.profile?.state || 'N/A',
+    pincode: designer.pincode || designer.profile?.pincode || 'N/A',
+    country: designer.country || designer.profile?.country || 'N/A',
+    specialization: designer.specialization || designer.profile?.specialization || 'N/A',
+    yearsOfExperience: designer.yearsOfExperience || designer.profile?.yearsOfExperience || 'N/A',
+    portfolioUrl: designer.portfolioUrl || designer.profile?.portfolioUrl || 'N/A',
+    bio: designer.bio || designer.profile?.bio || 'N/A',
+    bankAccountHolderName: designer.bankAccountHolderName || designer.profile?.bankAccountHolderName || null,
+    bankAccountNumber: designer.bankAccountNumber || designer.profile?.bankAccountNumber || null,
+    bankIFSCCode: designer.bankIFSCCode || designer.profile?.bankIFSCCode || null,
+    bankName: designer.bankName || designer.profile?.bankName || null,
+    gstNumber: designer.gstNumber || designer.profile?.gstNumber || null,
+    businessName: designer.businessName || designer.profile?.businessName || null,
+    businessAddress: designer.businessAddress || designer.profile?.businessAddress || null,
+    aadhaarCard: designer.aadhaarCard || designer.profile?.aadhaarCard || null,
+    panCard: designer.panCard || designer.profile?.panCard || null,
+    gstCertificate: designer.gstCertificate || designer.profile?.gstCertificate || null,
+    cancelledCheque: designer.cancelledCheque || designer.profile?.cancelledCheque || null,
+    portfolioSamples: designer.portfolioSamples || designer.profile?.portfolioSamples || [],
+    isApproved: designer.isApproved !== undefined ? designer.isApproved : (designer.profile?.isApproved !== undefined ? designer.profile.isApproved : null),
+    rejectionReason: designer.rejectionReason || designer.profile?.rejectionReason || null
+  }
+
+  const userData = {
+    email: user.email || designer.email || 'N/A',
+    createdAt: user.createdAt || designer.createdAt || new Date()
+  }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    })
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
+    } catch (error) {
+      return 'Invalid Date'
+    }
   }
 
   return (
@@ -64,27 +110,27 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Full Name</p>
-              <p className="font-medium">{designer.fullName || 'N/A'}</p>
+              <p className="font-medium">{designerData.fullName}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Email</p>
-              <p className="font-medium">{user.email || 'N/A'}</p>
+              <p className="font-medium">{userData.email}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Phone Number</p>
-              <p className="font-medium">{designer.phoneNumber || 'N/A'}</p>
+              <p className="font-medium">{designerData.phoneNumber}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Date of Birth</p>
-              <p className="font-medium">{designer.dob || 'N/A'}</p>
+              <p className="font-medium">{designerData.dob}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Gender</p>
-              <p className="font-medium">{designer.gender || 'N/A'}</p>
+              <p className="font-medium">{designerData.gender}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Registration Date</p>
-              <p className="font-medium">{formatDate(user.createdAt)}</p>
+              <p className="font-medium">{formatDate(userData.createdAt)}</p>
             </div>
           </div>
         </div>
@@ -97,23 +143,23 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <p className="text-sm text-gray-600">Street Address</p>
-              <p className="font-medium">{designer.address || 'N/A'}</p>
+              <p className="font-medium">{designerData.address}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">City</p>
-              <p className="font-medium">{designer.city || 'N/A'}</p>
+              <p className="font-medium">{designerData.city}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">State</p>
-              <p className="font-medium">{designer.state || 'N/A'}</p>
+              <p className="font-medium">{designerData.state}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">PIN Code</p>
-              <p className="font-medium">{designer.pincode || 'N/A'}</p>
+              <p className="font-medium">{designerData.pincode}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Country</p>
-              <p className="font-medium">{designer.country || 'N/A'}</p>
+              <p className="font-medium">{designerData.country}</p>
             </div>
           </div>
         </div>
@@ -126,25 +172,25 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Specialization</p>
-              <p className="font-medium">{designer.specialization || 'N/A'}</p>
+              <p className="font-medium">{designerData.specialization}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Years of Experience</p>
-              <p className="font-medium">{designer.yearsOfExperience || 'N/A'}</p>
+              <p className="font-medium">{designerData.yearsOfExperience}</p>
             </div>
             <div className="col-span-2">
               <p className="text-sm text-gray-600">Portfolio URL</p>
-              <p className="font-medium break-all">{designer.portfolioUrl || 'N/A'}</p>
+              <p className="font-medium break-all">{designerData.portfolioUrl}</p>
             </div>
             <div className="col-span-2">
               <p className="text-sm text-gray-600">Bio</p>
-              <p className="font-medium whitespace-pre-wrap">{designer.bio || 'N/A'}</p>
+              <p className="font-medium whitespace-pre-wrap">{designerData.bio}</p>
             </div>
           </div>
         </div>
 
         {/* Bank Details */}
-        {designer.bankAccountNumber && (
+        {designerData.bankAccountNumber && (
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">
               Bank Details
@@ -152,26 +198,26 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">Account Holder Name</p>
-                <p className="font-medium">{designer.bankAccountHolderName || 'N/A'}</p>
+                <p className="font-medium">{designerData.bankAccountHolderName || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Account Number</p>
-                <p className="font-medium">{designer.bankAccountNumber || 'N/A'}</p>
+                <p className="font-medium">{designerData.bankAccountNumber}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">IFSC Code</p>
-                <p className="font-medium">{designer.bankIFSCCode || 'N/A'}</p>
+                <p className="font-medium">{designerData.bankIFSCCode || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Bank Name</p>
-                <p className="font-medium">{designer.bankName || 'N/A'}</p>
+                <p className="font-medium">{designerData.bankName || 'N/A'}</p>
               </div>
             </div>
           </div>
         )}
 
         {/* GST Information */}
-        {designer.gstNumber && (
+        {designerData.gstNumber && (
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-2">
               GST Information
@@ -179,15 +225,15 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-600">GST Number</p>
-                <p className="font-medium">{designer.gstNumber}</p>
+                <p className="font-medium">{designerData.gstNumber}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Business Name</p>
-                <p className="font-medium">{designer.businessName || 'N/A'}</p>
+                <p className="font-medium">{designerData.businessName || 'N/A'}</p>
               </div>
               <div className="col-span-2">
                 <p className="text-sm text-gray-600">Business Address</p>
-                <p className="font-medium">{designer.businessAddress || 'N/A'}</p>
+                <p className="font-medium">{designerData.businessAddress || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -201,28 +247,28 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-600">Aadhaar Card</p>
-              <p className="font-medium">{designer.aadhaarCard ? '✓ Uploaded' : '✗ Not Uploaded'}</p>
+              <p className="font-medium">{designerData.aadhaarCard ? '✓ Uploaded' : '✗ Not Uploaded'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">PAN Card</p>
-              <p className="font-medium">{designer.panCard ? '✓ Uploaded' : '✗ Not Uploaded'}</p>
+              <p className="font-medium">{designerData.panCard ? '✓ Uploaded' : '✗ Not Uploaded'}</p>
             </div>
-            {designer.gstCertificate && (
+            {designerData.gstCertificate && (
               <div>
                 <p className="text-sm text-gray-600">GST Certificate</p>
                 <p className="font-medium">✓ Uploaded</p>
               </div>
             )}
-            {designer.cancelledCheque && (
+            {designerData.cancelledCheque && (
               <div>
                 <p className="text-sm text-gray-600">Cancelled Cheque</p>
                 <p className="font-medium">✓ Uploaded</p>
               </div>
             )}
-            {designer.portfolioSamples && designer.portfolioSamples.length > 0 && (
+            {designerData.portfolioSamples && designerData.portfolioSamples.length > 0 && (
               <div>
                 <p className="text-sm text-gray-600">Portfolio Samples</p>
-                <p className="font-medium">✓ {designer.portfolioSamples.length} file(s)</p>
+                <p className="font-medium">✓ {designerData.portfolioSamples.length} file(s)</p>
               </div>
             )}
           </div>
@@ -237,15 +283,15 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
             <div>
               <p className="text-sm text-gray-600">Approval Status</p>
               <p className="font-medium">
-                {designer.isApproved === true && '✓ Approved'}
-                {designer.isApproved === false && '✗ Rejected'}
-                {designer.isApproved === null && '⏳ Pending'}
+                {designerData.isApproved === true && '✓ Approved'}
+                {designerData.isApproved === false && '✗ Rejected'}
+                {designerData.isApproved === null && '⏳ Pending'}
               </p>
             </div>
-            {designer.rejectionReason && (
+            {designerData.rejectionReason && (
               <div>
                 <p className="text-sm text-gray-600">Rejection Reason</p>
-                <p className="font-medium">{designer.rejectionReason}</p>
+                <p className="font-medium">{designerData.rejectionReason}</p>
               </div>
             )}
           </div>

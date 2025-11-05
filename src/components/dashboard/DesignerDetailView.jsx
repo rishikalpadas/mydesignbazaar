@@ -66,6 +66,10 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
           }
         } catch (e) {
           errorMessage += ` (Status: ${response.status})`
+          // If we can't parse the error but got 503, still offer fallback
+          if (response.status === 503) {
+            shouldFallbackToPrint = true
+          }
         }
         
         // Offer print-to-PDF as fallback
@@ -666,10 +670,10 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       {/* Print View */}
       {showPrintView && (
         <DesignerPrintView
-          designer={designer.profile || designer}
+          designer={designer}
           user={{
-            email: designer.email,
-            createdAt: designer.createdAt
+            email: designer.email || designer.profile?.email || 'N/A',
+            createdAt: designer.createdAt || designer.profile?.createdAt || new Date()
           }}
           onClose={() => setShowPrintView(false)}
         />
