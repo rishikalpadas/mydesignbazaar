@@ -124,14 +124,14 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             {/* Document counter */}
             {documents.length > 1 && (
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-white font-medium text-sm">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-1.5 text-black font-medium text-sm">
                 {currentIndex + 1} / {documents.length}
               </div>
             )}
             
             {/* Document name */}
             {currentDoc.name && (
-              <div className="text-white font-medium truncate">
+              <div className="text-black font-medium truncate">
                 {currentDoc.name}
               </div>
             )}
@@ -144,21 +144,21 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
                 <button
                   onClick={handleZoomOut}
                   disabled={zoom <= 0.5}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-black disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Zoom out"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-5 h-5" />
                 </button>
                 
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2 text-white font-medium text-sm min-w-[60px] text-center">
+                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg px-3 py-2 text-black font-medium text-sm min-w-[60px] text-center">
                   {Math.round(zoom * 100)}%
                 </div>
                 
                 <button
                   onClick={handleZoomIn}
                   disabled={zoom >= 3}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-black disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Zoom in"
                   title="Zoom In"
                 >
@@ -167,7 +167,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
                 <button
                   onClick={handleRotate}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-black"
                   aria-label="Rotate"
                   title="Rotate 90°"
                 >
@@ -178,7 +178,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
             <button
               onClick={handleDownload}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-black"
               aria-label="Download"
               title="Download"
             >
@@ -187,7 +187,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
             <button
               onClick={onClose}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-white"
+              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all text-black"
               aria-label="Close"
               title="Close (Esc)"
             >

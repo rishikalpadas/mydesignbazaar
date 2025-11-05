@@ -4,7 +4,6 @@ const designSchema = new mongoose.Schema(
   {
     designId: {
       type: String,
-      unique: true,
       required: true,
       trim: true,
     },
@@ -137,13 +136,18 @@ const designSchema = new mongoose.Schema(
   },
 )
 
-// Indexes for better query performance
-// Note: designId already has a unique index from schema definition
-designSchema.index({ uploadedBy: 1 })
-designSchema.index({ status: 1 })
-designSchema.index({ category: 1 })
-designSchema.index({ createdAt: -1 })
-designSchema.index({ featured: 1, status: 1 })
+// Only create indexes if they don't already exist (prevents duplicate index warnings)
+if (!designSchema.options.indexesDeclared) {
+  // Indexes for better query performance
+  designSchema.index({ designId: 1 }, { unique: true }) // Unique index for designId
+  designSchema.index({ uploadedBy: 1 })
+  designSchema.index({ status: 1 })
+  designSchema.index({ category: 1 })
+  designSchema.index({ createdAt: -1 })
+  designSchema.index({ featured: 1, status: 1 })
+  
+  designSchema.options.indexesDeclared = true
+}
 
 // Virtual for multiple preview image URLs
 designSchema.virtual("previewImageUrls").get(function () {
