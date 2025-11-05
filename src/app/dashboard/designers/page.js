@@ -27,7 +27,6 @@ const DesignersContent = () => {
   const router=useRouter();
   const [stats, setStats] = useState({
     total: 0,
-    pending: 0,
     thisWeek: 0,
   });
   const [blockModalOpen, setBlockModalOpen] = useState(false);
@@ -58,7 +57,6 @@ const DesignersContent = () => {
       setDesigners(data.data || []);
       setStats({
         total: data.designers?.length || 0,
-        pending: data.designers?.filter((d) => !d.isApproved).length || 0,
         thisWeek:
           data.designers?.filter((d) => {
             const created = new Date(d.createdAt);
@@ -197,9 +195,17 @@ const DesignersContent = () => {
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-xl shadow-lg p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Designers</h1>
+            <h1 className="text-3xl font-bold mb-2">Approved Designers</h1>
+            <p className="text-purple-100">Manage verified and approved designers</p>
           </div>
           <div className="flex items-center space-x-4">
+            <button
+              onClick={() => router.push('/dashboard/designers/pending')}
+              className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 transition-colors"
+            >
+              <Clock className="w-5 h-5" />
+              <span className="font-medium">Pending Approval</span>
+            </button>
             <button
               onClick={() => router.push('/dashboard/designers/blocked')}
               className="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 transition-colors"
@@ -231,7 +237,7 @@ const DesignersContent = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">
-                Total Designers
+                Approved Designers
               </p>
               <p className="text-2xl font-bold text-gray-900">
                 {designers.length}
@@ -301,12 +307,12 @@ const DesignersContent = () => {
           <div className="text-center py-12">
             <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No pending designers
+              No approved designers
             </h3>
             <p className="text-gray-500">
               {searchTerm
-                ? "No designers match your search criteria."
-                : "All designer applications have been reviewed."}
+                ? "No approved designers match your search criteria."
+                : "No designers have been approved yet."}
             </p>
           </div>
         )}

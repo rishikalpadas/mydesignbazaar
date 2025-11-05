@@ -33,11 +33,12 @@ export async function GET(request) {
       );
     }
 
-    // Get all designer profiles, excluding blocked ones
+    // Get all designer profiles, excluding blocked ones and only approved ones
     const userIds = users.map(u => u._id);
     const profiles = await Designer.find({
       userId: { $in: userIds },
-      accountStatus: { $ne: 'blocked' } // Exclude blocked designers
+      accountStatus: { $ne: 'blocked' }, // Exclude blocked designers
+      isApproved: true // Only include approved designers
     }).lean();
 
     // Create a map of userId to profile

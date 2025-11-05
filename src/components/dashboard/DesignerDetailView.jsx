@@ -16,10 +16,14 @@ import {
   Eye,
   Calendar
 } from "lucide-react"
+import DocumentLightbox from "./DocumentLightbox"
 
 const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) => {
   const [activeTab, setActiveTab] = useState("personal")
   const [downloadingPDF, setDownloadingPDF] = useState(false)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxDocuments, setLightboxDocuments] = useState([])
+  const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0)
 
   if (!isOpen || !designer) return null
 
@@ -62,16 +66,76 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
     }
   }
 
-  const viewFile = (fileUrl) => {
-    if (fileUrl) {
-      // Check if it's already a full URL path (starts with /)
-      if (fileUrl.startsWith('/') || fileUrl.startsWith('http')) {
-        window.open(fileUrl, '_blank')
+  const viewFile = (fileUrl, fileName, fileType = 'document') => {
+    if (!fileUrl) return
+
+    // Determine the correct API path based on file type
+    let apiPath = ''
+    
+    if (fileUrl.startsWith('/api/')) {
+      // Already has API path
+      apiPath = fileUrl
+    } else if (fileUrl.startsWith('http')) {
+      // External URL
+      apiPath = fileUrl
+    } else {
+      // It's a filename, need to construct the API path
+      // Extract just the filename if it contains path separators
+      const filename = fileUrl.split('/').pop()
+      
+      if (fileType === 'aadhaar') {
+        apiPath = `/api/uploads/aadhaar/${filename}`
+      } else if (fileType === 'pan') {
+        apiPath = `/api/uploads/pan/${filename}`
+      } else if (fileType === 'sample') {
+        apiPath = `/api/uploads/sample-designs/${filename}`
       } else {
-        // For old records that only have filenames, show an alert
-        alert('This file was uploaded before the file storage system was implemented and cannot be viewed. The file name is: ' + fileUrl)
+        apiPath = `/api/uploads/general/${filename}`
       }
     }
+
+    // Open in lightbox
+    setLightboxDocuments([{
+      url: apiPath,
+      name: fileName || fileUrl.split('/').pop()
+    }])
+    setLightboxInitialIndex(0)
+    setLightboxOpen(true)
+  }
+
+  const viewMultipleFiles = (files, fileType, startIndex = 0) => {
+    if (!files || files.length === 0) return
+
+    const docs = files.map((file, index) => {
+      let apiPath = ''
+      
+      if (file.startsWith('/api/')) {
+        apiPath = file
+      } else if (file.startsWith('http')) {
+        apiPath = file
+      } else {
+        const filename = file.split('/').pop()
+        
+        if (fileType === 'aadhaar') {
+          apiPath = `/api/uploads/aadhaar/${filename}`
+        } else if (fileType === 'pan') {
+          apiPath = `/api/uploads/pan/${filename}`
+        } else if (fileType === 'sample') {
+          apiPath = `/api/uploads/sample-designs/${filename}`
+        } else {
+          apiPath = `/api/uploads/general/${filename}`
+        }
+      }
+
+      return {
+        url: apiPath,
+        name: `${fileType.charAt(0).toUpperCase() + fileType.slice(1)} ${index + 1}`
+      }
+    })
+
+    setLightboxDocuments(docs)
+    setLightboxInitialIndex(startIndex)
+    setLightboxOpen(true)
   }
 
   const tabs = [
@@ -242,7 +306,7 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
                       {designer.profile.aadhaarFiles.map((file, index) => (
                         <button
                           key={index}
-                          onClick={() => viewFile(file)}
+                          onClick={() => viewMultipleFiles(designer.profile.aadhaarFiles, 'aadhaar', index)}
                           className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                         >
                           <FileText className="w-4 h-4 mr-2" />
@@ -258,7 +322,7 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
                   <div>
                     <label className="text-sm font-medium text-gray-600 mb-2 block">PAN Card Document</label>
                     <button
-                      onClick={() => viewFile(designer.profile.panCardFile)}
+                      onClick={() => viewFile(designer.profile.panCardFile, 'PAN Card', 'pan')}
                       className="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
                     >
                       <FileText className="w-4 h-4 mr-2" />
@@ -368,21 +432,26 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
                 <div>
                   <label className="text-sm font-medium text-gray-600 mb-2 block">Sample Designs</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {designer.profile.sampleDesigns.map((design, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={design}
-                          alt={`Sample design ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                        />
-                        <button
-                          onClick={() => viewFile(design)}
-                          className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all rounded-lg"
-                        >
-                          <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                      </div>
-                    ))}
+                    {designer.profile.sampleDesigns.map((design, index) => {
+                      const filename = design.split('/').pop()
+                      const imageUrl = `/api/uploads/sample-designs/${filename}`
+                      
+                      return (
+                        <div key={index} className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt={`Sample design ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                          />
+                          <button
+                            onClick={() => viewMultipleFiles(designer.profile.sampleDesigns, 'sample', index)}
+                            className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all rounded-lg"
+                          >
+                            <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -522,6 +591,14 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
           </div>
         )}
       </div>
+
+      {/* Document Lightbox */}
+      <DocumentLightbox
+        isOpen={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        documents={lightboxDocuments}
+        initialIndex={lightboxInitialIndex}
+      />
     </div>
   )
 }
