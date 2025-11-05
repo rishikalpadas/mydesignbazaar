@@ -44,23 +44,43 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
         credentials: "include",
       })
       
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.style.display = 'none'
-        a.href = url
-        a.download = `designer-${designer.profile?.fullName || designer.email}-${Date.now()}.pdf`
-        document.body.appendChild(a)
-        a.click()
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = 'Failed to download PDF'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorData.message || errorMessage
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`
+          }
+        } catch (e) {
+          errorMessage += ` (Status: ${response.status})`
+        }
+        throw new Error(errorMessage)
+      }
+      
+      const blob = await response.blob()
+      
+      if (blob.size === 0) {
+        throw new Error('PDF file is empty')
+      }
+      
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = url
+      a.download = `designer-${designer.profile?.fullName || designer.email}-${Date.now()}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      
+      // Cleanup
+      setTimeout(() => {
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-      } else {
-        alert('Failed to download PDF')
-      }
+      }, 100)
     } catch (error) {
       console.error('Error downloading PDF:', error)
-      alert('Error downloading PDF')
+      alert(`Error downloading PDF: ${error.message}`)
     } finally {
       setDownloadingPDF(false)
     }
