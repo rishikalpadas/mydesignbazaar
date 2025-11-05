@@ -106,35 +106,44 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
   const viewMultipleFiles = (files, fileType, startIndex = 0) => {
     if (!files || files.length === 0) return
 
-    const docs = files.map((file, index) => {
-      let apiPath = ''
-      
-      if (file.startsWith('/api/')) {
-        apiPath = file
-      } else if (file.startsWith('http')) {
-        apiPath = file
-      } else {
-        const filename = file.split('/').pop()
+    // Filter out invalid files and map to document objects
+    const docs = files
+      .filter(file => file && typeof file === 'string') // Only process valid string files
+      .map((file, index) => {
+        let apiPath = ''
         
-        if (fileType === 'aadhaar') {
-          apiPath = `/api/uploads/aadhaar/${filename}`
-        } else if (fileType === 'pan') {
-          apiPath = `/api/uploads/pan/${filename}`
-        } else if (fileType === 'sample') {
-          apiPath = `/api/uploads/sample-designs/${filename}`
+        if (file.startsWith('/api/')) {
+          apiPath = file
+        } else if (file.startsWith('http')) {
+          apiPath = file
         } else {
-          apiPath = `/api/uploads/general/${filename}`
+          const filename = file.split('/').pop()
+          
+          if (fileType === 'aadhaar') {
+            apiPath = `/api/uploads/aadhaar/${filename}`
+          } else if (fileType === 'pan') {
+            apiPath = `/api/uploads/pan/${filename}`
+          } else if (fileType === 'sample') {
+            apiPath = `/api/uploads/sample-designs/${filename}`
+          } else {
+            apiPath = `/api/uploads/general/${filename}`
+          }
         }
-      }
 
-      return {
-        url: apiPath,
-        name: `${fileType.charAt(0).toUpperCase() + fileType.slice(1)} ${index + 1}`
-      }
-    })
+        return {
+          url: apiPath,
+          name: `${fileType.charAt(0).toUpperCase() + fileType.slice(1)} ${index + 1}`
+        }
+      })
+
+    // Only open lightbox if we have valid documents
+    if (docs.length === 0) {
+      console.error('No valid documents to display')
+      return
+    }
 
     setLightboxDocuments(docs)
-    setLightboxInitialIndex(startIndex)
+    setLightboxInitialIndex(Math.min(startIndex, docs.length - 1)) // Ensure startIndex is valid
     setLightboxOpen(true)
   }
 

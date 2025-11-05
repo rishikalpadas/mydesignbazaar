@@ -47,6 +47,13 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
   if (!isOpen || !documents || documents.length === 0) return null
 
   const currentDoc = documents[currentIndex]
+  
+  // Safety check: if current document is undefined, close the modal
+  if (!currentDoc || !currentDoc.url) {
+    console.error('DocumentLightbox: Invalid document or missing URL', { currentDoc, currentIndex, documents })
+    onClose()
+    return null
+  }
 
   const handleNext = () => {
     if (currentIndex < documents.length - 1) {
@@ -73,6 +80,8 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
   }
 
   const handleDownload = () => {
+    if (!currentDoc || !currentDoc.url) return
+    
     const link = document.createElement('a')
     link.href = currentDoc.url
     link.download = currentDoc.name || `document-${currentIndex + 1}`
