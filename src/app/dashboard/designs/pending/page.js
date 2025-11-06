@@ -1,4 +1,5 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -44,6 +45,20 @@ const PendingDesignsContent = () => {
   const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0)
   const [downloadingZip, setDownloadingZip] = useState(false)
 
+  const load = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch("/api/admin/designs/pending", { credentials: "include" })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to load")
+      setItems(data.designs || [])
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const stats = {
     totalPending: items.length,
     oldestPending:
@@ -59,20 +74,6 @@ const PendingDesignsContent = () => {
             ) / items.length,
           )
         : 0,
-  }
-
-  const load = async () => {
-    try {
-      setLoading(true)
-      const res = await fetch("/api/admin/designs/pending", { credentials: "include" })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to load")
-      setItems(data.designs || [])
-    } catch (e) {
-      setError(e.message)
-    } finally {
-      setLoading(false)
-    }
   }
 
   useEffect(() => {
@@ -1004,5 +1005,7 @@ const PendingDesignsPage = () => {
     </DashboardPageWrapper>
   )
 }
+
+// Disable static generation for this page (requires authentication)
 
 export default PendingDesignsPage

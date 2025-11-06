@@ -15,10 +15,6 @@ const Dashboard = () => {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
   const checkAuth = async () => {
     try {
       const response = await fetch("/api/user/profile", {
@@ -52,6 +48,10 @@ const Dashboard = () => {
     // If user closes modal without logging in, redirect to home
     router.push("/")
   }
+
+  useEffect(() => {
+    checkAuth()
+  }, [])
 
   if (loading) {
     return <LoadingSpinner />
@@ -119,5 +119,8 @@ const Dashboard = () => {
 
   return <DashboardLayout user={user}>{renderDashboard()}</DashboardLayout>
 }
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
 
 export default Dashboard

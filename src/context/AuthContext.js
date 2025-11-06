@@ -1,10 +1,29 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AuthContext = createContext();
+// Create context with default values for SSR
+const AuthContext = createContext({
+  user: null,
+  loading: true,
+  login: async () => ({ success: false }),
+  logout: async () => {},
+  register: async () => ({ success: false }),
+  checkAuth: async () => {},
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  // During SSR/build, return default context
+  if (!context && typeof window === 'undefined') {
+    return {
+      user: null,
+      loading: true,
+      login: async () => ({ success: false }),
+      logout: async () => {},
+      register: async () => ({ success: false }),
+      checkAuth: async () => {},
+    };
+  }
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

@@ -6,6 +6,10 @@ import { Settings, Percent, DollarSign, Shield, Save, RefreshCw, Package, Shoppi
 import DashboardLayout from '../../../components/dashboard/DashboardLayout';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function SettingsPage() {
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);

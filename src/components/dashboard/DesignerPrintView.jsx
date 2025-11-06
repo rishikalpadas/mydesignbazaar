@@ -2,10 +2,16 @@
 import { useEffect } from "react"
 
 const DesignerPrintView = ({ designer, user, onClose }) => {
+  // Check props early before any hooks
+  if (!designer || !user) {
+    console.error('DesignerPrintView: Missing required props', { designer, user })
+    return null
+  }
+
   useEffect(() => {
     // Debug the data structure
     console.log('DesignerPrintView received:', { designer, user })
-    
+
     // Auto-trigger print dialog after a short delay
     const timer = setTimeout(() => {
       window.print()
@@ -15,11 +21,6 @@ const DesignerPrintView = ({ designer, user, onClose }) => {
 
     return () => clearTimeout(timer)
   }, [onClose, designer, user])
-
-  if (!designer || !user) {
-    console.error('DesignerPrintView: Missing required props', { designer, user })
-    return null
-  }
 
   // Safely extract designer data with fallbacks
   const designerData = {

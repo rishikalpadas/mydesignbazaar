@@ -14,17 +14,6 @@ const DashboardPageWrapper = ({ children, requiredUserType = null }) => {
   const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
 
-  // Prevent SSR issues by only running on client
-  useEffect(() => {
-    setIsMounted(true)
-    checkAuth()
-  }, [])
-
-  // Don't render anything until mounted on client
-  if (!isMounted) {
-    return <LoadingSpinner />
-  }
-
   const checkAuth = async () => {
     try {
       const response = await fetch("/api/user/profile", {
@@ -75,6 +64,17 @@ const DashboardPageWrapper = ({ children, requiredUserType = null }) => {
 
   const handleAuthModalClose = () => {
     router.push("/")
+  }
+
+  // Prevent SSR issues by only running on client
+  useEffect(() => {
+    setIsMounted(true)
+    checkAuth()
+  }, [])
+
+  // Don't render anything until mounted on client
+  if (!isMounted) {
+    return <LoadingSpinner />
   }
 
   if (loading) {

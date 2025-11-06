@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import {
   Menu,
@@ -43,37 +43,7 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const isAuthenticated = hasExternalAuth ? externalIsAuthenticated : internalIsAuthenticated
   const user = hasExternalAuth ? externalUser : internalUser
 
-  // Fetch auth state if not provided via props
-  useEffect(() => {
-    setIsMounted(true)
-    if (!hasExternalAuth && !authChecked) {
-      checkAuthStatus()
-    }
-  }, [hasExternalAuth, authChecked])
-
-  // Don't render until mounted on client
-  if (!isMounted) {
-    return <nav className="bg-white shadow-md sticky top-0 z-50"><div className="container mx-auto px-4 py-4"></div></nav>
-  }
-
-  // Fetch subscription status when user changes (for both internal and external auth)
-  useEffect(() => {
-    if (user?.userType === 'buyer') {
-      fetchSubscriptionStatus()
-    }
-  }, [user])
-
-  // Fetch cart and wishlist counts when authentication changes
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchCartCount()
-      fetchWishlistCount()
-    } else {
-      setCartCount(0)
-      setWishlistCount(0)
-    }
-  }, [isAuthenticated])
-
+  // Define all functions before hooks
   const checkAuthStatus = async () => {
     try {
       const response = await fetch("/api/auth/me", {
@@ -146,6 +116,59 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     }
   }
 
+  // Fetch auth state if not provided via props
+  useEffect(() => {
+    setIsMounted(true)
+    if (!hasExternalAuth && !authChecked) {
+      checkAuthStatus()
+    }
+  }, [hasExternalAuth, authChecked])
+
+  // Fetch subscription status when user changes (for both internal and external auth)
+  useEffect(() => {
+    if (user?.userType === 'buyer') {
+      fetchSubscriptionStatus()
+    }
+  }, [user])
+
+  // Fetch cart and wishlist counts when authentication changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCartCount()
+      fetchWishlistCount()
+    } else {
+      setCartCount(0)
+      setWishlistCount(0)
+    }
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (mobileMenuOpen && mobileSearchRef.current) {
+      setTimeout(() => {
+        mobileSearchRef.current.focus()
+      }, 100)
+    }
+  }, [mobileMenuOpen])
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setUserDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [])
+
+  // Don't render until mounted on client
+  if (!isMounted) {
+    return <nav className="bg-white shadow-md sticky top-0 z-50"><div className="container mx-auto px-4 py-4"></div></nav>
+  }
+
   const handleAuthClick = () => {
     if (externalOnAuthClick) {
       externalOnAuthClick()
@@ -176,28 +199,6 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     setInternalAuthModalOpen(false)
     checkAuthStatus()
   }
-
-  useEffect(() => {
-    if (mobileMenuOpen && mobileSearchRef.current) {
-      setTimeout(() => {
-        mobileSearchRef.current.focus()
-      }, 100)
-    }
-  }, [mobileMenuOpen])
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
-        setUserDropdownOpen(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
 
   const toggleMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)

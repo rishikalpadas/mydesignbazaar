@@ -25,7 +25,21 @@
       "Bash(public/uploads/aadhaar/test.pdf)",
       "Bash(mkdir:*)",
       "Bash(npm uninstall:*)",
-      "Bash(rd /s /q .next 2)"
+      "Bash(rd /s /q .next 2)",
+      "Bash(REACT_ERROR_FIX.md 2)",
+      "Bash(echo:*)",
+      "Bash(REACT_ERROR_FIX.md)",
+      "Bash(timeout 180 npm run build:*)",
+      "Bash(for file in src/app/dashboard/*/page.js src/app/dashboard/*/*/page.js)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(! grep -q \"export const dynamic\" \"$file\")",
+      "Bash(then echo \"Adding dynamic export to $file\")",
+      "Bash(done)",
+      "Bash(then grep -L \"export const dynamic\" \"$file\")",
+      "Bash(node add-dynamic-export.js)",
+      "Bash(node add-dynamic-export.cjs:*)",
+      "Bash(src/app/dashboard/designs/pending/page.js)",
+      "Bash(timeout 120 npm run build:*)"
     ],
     "deny": [],
     "ask": []

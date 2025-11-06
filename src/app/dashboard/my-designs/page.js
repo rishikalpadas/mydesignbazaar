@@ -567,4 +567,8 @@ const MyDesignsPage = () => {
   )
 }
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default MyDesignsPage
