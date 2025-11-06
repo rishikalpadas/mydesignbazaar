@@ -45,7 +45,8 @@
       "Bash(then sed -i \"1i// Force dynamic rendering\\nexport const dynamic = ''force-dynamic''\\n\" \"$file\")",
       "Bash(cross-env NEXT_PRIVATE_SKIP_PRERENDER=1 npm run build:*)",
       "Bash(npm run dev:prod:*)",
-      "Bash(timeout /t 8 /nobreak)"
+      "Bash(timeout /t 8 /nobreak)",
+      "Bash(ping:*)"
     ],
     "deny": [],
     "ask": []
