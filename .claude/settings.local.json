@@ -39,7 +39,13 @@
       "Bash(node add-dynamic-export.js)",
       "Bash(node add-dynamic-export.cjs:*)",
       "Bash(src/app/dashboard/designs/pending/page.js)",
-      "Bash(timeout 120 npm run build:*)"
+      "Bash(timeout 120 npm run build:*)",
+      "Bash(for file in src/app/about-us/page.js src/app/brand-guidelines/page.js src/app/cart/page.js src/app/contact-us/page.js src/app/copyright-terms/page.js src/app/licensing-policy/page.js)",
+      "Bash(then if ! grep -q \"export const dynamic\" \"$file\")",
+      "Bash(then sed -i \"1i// Force dynamic rendering\\nexport const dynamic = ''force-dynamic''\\n\" \"$file\")",
+      "Bash(cross-env NEXT_PRIVATE_SKIP_PRERENDER=1 npm run build:*)",
+      "Bash(npm run dev:prod:*)",
+      "Bash(timeout /t 8 /nobreak)"
     ],
     "deny": [],
     "ask": []

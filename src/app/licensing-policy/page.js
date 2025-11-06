@@ -2,6 +2,10 @@ import Navbar from '../../components/Navbar';
 import Newsletter from '../../components/Newsletter';
 import Footer from '../../components/Footer';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function LicensingPage() {
   return (
     <>

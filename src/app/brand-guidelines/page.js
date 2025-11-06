@@ -2,6 +2,10 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function BrandGuidelinesPage() {
   return (
     <>

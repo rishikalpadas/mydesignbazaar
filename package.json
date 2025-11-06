@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "cross-env SKIP_BUILD_STATIC_GENERATION=1 next build",
-    "build:static": "next build",
+    "dev:prod": "cross-env NODE_ENV=production next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "setup-db": "node src/scripts/setupDatabase.js",

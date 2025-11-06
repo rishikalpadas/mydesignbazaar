@@ -5,9 +5,10 @@ const nextConfig = {
   generateBuildId: async () => {
     return 'build-' + Date.now()
   },
+  // Skip trailing slash redirect (moved from experimental in Next.js 16)
+  skipTrailingSlashRedirect: true,
   // Experimental features
   experimental: {
-    skipTrailingSlashRedirect: true,
     optimizePackageImports: ['lucide-react'],
   },
   // Disable static page generation for dashboard routes

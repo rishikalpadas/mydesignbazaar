@@ -23,6 +23,10 @@ import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
 import AuthModal from '../../components/AuthModal';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function PricingPage() {
   const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState("monthly");

@@ -2,16 +2,17 @@ const fs = require('fs');
 const path = require('path');
 
 const dashboardPages = [
-  'src/app/dashboard/buyers/page.js',
-  'src/app/dashboard/designers/page.js',
-  'src/app/dashboard/designers/blocked/page.js',
-  'src/app/dashboard/designers/pending/page.js',
-  'src/app/dashboard/designers/[id]/page.js',
-  'src/app/dashboard/designs/page.js',
-  'src/app/dashboard/my-designs/page.js',
-  'src/app/dashboard/profile/page.js',
-  'src/app/dashboard/settings/page.js',
-  'src/app/dashboard/upload/page.js',
+  'src/app/about-us/page.js',
+  'src/app/brand-guidelines/page.js',
+  'src/app/cart/page.js',
+  'src/app/contact-us/page.js',
+  'src/app/copyright-terms/page.js',
+  'src/app/licensing-policy/page.js',
+  'src/app/wishlist/page.js',
+  'src/app/categories/page.jsx',
+  'src/app/designer-portfolio/page.jsx',
+  'src/app/pricing/page.js',
+  'src/app/reset-password/page.js',
 ];
 
 const dynamicExport = `\n// Disable static generation for this page (requires authentication)\nexport const dynamic = 'force-dynamic'\n\n`;

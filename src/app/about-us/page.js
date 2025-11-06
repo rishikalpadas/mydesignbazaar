@@ -4,6 +4,10 @@ import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
 import { useAuth } from '../../context/AuthContext';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function AboutPage() {
 
   const { user } = useAuth();

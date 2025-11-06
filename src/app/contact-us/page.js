@@ -20,6 +20,10 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+
+// Disable static generation for this page (requires authentication)
+export const dynamic = 'force-dynamic'
+
 export default function ContactUsPage() {
   const [formData, setFormData] = useState({
     name: '',
