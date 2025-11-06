@@ -41,45 +41,54 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
+      console.log('[AUTH] Checking authentication status...');
       const response = await fetch('/api/user/profile', {
         credentials: 'include',
       });
       
+      console.log('[AUTH] Profile check response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('[AUTH] Auth check successful, user:', data.user?.email);
         setUser(data.user);
       } else {
+        console.log('[AUTH] Auth check failed, status:', response.status);
         setUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('[AUTH] Auth check failed:', error);
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = false) => {
     try {
+      console.log('[AUTH] Attempting login for:', email);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
         credentials: 'include',
       });
 
+      console.log('[AUTH] Login response status:', response.status);
       const data = await response.json();
 
       if (response.ok) {
+        console.log('[AUTH] Login successful, user:', data.user?.email);
         setUser(data.user);
         return { success: true, message: data.message };
       } else {
+        console.log('[AUTH] Login failed:', data.error);
         return { success: false, error: data.error };
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('[AUTH] Login error:', error);
       return { success: false, error: 'Network error. Please try again.' };
     }
   };

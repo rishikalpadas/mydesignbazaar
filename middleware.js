@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
 
 export function middleware(request) {
   const token = request.cookies.get('auth-token')?.value;
   const { pathname } = request.nextUrl;
+
+  console.log('[MIDDLEWARE] Processing:', pathname, 'Token present:', !!token);
 
   // Define protected routes
   const protectedRoutes = ['/dashboard', '/profile', '/designs', '/admin'];
@@ -21,48 +22,34 @@ export function middleware(request) {
 
   // If accessing protected route without token
   if (isProtectedRoute && !token) {
+    console.log('[MIDDLEWARE] Redirecting to login - no token for protected route');
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // If accessing auth routes with valid token, redirect to dashboard
   if (isAuthRoute && token) {
-    try {
-      jwt.verify(token, process.env.JWT_SECRET);
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    } catch (error) {
-      // Token is invalid, allow access to auth routes
-      return NextResponse.next();
-    }
-  }
-
-  // For API routes starting with /api/auth, allow all access
-  if (pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
-  }
-
-  // For other API routes, verify token if present
-  if (pathname.startsWith('/api/') && token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      // Add user info to headers for API routes
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('user-id', decoded.userId);
-      requestHeaders.set('user-type', decoded.userType);
-      
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
-    } catch (error) {
-      // Invalid token for API routes
-      if (pathname.startsWith('/api/user') || pathname.startsWith('/api/admin')) {
-        return NextResponse.json(
-          { error: 'Invalid token' },
-          { status: 401 }
-        );
+    // Only verify token if JWT_SECRET is available
+    if (process.env.JWT_SECRET) {
+      try {
+        const jwt = require('jsonwebtoken');
+        jwt.verify(token, process.env.JWT_SECRET);
+        console.log('[MIDDLEWARE] Valid token, redirecting to dashboard');
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      } catch (error) {
+        console.log('[MIDDLEWARE] Invalid token, allowing auth route access');
+        // Token is invalid, allow access to auth routes
+        return NextResponse.next();
       }
+    } else {
+      console.warn('[MIDDLEWARE] JWT_SECRET not available, skipping token verification');
     }
+  }
+
+  // For ALL API routes, let them handle their own authentication
+  // Don't interfere with API route authentication
+  if (pathname.startsWith('/api/')) {
+    console.log('[MIDDLEWARE] API route - passing through');
+    return NextResponse.next();
   }
 
   return NextResponse.next();

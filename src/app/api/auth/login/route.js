@@ -152,17 +152,24 @@ export async function POST(request) {
         { status: 200 },
       )
 
-      // Set HTTP-only cookie for token
-      response.cookies.set("auth-token", token, {
+      // Set HTTP-only cookie for token with enhanced production settings
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax", // Changed from 'strict' to 'lax' for production compatibility
         maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
         path: "/",
-      })
+      }
+
+      // Add domain for production if needed
+      if (process.env.NODE_ENV === "production" && process.env.COOKIE_DOMAIN) {
+        cookieOptions.domain = process.env.COOKIE_DOMAIN
+      }
+
+      response.cookies.set("auth-token", token, cookieOptions)
 
       console.log('[LOGIN] Admin login successful for:', admin.email)
-      console.log('[LOGIN] Cookie set with secure:', process.env.NODE_ENV === "production", 'sameSite: lax')
+      console.log('[LOGIN] Cookie set with options:', JSON.stringify(cookieOptions))
       console.log('[LOGIN] NODE_ENV:', process.env.NODE_ENV)
       return response
     }
@@ -235,17 +242,24 @@ export async function POST(request) {
       { status: 200 },
     )
 
-    // Set HTTP-only cookie for token
-    response.cookies.set("auth-token", token, {
+    // Set HTTP-only cookie for token with enhanced production settings
+    const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax", // Changed from 'strict' to 'lax' for production compatibility
       maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
       path: "/",
-    })
+    }
+
+    // Add domain for production if needed
+    if (process.env.NODE_ENV === "production" && process.env.COOKIE_DOMAIN) {
+      cookieOptions.domain = process.env.COOKIE_DOMAIN
+    }
+
+    response.cookies.set("auth-token", token, cookieOptions)
 
     console.log('[LOGIN] User login successful for:', user.email, 'type:', user.userType)
-    console.log('[LOGIN] Cookie set with secure:', process.env.NODE_ENV === "production", 'sameSite: lax')
+    console.log('[LOGIN] Cookie set with options:', JSON.stringify(cookieOptions))
     console.log('[LOGIN] NODE_ENV:', process.env.NODE_ENV)
     return response
   } catch (error) {
