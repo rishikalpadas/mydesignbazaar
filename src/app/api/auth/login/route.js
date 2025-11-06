@@ -143,7 +143,7 @@ export async function POST(request) {
       response.cookies.set("auth-token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "lax", // Changed from 'strict' to 'lax' for production compatibility
         maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
         path: "/",
       })
@@ -223,7 +223,7 @@ export async function POST(request) {
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax", // Changed from 'strict' to 'lax' for production compatibility
       maxAge: sessionDuration, // Dynamic: 1 day or 7 days based on rememberMe
       path: "/",
     })
