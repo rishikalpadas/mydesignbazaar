@@ -35,6 +35,8 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'production',
   },
   // Static file serving is handled by API route at /api/uploads/[...path]
+  // Empty turbopack config to allow build to proceed
+  turbopack: {},
 };
 
 export default nextConfig;

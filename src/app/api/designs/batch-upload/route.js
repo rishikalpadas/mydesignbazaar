@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from "uuid"
 import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
 import { batchWatermark } from "../../../../lib/watermark"
 import { captureUploadMetadata } from "../../../../lib/deviceTracking"
+import { calculateImageHash, checkDuplicate } from "../../../../lib/duplicateDetection"
+import { validateRawFileMatch } from "../../../../lib/rawFileValidator"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
@@ -258,6 +260,43 @@ export async function POST(request) {
           continue
         }
 
+        // === DUPLICATE DETECTION ===
+        console.log(`Design ${i + 1} - Checking for duplicates...`)
+        try {
+          // Calculate hash for primary preview image
+          const primaryPreviewBytes = await previewImages[0].arrayBuffer()
+          const primaryBuffer = Buffer.from(primaryPreviewBytes)
+          const primaryHash = await calculateImageHash(primaryBuffer)
+
+          // Check against existing designs
+          const duplicateCheck = await checkDuplicate(primaryHash, user._id, 5)
+
+          if (duplicateCheck.isDuplicate) {
+            console.log(`Design ${i + 1} - Duplicate detected!`)
+            errors.push({
+              designIndex: i,
+              title: title,
+              error: `Duplicate of existing design "${duplicateCheck.matchedDesign.title}" (${duplicateCheck.similarity}% similar). Skipped.`,
+              isDuplicate: true,
+              matchedDesign: {
+                id: duplicateCheck.matchedDesign.designId,
+                title: duplicateCheck.matchedDesign.title
+              }
+            })
+            continue // Skip this design
+          }
+
+          console.log(`Design ${i + 1} - No duplicates found, proceeding with upload...`)
+
+          // Store the hash for later use
+          var designPrimaryHash = primaryHash
+
+        } catch (hashError) {
+          console.error(`Design ${i + 1} - Error during duplicate detection:`, hashError)
+          // Continue with upload even if duplicate detection fails
+          var designPrimaryHash = null
+        }
+
         // If we got here, all validations passed, create the design
         console.log(`Design ${i + 1} - All validations passed, creating database entry...`)
         const customDesignId = await generateUniqueDesignId()
@@ -271,6 +310,7 @@ export async function POST(request) {
           uploadedBy: user._id,
           status: "pending",
           uploadMetadata,
+          primaryImageHash: designPrimaryHash // Store hash
         })
 
         await design.save()
@@ -322,6 +362,47 @@ export async function POST(request) {
 
           // For backward compatibility, also set rawFiles array
           design.rawFiles = [rawFileData]
+
+          // Validate raw file matches preview images (automatic validation)
+          try {
+            const publicDir = path.join(process.cwd(), 'public')
+            const rawFilePath = path.join(publicDir, rawFileData.path)
+            const previewImagePaths = previewImagesData.map(img => path.join(publicDir, img.path))
+
+            const validation = await validateRawFileMatch(
+              rawFilePath,
+              fileType,
+              previewImagePaths,
+              10 // threshold
+            )
+
+            // Store validation results
+            design.rawFileValidation = {
+              isValidated: true,
+              isMatch: validation.isMatch,
+              similarity: validation.similarity,
+              matchedPreview: validation.matchedPreview,
+              matchedPreviewIndex: validation.matchedPreviewIndex,
+              hammingDistance: validation.hammingDistance,
+              details: validation.details,
+              validatedAt: new Date(),
+              skipped: validation.skipped || false
+            }
+
+            // Log validation results for admin review
+            console.log(`Design ${i + 1} - Raw file validation:`, {
+              isMatch: validation.isMatch,
+              similarity: validation.similarity,
+              details: validation.details
+            })
+          } catch (validationError) {
+            console.error(`Design ${i + 1} - Raw file validation error:`, validationError)
+            // Don't fail the upload, just log the error
+            design.rawFileValidation = {
+              isValidated: false,
+              details: `Validation failed: ${validationError.message}`
+            }
+          }
 
           // Save updated design
           await design.save()

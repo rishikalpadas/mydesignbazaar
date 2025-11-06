@@ -9,7 +9,7 @@ async function handler() {
 
     const designs = await Design.find({ status: "pending" })
       .sort({ createdAt: -1 })
-      .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy")
+      .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy rawFileValidation")
       .populate("uploadedBy", "email")
       .lean()
 
@@ -44,6 +44,7 @@ async function handler() {
         uploadedBy: {
           email: d.uploadedBy?.email || "Unknown",
         },
+        rawFileValidation: d.rawFileValidation || null,
       }
     })
 

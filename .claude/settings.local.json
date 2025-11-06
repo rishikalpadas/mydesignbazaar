@@ -22,7 +22,10 @@
       "Bash(public/uploads/pan/test-pan.pdf)",
       "Bash(public/uploads/designs/test-design.ai)",
       "Bash(public/uploads/designs/test.jpg)",
-      "Bash(public/uploads/aadhaar/test.pdf)"
+      "Bash(public/uploads/aadhaar/test.pdf)",
+      "Bash(mkdir:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(rd /s /q .next 2)"
     ],
     "deny": [],
     "ask": []

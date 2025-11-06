@@ -1,24 +1,22 @@
 "use client"
 import { useState } from "react"
-import { 
-  X, 
-  Download, 
-  FileText, 
-  ExternalLink, 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  CreditCard, 
-  Briefcase, 
-  CheckCircle, 
+import {
+  X,
+  Download,
+  FileText,
+  ExternalLink,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Briefcase,
+  CheckCircle,
   XCircle,
   Eye,
-  Calendar,
-  Printer
+  Calendar
 } from "lucide-react"
 import DocumentLightbox from "./DocumentLightbox"
-import DesignerPrintView from "./DesignerPrintView"
 
 const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) => {
   const [activeTab, setActiveTab] = useState("personal")
@@ -26,7 +24,6 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxDocuments, setLightboxDocuments] = useState([])
   const [lightboxInitialIndex, setLightboxInitialIndex] = useState(0)
-  const [showPrintView, setShowPrintView] = useState(false)
 
   if (!isOpen || !designer) return null
 
@@ -72,15 +69,10 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
           }
         }
         
-        // Offer print-to-PDF as fallback
+        // No fallback needed - show error
         if (shouldFallbackToPrint) {
-          const usePrint = confirm(
-            'Server PDF generation is not available. Would you like to use your browser\'s Print to PDF instead?'
-          )
-          if (usePrint) {
-            setShowPrintView(true)
-            return
-          }
+          alert('Server PDF generation is temporarily unavailable. Please try again later or contact support.')
+          return
         }
         
         throw new Error(errorMessage)
@@ -113,16 +105,13 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
     }
   }
 
-  const handlePrintPDF = () => {
-    setShowPrintView(true)
-  }
 
   const viewFile = (fileUrl, fileName, fileType = 'document') => {
     if (!fileUrl) return
 
     // Determine the correct API path based on file type
     let apiPath = ''
-    
+
     if (fileUrl.startsWith('/api/')) {
       // Already has API path
       apiPath = fileUrl
@@ -133,7 +122,7 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       // It's a filename, need to construct the API path
       // Extract just the filename if it contains path separators
       const filename = fileUrl.split('/').pop()
-      
+
       if (fileType === 'aadhaar') {
         apiPath = `/api/uploads/aadhaar/${filename}`
       } else if (fileType === 'pan') {
@@ -145,13 +134,18 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       }
     }
 
-    // Open in lightbox
-    setLightboxDocuments([{
-      url: apiPath,
-      name: fileName || fileUrl.split('/').pop()
-    }])
-    setLightboxInitialIndex(0)
-    setLightboxOpen(true)
+    // Close lightbox first to reset state
+    setLightboxOpen(false)
+
+    // Use setTimeout to ensure state is fully reset before opening again
+    setTimeout(() => {
+      setLightboxDocuments([{
+        url: apiPath,
+        name: fileName || fileUrl.split('/').pop()
+      }])
+      setLightboxInitialIndex(0)
+      setLightboxOpen(true)
+    }, 0)
   }
 
   const viewMultipleFiles = (files, fileType, startIndex = 0) => {
@@ -162,14 +156,14 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       .filter(file => file && typeof file === 'string') // Only process valid string files
       .map((file, index) => {
         let apiPath = ''
-        
+
         if (file.startsWith('/api/')) {
           apiPath = file
         } else if (file.startsWith('http')) {
           apiPath = file
         } else {
           const filename = file.split('/').pop()
-          
+
           if (fileType === 'aadhaar') {
             apiPath = `/api/uploads/aadhaar/${filename}`
           } else if (fileType === 'pan') {
@@ -193,9 +187,15 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
       return
     }
 
-    setLightboxDocuments(docs)
-    setLightboxInitialIndex(Math.min(startIndex, docs.length - 1)) // Ensure startIndex is valid
-    setLightboxOpen(true)
+    // Close lightbox first to reset state
+    setLightboxOpen(false)
+
+    // Use setTimeout to ensure state is fully reset before opening again
+    setTimeout(() => {
+      setLightboxDocuments(docs)
+      setLightboxInitialIndex(Math.min(startIndex, docs.length - 1)) // Ensure startIndex is valid
+      setLightboxOpen(true)
+    }, 0)
   }
 
   const tabs = [
@@ -227,13 +227,6 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
               >
                 <Download className="w-4 h-4 mr-2" />
                 {downloadingPDF ? 'Generating...' : 'Download PDF'}
-              </button>
-              <button
-                onClick={handlePrintPDF}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                Print to PDF
               </button>
               <button
                 onClick={onClose}
@@ -666,18 +659,6 @@ const DesignerDetailView = ({ designer, isOpen, onClose, onApprove, onReject }) 
         documents={lightboxDocuments}
         initialIndex={lightboxInitialIndex}
       />
-
-      {/* Print View */}
-      {showPrintView && (
-        <DesignerPrintView
-          designer={designer}
-          user={{
-            email: designer.email || designer.profile?.email || 'N/A',
-            createdAt: designer.createdAt || designer.profile?.createdAt || new Date()
-          }}
-          onClose={() => setShowPrintView(false)}
-        />
-      )}
     </div>
   )
 }

@@ -23,8 +23,11 @@ export async function GET(request) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
 
-    // Get all designer users
-    const users = await User.find({userType:"designer"}).lean();
+    // Get all approved designer users
+    const users = await User.find({
+      userType: "designer",
+      isApproved: true // Filter approved designers at User level
+    }).lean();
 
     if (!users || users.length === 0) {
       return NextResponse.json(
@@ -33,12 +36,11 @@ export async function GET(request) {
       );
     }
 
-    // Get all designer profiles, excluding blocked ones and only approved ones
+    // Get all designer profiles, excluding blocked ones
     const userIds = users.map(u => u._id);
     const profiles = await Designer.find({
       userId: { $in: userIds },
-      accountStatus: { $ne: 'blocked' }, // Exclude blocked designers
-      isApproved: true // Only include approved designers
+      accountStatus: { $ne: 'blocked' } // Exclude blocked designers
     }).lean();
 
     // Create a map of userId to profile

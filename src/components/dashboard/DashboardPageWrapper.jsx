@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import DashboardLayout from "./DashboardLayout"
 import LoadingSpinner from "../../components/ui/LoadingSpinner"
 import AuthModal from "../../components/AuthModal"
@@ -10,11 +11,19 @@ const DashboardPageWrapper = ({ children, requiredUserType = null }) => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
 
+  // Prevent SSR issues by only running on client
   useEffect(() => {
+    setIsMounted(true)
     checkAuth()
   }, [])
+
+  // Don't render anything until mounted on client
+  if (!isMounted) {
+    return <LoadingSpinner />
+  }
 
   const checkAuth = async () => {
     try {

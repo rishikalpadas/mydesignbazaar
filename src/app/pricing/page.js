@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 import {
   Check,
   Crown,
@@ -15,14 +16,21 @@ import {
   ArrowRight,
   X,
   Info,
+  Loader,
 } from "lucide-react";
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import Newsletter from '../../components/Newsletter';
+import AuthModal from '../../components/AuthModal';
 
 export default function PricingPage() {
+  const router = useRouter();
   const [billingPeriod, setBillingPeriod] = useState("monthly");
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   const [planPrices, setPlanPrices] = useState({
     basic: 600,
     premium: 5000,
@@ -33,6 +41,25 @@ export default function PricingPage() {
     exclusive: 399,
     ai: 499
   });
+
+  // Check authentication
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data.user);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Fetch pricing from backend
   useEffect(() => {
@@ -54,6 +81,135 @@ export default function PricingPage() {
 
     fetchSettings();
   }, []);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handlePurchasePlan = async (plan) => {
+    // Check if user is authenticated
+    if (!isAuthenticated || !user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Check if user is a buyer
+    if (user.userType !== 'buyer') {
+      alert('Only buyers can purchase subscription plans. Please register as a buyer.');
+      return;
+    }
+
+    setProcessingPayment(true);
+
+    try {
+      // Get plan details
+      const planDetails = {
+        basic: { credits: 10, validityDays: 15 },
+        premium: { credits: 100, validityDays: 90 },
+        elite: { credits: 1200, validityDays: 365 }
+      };
+
+      const planDetail = planDetails[plan.id];
+      const amount = planPrices[plan.priceKey];
+
+      // Create Razorpay order
+      const orderResponse = await fetch('/api/payment/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          planId: plan.id,
+          planName: plan.name,
+          amount,
+          credits: planDetail.credits,
+          validityDays: planDetail.validityDays
+        })
+      });
+
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create order');
+      }
+
+      // Initialize Razorpay payment
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount * 100,
+        currency: orderData.currency,
+        name: 'MyDesignBazaar',
+        description: `${orderData.planDetails.planName} Subscription Plan`,
+        order_id: orderData.orderId,
+        prefill: {
+          email: user.email,
+          contact: user.mobileNumber || ''
+        },
+        theme: {
+          color: '#F97316'
+        },
+        handler: async function (response) {
+          try {
+            // Verify payment
+            const verifyResponse = await fetch('/api/payment/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                planId: plan.id,
+                planName: plan.name,
+                credits: planDetail.credits,
+                validityDays: planDetail.validityDays,
+                amount: orderData.amount
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyResponse.ok) {
+              alert(`🎉 ${verifyData.message}\n\nYour subscription is now active!`);
+              router.push('/dashboard/profile');
+            } else {
+              throw new Error(verifyData.error);
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment verification failed. Please contact support.');
+          } finally {
+            setProcessingPayment(false);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            setProcessingPayment(false);
+          }
+        }
+      };
+
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(error.message || 'Failed to initiate payment. Please try again.');
+      setProcessingPayment(false);
+    }
+  };
+
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+  };
 
   const subscriptionPlans = [
     {
@@ -304,13 +460,22 @@ export default function PricingPage() {
                     </div>
 
                     <button
-                      className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 ${
+                      onClick={() => handlePurchasePlan(plan)}
+                      disabled={processingPayment}
+                      className={`w-full py-4 px-6 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
                         plan.popular
                           ? `text-white ${getColorClasses(plan.color, "primary")} shadow-lg hover:shadow-xl`
                           : "text-gray-700 border-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
                       }`}
                     >
-                      Get Started with {plan.name}
+                      {processingPayment ? (
+                        <>
+                          <Loader className="w-5 h-5 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        `Get Started with ${plan.name}`
+                      )}
                     </button>
                   </div>
                 );
@@ -500,6 +665,15 @@ export default function PricingPage() {
         <Newsletter />
       </main>
       <Footer />
+
+      {/* Auth Modal */}
+      {showAuthModal && (
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      )}
     </>
   );
 }

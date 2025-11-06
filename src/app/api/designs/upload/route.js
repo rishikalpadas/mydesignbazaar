@@ -9,6 +9,8 @@ import { v4 as uuidv4 } from "uuid"
 import { generateUniqueDesignId } from "../../../../lib/designIdGenerator"
 import { batchWatermark } from "../../../../lib/watermark"
 import { captureUploadMetadata } from "../../../../lib/deviceTracking"
+import { calculateImageHash, checkDuplicate, checkInternalDuplicates } from "../../../../lib/duplicateDetection"
+import { validateRawFileMatch } from "../../../../lib/rawFileValidator"
 
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB
@@ -201,10 +203,48 @@ export async function POST(request) {
     // Check if this is a first-time upload and enforce minimum requirement
     const existingDesignsCount = await Design.countDocuments({ uploadedBy: user._id })
     const isFirstTimeUpload = existingDesignsCount === 0
-    
+
     if (isFirstTimeUpload) {
-      return NextResponse.json({ 
-        error: "First-time uploaders must upload at least 10 designs. Please use the batch upload feature." 
+      return NextResponse.json({
+        error: "First-time uploaders must upload at least 10 designs. Please use the batch upload feature."
+      }, { status: 400 })
+    }
+
+    // === DUPLICATE DETECTION ===
+    // Convert preview images to buffers and check for duplicates
+    const previewBuffers = []
+    for (const previewFile of previewFiles) {
+      const bytes = await previewFile.arrayBuffer()
+      previewBuffers.push(Buffer.from(bytes))
+    }
+
+    // Check if user is uploading duplicate images within this upload
+    const internalDuplicateCheck = await checkInternalDuplicates(previewBuffers, 5)
+    if (internalDuplicateCheck.hasDuplicates) {
+      const duplicatePairs = internalDuplicateCheck.duplicateIndices
+        .map(d => `Image ${d.image1 + 1} and Image ${d.image2 + 1}`)
+        .join(', ')
+
+      return NextResponse.json({
+        error: `Duplicate images detected in your upload: ${duplicatePairs}. Please upload unique designs only.`,
+        duplicates: internalDuplicateCheck.duplicateIndices
+      }, { status: 400 })
+    }
+
+    // Calculate hash for primary image (first preview)
+    const primaryHash = internalDuplicateCheck.hashes[0]
+
+    // Check if this design is a duplicate of designer's existing uploads
+    const duplicateCheck = await checkDuplicate(primaryHash, user._id, 5)
+
+    if (duplicateCheck.isDuplicate) {
+      return NextResponse.json({
+        error: `This design appears to be a duplicate of your existing design "${duplicateCheck.matchedDesign.title}" (ID: ${duplicateCheck.matchedDesign.designId}). Similarity: ${duplicateCheck.similarity}%. Please upload original, unique designs only.`,
+        matchedDesign: {
+          id: duplicateCheck.matchedDesign.designId,
+          title: duplicateCheck.matchedDesign.title,
+          similarity: duplicateCheck.similarity
+        }
       }, { status: 400 })
     }
 
@@ -231,14 +271,18 @@ export async function POST(request) {
     const customId = design.designId
 
     try {
-      // Save preview images using custom design ID
+      // Save preview images using custom design ID and attach their hashes
       const previewImagesData = []
       for (const [index, previewFile] of previewFiles.entries()) {
         const previewImageData = await saveFile(previewFile, customId, "preview")
         previewImageData.isPrimary = index === 0 // First image is primary
+        previewImageData.imageHash = internalDuplicateCheck.hashes[index] // Store hash
         previewImagesData.push(previewImageData)
       }
       design.previewImages = previewImagesData
+
+      // Store primary image hash for quick duplicate checking
+      design.primaryImageHash = primaryHash
 
       // Generate watermarked versions of preview images
       try {
@@ -269,6 +313,47 @@ export async function POST(request) {
 
       // For backward compatibility, also set rawFiles array
       design.rawFiles = [rawFileData]
+
+      // Validate raw file matches preview images (automatic validation)
+      try {
+        const publicDir = path.join(process.cwd(), 'public')
+        const rawFilePath = path.join(publicDir, rawFileData.path)
+        const previewImagePaths = previewImagesData.map(img => path.join(publicDir, img.path))
+
+        const validation = await validateRawFileMatch(
+          rawFilePath,
+          fileType,
+          previewImagePaths,
+          10 // threshold
+        )
+
+        // Store validation results
+        design.rawFileValidation = {
+          isValidated: true,
+          isMatch: validation.isMatch,
+          similarity: validation.similarity,
+          matchedPreview: validation.matchedPreview,
+          matchedPreviewIndex: validation.matchedPreviewIndex,
+          hammingDistance: validation.hammingDistance,
+          details: validation.details,
+          validatedAt: new Date(),
+          skipped: validation.skipped || false
+        }
+
+        // Log validation results for admin review
+        console.log(`Raw file validation for ${customId}:`, {
+          isMatch: validation.isMatch,
+          similarity: validation.similarity,
+          details: validation.details
+        })
+      } catch (validationError) {
+        console.error('Raw file validation error:', validationError)
+        // Don't fail the upload, just log the error
+        design.rawFileValidation = {
+          isValidated: false,
+          details: `Validation failed: ${validationError.message}`
+        }
+      }
 
       // Save updated design
       await design.save()

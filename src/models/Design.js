@@ -40,8 +40,14 @@ const designSchema = new mongoose.Schema(
       isPrimary: {
         type: Boolean,
         default: false
-      }
+      },
+      imageHash: String // Perceptual hash for duplicate detection
     }],
+    // Primary image hash for quick duplicate checking
+    primaryImageHash: {
+      type: String,
+      index: true // Index for fast duplicate lookups
+    },
     // Keep the old previewImage field for backward compatibility
     previewImage: {
       filename: String,
@@ -60,6 +66,30 @@ const designSchema = new mongoose.Schema(
         type: String,
         enum: ["pdf", "cdr", "ai", "eps", "svg"],
       },
+    },
+    // Raw file validation metadata
+    rawFileValidation: {
+      isValidated: {
+        type: Boolean,
+        default: false
+      },
+      isMatch: {
+        type: Boolean,
+        default: null
+      },
+      similarity: {
+        type: Number,
+        default: 0
+      },
+      matchedPreview: String,
+      matchedPreviewIndex: Number,
+      hammingDistance: Number,
+      details: String,
+      validatedAt: Date,
+      skipped: {
+        type: Boolean,
+        default: false
+      }
     },
     // Keep the old rawFiles field for backward compatibility
     rawFiles: [

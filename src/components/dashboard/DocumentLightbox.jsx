@@ -14,6 +14,16 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     setCurrentIndex(initialIndex)
   }, [initialIndex])
 
+  // Reset index when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentIndex(0)
+      setZoom(1)
+      setRotation(0)
+      setPosition({ x: 0, y: 0 })
+    }
+  }, [isOpen])
+
   useEffect(() => {
     // Reset zoom and rotation when changing documents
     setZoom(1)
@@ -24,7 +34,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (!isOpen) return
-      
+
       switch (e.key) {
         case 'Escape':
           onClose()
@@ -44,14 +54,30 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, currentIndex, documents])
 
+  // Safety check: if current document is invalid, close the modal using useEffect
+  // Only run this check after a brief delay to avoid race conditions during state transitions
+  useEffect(() => {
+    if (!isOpen || !documents || documents.length === 0) return
+
+    const timeoutId = setTimeout(() => {
+      if (isOpen && documents && documents.length > 0) {
+        const currentDoc = documents[currentIndex]
+        if (!currentDoc || !currentDoc.url) {
+          console.error('DocumentLightbox: Invalid document or missing URL', { currentDoc, currentIndex, documents })
+          onClose()
+        }
+      }
+    }, 50) // Small delay to avoid race conditions
+
+    return () => clearTimeout(timeoutId)
+  }, [isOpen, currentIndex, documents, onClose])
+
   if (!isOpen || !documents || documents.length === 0) return null
 
   const currentDoc = documents[currentIndex]
-  
-  // Safety check: if current document is undefined, close the modal
+
+  // If current doc is invalid, don't render (useEffect will close it)
   if (!currentDoc || !currentDoc.url) {
-    console.error('DocumentLightbox: Invalid document or missing URL', { currentDoc, currentIndex, documents })
-    onClose()
     return null
   }
 
