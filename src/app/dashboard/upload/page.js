@@ -33,7 +33,7 @@ const CATEGORIES = [
 const MAX_DESIGNS = 25
 const MAX_PREVIEW_IMAGES = 5
 
-const UploadContent = () => {
+const UploadContent = ({ user }) => {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -506,6 +506,64 @@ const UploadContent = () => {
             {uploadResults?.totalUploaded > 0
               ? 'Redirecting to your designs...'
               : 'You can fix the issues and re-upload.'}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user is approved before showing upload form
+  if (!user?.isApproved) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-xl p-6 text-white shadow-md">
+          <h1 className="text-3xl font-bold mb-2">Account Pending Approval</h1>
+          <p className="text-orange-100">Your designer account is currently under review</p>
+        </div>
+
+        {/* Status Card */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-8 text-center">
+          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-orange-600" />
+          </div>
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Waiting for Admin Approval
+          </h2>
+          
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Thank you for registering as a designer! Your account is currently pending approval by our admin team. 
+            Once approved, you'll be able to upload your designs and start sharing your creative work with our community.
+          </p>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
+            <ul className="text-blue-800 text-sm space-y-1 text-left max-w-md mx-auto">
+              <li>• Our admin team will review your designer application</li>
+              <li>• You'll receive an email notification once approved</li>
+              <li>• After approval, you can upload your initial 10 designs</li>
+              <li>• Your designs will then be reviewed for content approval</li>
+            </ul>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/profile')}
+              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all"
+            >
+              Edit Profile
+            </button>
+          </div>
+
+          <p className="text-sm text-gray-500 mt-6">
+            Questions? Contact our support team at support@mydesignbazaar.com
           </p>
         </div>
       </div>
@@ -1039,7 +1097,7 @@ const DesignForm = ({
 const UploadPage = () => {
   return (
     <DashboardPageWrapper requiredUserType="designer">
-      <UploadContent />
+      {({ user }) => <UploadContent user={user} />}
     </DashboardPageWrapper>
   )
 }

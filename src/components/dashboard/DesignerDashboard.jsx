@@ -68,10 +68,20 @@ const DesignerDashboard = ({ user }) => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 text-left transition-all duration-300 hover:shadow-lg">
-              <Upload className="h-8 w-8 text-purple-500 mb-2" />
+            <button 
+              className={`p-4 border border-orange-200 rounded-xl text-left transition-all duration-300 ${
+                user.isApproved 
+                  ? 'hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:shadow-lg cursor-pointer' 
+                  : 'opacity-50 cursor-not-allowed'
+              }`}
+              disabled={!user.isApproved}
+              onClick={() => user.isApproved && (window.location.href = '/dashboard/upload')}
+            >
+              <Upload className={`h-8 w-8 mb-2 ${user.isApproved ? 'text-purple-500' : 'text-gray-400'}`} />
               <h3 className="font-semibold text-gray-900">Upload New Design</h3>
-              <p className="text-sm text-gray-500">Share your latest creation</p>
+              <p className="text-sm text-gray-500">
+                {user.isApproved ? 'Share your latest creation' : 'Available after approval'}
+              </p>
             </button>
 
             <button className="p-4 border border-orange-200 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 text-left transition-all duration-300 hover:shadow-lg">
@@ -100,7 +110,17 @@ const DesignerDashboard = ({ user }) => {
           <div className="text-center py-8 text-gray-500">
             <Palette className="h-12 w-12 mx-auto mb-4 text-gray-300" />
             <p>No designs uploaded yet</p>
-            <button className="mt-2 text-purple-600 hover:text-purple-700 font-medium">Upload your first design</button>
+            <button 
+              className={`mt-2 font-medium ${
+                user.isApproved 
+                  ? 'text-purple-600 hover:text-purple-700 cursor-pointer' 
+                  : 'text-gray-400 cursor-not-allowed'
+              }`}
+              disabled={!user.isApproved}
+              onClick={() => user.isApproved && (window.location.href = '/dashboard/upload')}
+            >
+              {user.isApproved ? 'Upload your first design' : 'Upload available after approval'}
+            </button>
           </div>
         </div>
       </div>

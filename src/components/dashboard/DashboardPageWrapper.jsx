@@ -118,7 +118,7 @@ const DashboardPageWrapper = ({ children, requiredUserType = null }) => {
 
   return (
     <DashboardLayout user={user}>
-      {children}
+      {typeof children === 'function' ? children({ user }) : children}
     </DashboardLayout>
   )
 }
