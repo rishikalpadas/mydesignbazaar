@@ -148,6 +148,7 @@ export async function POST(request) {
         path: "/",
       })
 
+      console.log('[LOGIN] Admin login successful, cookie set with sameSite: lax, secure:', process.env.NODE_ENV === "production")
       return response
     }
 
