@@ -65,10 +65,18 @@ export async function verifyToken(request) {
     const token = request.cookies.get("auth-token")?.value
 
     if (!token) {
+      console.log('[AUTH] No token provided in cookies')
       return { error: "No token provided", status: 401 }
     }
 
+    if (!process.env.JWT_SECRET) {
+      console.error('[AUTH] JWT_SECRET environment variable is not set!')
+      return { error: "Server configuration error", status: 500 }
+    }
+
+    console.log('[AUTH] Verifying token...')
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    console.log('[AUTH] Token verified for user:', decoded.userId, 'type:', decoded.userType)
 
     await connectDB()
 
@@ -80,9 +88,11 @@ export async function verifyToken(request) {
       user = await Admin.findById(decoded.userId).select("-password")
 
       if (!user) {
+        console.log('[AUTH] Admin not found in database:', decoded.userId)
         return { error: "Admin not found", status: 401 }
       }
 
+      console.log('[AUTH] Admin user found:', user.email)
       // Add admin-specific properties
       user = {
         ...user.toObject(),
@@ -94,9 +104,11 @@ export async function verifyToken(request) {
       user = await User.findById(decoded.userId).select("-password")
 
       if (!user) {
+        console.log('[AUTH] User not found in database:', decoded.userId)
         return { error: "User not found", status: 401 }
       }
 
+      console.log('[AUTH] Regular user found:', user.email)
       user = {
         ...user.toObject(),
         isAdmin: false,
@@ -105,7 +117,13 @@ export async function verifyToken(request) {
 
     return { user, decoded }
   } catch (error) {
-    console.error("Token verification error:", error)
+    if (error.name === 'JsonWebTokenError') {
+      console.error('[AUTH] Invalid JWT token:', error.message)
+    } else if (error.name === 'TokenExpiredError') {
+      console.error('[AUTH] JWT token expired:', error.message)
+    } else {
+      console.error('[AUTH] Token verification error:', error)
+    }
     return { error: "Invalid token", status: 401 }
   }
 }

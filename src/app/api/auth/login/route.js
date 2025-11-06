@@ -63,6 +63,19 @@ const AdminSchema = new mongoose.Schema({
 
 export async function POST(request) {
   try {
+    // Validate critical environment variables
+    if (!process.env.JWT_SECRET) {
+      console.error('[LOGIN] JWT_SECRET environment variable is not set!')
+      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+    }
+
+    if (!process.env.MONGODB_URI) {
+      console.error('[LOGIN] MONGODB_URI environment variable is not set!')
+      return NextResponse.json({ error: "Database configuration error" }, { status: 500 })
+    }
+
+    console.log('[LOGIN] Environment check passed. NODE_ENV:', process.env.NODE_ENV)
+    
     await connectDB()
 
     const { email, password, rememberMe } = await request.json()
@@ -148,7 +161,9 @@ export async function POST(request) {
         path: "/",
       })
 
-      console.log('[LOGIN] Admin login successful, cookie set with sameSite: lax, secure:', process.env.NODE_ENV === "production")
+      console.log('[LOGIN] Admin login successful for:', admin.email)
+      console.log('[LOGIN] Cookie set with secure:', process.env.NODE_ENV === "production", 'sameSite: lax')
+      console.log('[LOGIN] NODE_ENV:', process.env.NODE_ENV)
       return response
     }
 
@@ -229,6 +244,9 @@ export async function POST(request) {
       path: "/",
     })
 
+    console.log('[LOGIN] User login successful for:', user.email, 'type:', user.userType)
+    console.log('[LOGIN] Cookie set with secure:', process.env.NODE_ENV === "production", 'sameSite: lax')
+    console.log('[LOGIN] NODE_ENV:', process.env.NODE_ENV)
     return response
   } catch (error) {
     console.error("Login error:", error)
