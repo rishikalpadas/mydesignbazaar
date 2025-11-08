@@ -16,6 +16,30 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
   const modalDragStartRef = useRef({ x: 0, y: 0 })
   const modalRef = useRef(null)
 
+  // ALL CALLBACKS MUST BE DECLARED BEFORE ANY useEffect TO MAINTAIN HOOK ORDER
+  // Modal dragging handlers - use useCallback to prevent recreating on every render
+  const handleModalMouseMove = useCallback((e) => {
+    e.preventDefault()
+    const newX = e.clientX - modalDragStartRef.current.x
+    const newY = e.clientY - modalDragStartRef.current.y
+
+    // Keep modal within viewport bounds
+    const modalWidth = modalRef.current?.offsetWidth || 600
+    const modalHeight = modalRef.current?.offsetHeight || 500
+    const maxX = window.innerWidth - modalWidth
+    const maxY = window.innerHeight - modalHeight
+
+    setModalPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    })
+  }, [])
+
+  const handleModalMouseUp = useCallback(() => {
+    setIsModalDragging(false)
+  }, [])
+
+  // NOW ALL useEffect HOOKS IN CONSISTENT ORDER
   useEffect(() => {
     setCurrentIndex(initialIndex)
   }, [initialIndex])
@@ -86,6 +110,18 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     return () => clearTimeout(timeoutId)
   }, [isOpen, currentIndex, documents, onClose])
 
+  // Handle modal dragging with proper event listeners
+  useEffect(() => {
+    if (isModalDragging) {
+      document.addEventListener('mousemove', handleModalMouseMove)
+      document.addEventListener('mouseup', handleModalMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', handleModalMouseMove)
+        document.removeEventListener('mouseup', handleModalMouseUp)
+      }
+    }
+  }, [isModalDragging, handleModalMouseMove, handleModalMouseUp])
+
   if (!isOpen || !documents || documents.length === 0) return null
 
   const currentDoc = documents[currentIndex]
@@ -133,28 +169,6 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     document.body.removeChild(link)
   }
 
-  // Modal dragging handlers - use useCallback to prevent recreating on every render
-  const handleModalMouseMove = useCallback((e) => {
-    e.preventDefault()
-    const newX = e.clientX - modalDragStartRef.current.x
-    const newY = e.clientY - modalDragStartRef.current.y
-
-    // Keep modal within viewport bounds
-    const modalWidth = modalRef.current?.offsetWidth || 600
-    const modalHeight = modalRef.current?.offsetHeight || 500
-    const maxX = window.innerWidth - modalWidth
-    const maxY = window.innerHeight - modalHeight
-
-    setModalPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY))
-    })
-  }, [])
-
-  const handleModalMouseUp = useCallback(() => {
-    setIsModalDragging(false)
-  }, [])
-
   const handleModalMouseDown = (e) => {
     // Only allow dragging from header
     if (e.target.closest('.modal-drag-handle')) {
@@ -165,18 +179,6 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
       }
     }
   }
-
-  // Handle modal dragging with proper event listeners
-  useEffect(() => {
-    if (isModalDragging) {
-      document.addEventListener('mousemove', handleModalMouseMove)
-      document.addEventListener('mouseup', handleModalMouseUp)
-      return () => {
-        document.removeEventListener('mousemove', handleModalMouseMove)
-        document.removeEventListener('mouseup', handleModalMouseUp)
-      }
-    }
-  }, [isModalDragging, handleModalMouseMove, handleModalMouseUp])
 
   const handleMouseDown = (e) => {
     if (zoom > 1) {

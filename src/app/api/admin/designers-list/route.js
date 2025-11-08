@@ -29,26 +29,23 @@ export async function GET(request) {
       isApproved: true // Filter approved designers at User level
     }).lean();
 
+    // If no users found, return empty array (not an error)
     if (!users || users.length === 0) {
-      return NextResponse.json(
-        { error: "No designer available" },
-        { status: 404 }
-      );
+      return NextResponse.json({ data: [], designers: [] }, { status: 200 });
     }
 
-    // Get all designer profiles, excluding blocked ones
+    // Get all designer profiles (including blocked ones for admin to manage)
     const userIds = users.map(u => u._id);
     const profiles = await Designer.find({
-      userId: { $in: userIds },
-      accountStatus: { $ne: 'blocked' } // Exclude blocked designers
+      userId: { $in: userIds }
     }).lean();
 
     // Create a map of userId to profile
     const profileMap = new Map(profiles.map(p => [String(p.userId), p]));
 
-    // Combine user and profile data, only including non-blocked designers
+    // Combine user and profile data
     const designers = users
-      .filter(u => profileMap.has(String(u._id))) // Filter out blocked designers
+      .filter(u => profileMap.has(String(u._id)))
       .map(u => ({
         ...u,
         profile: profileMap.get(String(u._id))
