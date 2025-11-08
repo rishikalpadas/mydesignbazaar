@@ -10,15 +10,15 @@ export async function GET(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
-      console.error('[PROFILE] Auth failed:', authResult.message);
+    if (authResult.error) {
+      console.error('[PROFILE] Auth failed:', authResult.error);
       return NextResponse.json(
-        { success: false, message: authResult.message },
-        { status: 401 }
+        { success: false, message: authResult.error },
+        { status: authResult.status || 401 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
     console.log('[PROFILE] Fetching profile for user:', userId);
 
     // Get user
