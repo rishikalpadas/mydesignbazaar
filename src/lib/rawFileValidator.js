@@ -16,8 +16,17 @@ export async function extractRawFileContent(filePath, fileType) {
 
     switch (fileType.toLowerCase()) {
       case 'pdf':
+        // PDF files cannot be automatically validated without external tools
+        // Sharp does not support PDF processing - would need pdf2pic or similar
+        // Skip validation and require manual verification
+        console.log('PDF files require manual verification. Skipping automatic validation.')
+        return null
+
       case 'ai': // AI files are PDF-based
-        return await extractPDFPage(fileBuffer)
+        // AI files are essentially PDFs but Sharp can't process them
+        // Skip validation and require manual verification
+        console.log('AI files require manual verification. Skipping automatic validation.')
+        return null
 
       case 'svg':
         return await convertSVGToImage(fileBuffer)

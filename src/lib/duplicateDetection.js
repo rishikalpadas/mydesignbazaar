@@ -15,9 +15,18 @@ export async function calculateImageHash(imageBuffer) {
       .ensureAlpha()
       .toBuffer({ resolveWithObject: true })
 
-    // blockhash expects image data in specific format
+    // Prepare image data for blockhash
     const bits = 16 // 16x16 hash for good accuracy
-    const hash = blockhash.bmvbhash(data, bits, info.width, info.height)
+    const method = 2 // 2 = precise method
+
+    // blockhashData expects { width, height, data } object
+    const imageData = {
+      width: info.width,
+      height: info.height,
+      data: data
+    }
+
+    const hash = blockhash.blockhashData(imageData, bits, method)
 
     return hash
   } catch (error) {
