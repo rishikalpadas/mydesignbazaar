@@ -214,7 +214,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-30 z-[60]"
+      className="fixed inset-0 bg-black bg-opacity-5 z-[60]"
       onClick={handleBackdropClick}
     >
       {/* Modal Container - Compact and Draggable */}

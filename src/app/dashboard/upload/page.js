@@ -67,27 +67,33 @@ const UploadContent = ({ user }) => {
         const isFirstTime = data.stats.totalDesigns === 0
         setIsFirstTimeUpload(isFirstTime)
         setMinDesignsRequired(isFirstTime ? 10 : 1)
-        
-        // If first time and only 1 design, add more to meet minimum
-        if (isFirstTime && designs.length < 10) {
-          const additionalDesigns = Array.from({ length: 10 - designs.length }, (_, i) => ({
-            id: Date.now() + i,
-            title: '',
-            description: '',
-            category: '',
-            tags: '',
-            previewImages: [],
-            previewImageUrls: [],
-            rawFile: null,
-            errors: {}
-          }))
-          setDesigns(prev => [...prev, ...additionalDesigns])
+
+        // If first time, initialize with exactly 10 designs (only if we still have 1 design)
+        if (isFirstTime) {
+          setDesigns(prev => {
+            // Only add designs if we still have the initial single design
+            if (prev.length === 1) {
+              const additionalDesigns = Array.from({ length: 9 }, (_, i) => ({
+                id: Date.now() + i,
+                title: '',
+                description: '',
+                category: '',
+                tags: '',
+                previewImages: [],
+                previewImageUrls: [],
+                rawFile: null,
+                errors: {}
+              }))
+              return [...prev, ...additionalDesigns]
+            }
+            return prev
+          })
         }
       }
     } catch (error) {
       console.error('Error checking first-time upload status:', error)
     }
-  }, [designs.length])
+  }, []) // Empty deps - only run when explicitly called
 
   const updateDesign = (index, field, value) => {
     setDesigns(prev => 
