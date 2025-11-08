@@ -60,8 +60,20 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'production',
   },
   // Static file serving is handled by API route at /api/uploads/[...path]
-  // Empty turbopack config to allow build to proceed
+  // Turbopack config to ignore upload directories during build
   turbopack: {},
+
+  // Webpack config for production builds (ignore uploads directory)
+  webpack: (config, { isServer }) => {
+    // Ignore uploads directory to prevent build performance issues
+    if (!isServer) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: ['**/node_modules', '**/public/uploads/**'],
+      }
+    }
+    return config
+  },
 };
 
 export default nextConfig;
