@@ -5,6 +5,7 @@ const designSchema = new mongoose.Schema(
     designId: {
       type: String,
       required: true,
+      unique: true, // Ensure unique design IDs
       trim: true,
     },
     title: {
@@ -169,13 +170,13 @@ const designSchema = new mongoose.Schema(
 // Only create indexes if they don't already exist (prevents duplicate index warnings)
 if (!designSchema.options.indexesDeclared) {
   // Indexes for better query performance
-  designSchema.index({ designId: 1 }, { unique: true }) // Unique index for designId
+  // Note: designId index is declared in field definition with unique: true
   designSchema.index({ uploadedBy: 1 })
   designSchema.index({ status: 1 })
   designSchema.index({ category: 1 })
   designSchema.index({ createdAt: -1 })
   designSchema.index({ featured: 1, status: 1 })
-  
+
   designSchema.options.indexesDeclared = true
 }
 

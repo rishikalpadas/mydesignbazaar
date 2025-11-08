@@ -18,16 +18,10 @@ const MAX_RAW_SIZE = 50 * 1024 * 1024 // 50MB per raw file
 const MAX_DESIGNS_PER_BATCH = 25
 const MAX_PREVIEW_IMAGES_PER_DESIGN = 5
 
-// Configure route for larger payloads and longer timeouts
-export const config = {
-  api: {
-    bodyParser: false,
-    responseLimit: false,
-  },
-}
-
-// Increase max duration for API route (in seconds) - for Vercel
-export const maxDuration = 300 // 5 minutes
+// Route segment config for Next.js App Router
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+export const maxDuration = 300 // 5 minutes (for Vercel/production)
 
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
