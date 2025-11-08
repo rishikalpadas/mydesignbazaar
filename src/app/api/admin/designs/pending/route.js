@@ -7,11 +7,26 @@ async function handler() {
   try {
     await connectDB()
 
+    // DEBUG: Log query before executing
+    console.log('[ADMIN PENDING] Querying pending designs...')
+
     const designs = await Design.find({ status: "pending" })
       .sort({ createdAt: -1 })
       .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy rawFileValidation")
       .populate("uploadedBy", "email")
       .lean()
+
+    // DEBUG: Log results
+    console.log(`[ADMIN PENDING] Found ${designs.length} pending designs`)
+    if (designs.length > 0) {
+      console.log('[ADMIN PENDING] Sample designs:', designs.slice(0, 3).map(d => ({
+        id: d._id,
+        designId: d.designId,
+        title: d.title,
+        status: 'pending',
+        uploadedBy: d.uploadedBy?.email
+      })))
+    }
 
     const result = designs.map((d) => {
       const designIdToUse = d.designId || d._id

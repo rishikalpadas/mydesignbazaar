@@ -40,7 +40,10 @@ export async function GET(request) {
     if (status !== 'all') {
       query.status = status
     }
-    
+
+    // DEBUG: Log query
+    console.log(`[MY DESIGNS] Query for user ${user._id}:`, query)
+
     // Build sort options
     let sortOptions = {}
     switch (sortBy) {
@@ -74,9 +77,20 @@ export async function GET(request) {
       .populate('uploadedBy', 'profile.fullName email')
       .populate('approvedBy', 'profile.fullName email')
       .lean()
-    
+
     // Get total count for pagination
     const totalDesigns = await Design.countDocuments(query)
+
+    // DEBUG: Log results
+    console.log(`[MY DESIGNS] Found ${designs.length} designs (total: ${totalDesigns})`)
+    if (designs.length > 0) {
+      console.log('[MY DESIGNS] Sample designs:', designs.slice(0, 3).map(d => ({
+        id: d._id,
+        designId: d.designId,
+        title: d.title,
+        status: d.status
+      })))
+    }
     const totalPages = Math.ceil(totalDesigns / limit)
     
     // Get statistics for the user

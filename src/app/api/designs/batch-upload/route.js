@@ -408,6 +408,18 @@ export async function POST(request) {
           await design.save()
           console.log(`Design ${i + 1} - Upload completed successfully!`)
 
+          // DEBUG: Verify design was saved with correct status
+          const savedDesign = await Design.findById(design._id).lean()
+          console.log(`Design ${i + 1} - Verification:`, {
+            _id: savedDesign._id,
+            designId: savedDesign.designId,
+            title: savedDesign.title,
+            status: savedDesign.status,
+            uploadedBy: savedDesign.uploadedBy,
+            hasPreviewImages: savedDesign.previewImages?.length > 0,
+            hasRawFile: !!savedDesign.rawFile
+          })
+
           uploadedDesigns.push({
             id: design._id,
             title: design.title,
@@ -441,6 +453,21 @@ export async function POST(request) {
     console.log(`- Failed: ${errors.length}`)
     if (errors.length > 0) {
       console.log('Failed designs:', errors)
+    }
+
+    // DEBUG: Query all pending designs for this user to verify they were saved
+    if (uploadedDesigns.length > 0) {
+      const pendingDesigns = await Design.find({
+        uploadedBy: user._id,
+        status: 'pending'
+      }).select('_id designId title status').lean()
+      console.log(`\nDEBUG - Total pending designs for user ${user._id}:`, pendingDesigns.length)
+      console.log('Pending designs:', pendingDesigns.map(d => ({
+        id: d._id,
+        designId: d.designId,
+        title: d.title.substring(0, 30),
+        status: d.status
+      })))
     }
 
     // Return results
