@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { X, ZoomIn, ZoomOut, RotateCw, Download, ChevronLeft, ChevronRight, Move } from "lucide-react"
 
 const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
@@ -10,10 +10,10 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
 
-  // Modal dragging
+  // Modal dragging - use refs to avoid stale closures
   const [isModalDragging, setIsModalDragging] = useState(false)
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
-  const [modalDragStart, setModalDragStart] = useState({ x: 0, y: 0 })
+  const modalDragStartRef = useRef({ x: 0, y: 0 })
   const modalRef = useRef(null)
 
   useEffect(() => {
@@ -107,15 +107,18 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     }
   }
 
-  const handleZoomIn = () => {
+  const handleZoomIn = (e) => {
+    e?.stopPropagation()
     setZoom(prev => Math.min(prev + 0.25, 3))
   }
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (e) => {
+    e?.stopPropagation()
     setZoom(prev => Math.max(prev - 0.25, 0.5))
   }
 
-  const handleRotate = () => {
+  const handleRotate = (e) => {
+    e?.stopPropagation()
     setRotation(prev => (prev + 90) % 360)
   }
 
@@ -130,41 +133,40 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     document.body.removeChild(link)
   }
 
-  // Modal dragging handlers
+  // Modal dragging handlers - use useCallback to prevent recreating on every render
+  const handleModalMouseMove = useCallback((e) => {
+    e.preventDefault()
+    const newX = e.clientX - modalDragStartRef.current.x
+    const newY = e.clientY - modalDragStartRef.current.y
+
+    // Keep modal within viewport bounds
+    const modalWidth = modalRef.current?.offsetWidth || 600
+    const modalHeight = modalRef.current?.offsetHeight || 500
+    const maxX = window.innerWidth - modalWidth
+    const maxY = window.innerHeight - modalHeight
+
+    setModalPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY))
+    })
+  }, [])
+
+  const handleModalMouseUp = useCallback(() => {
+    setIsModalDragging(false)
+  }, [])
+
   const handleModalMouseDown = (e) => {
     // Only allow dragging from header
     if (e.target.closest('.modal-drag-handle')) {
       setIsModalDragging(true)
-      setModalDragStart({
+      modalDragStartRef.current = {
         x: e.clientX - modalPosition.x,
         y: e.clientY - modalPosition.y
-      })
+      }
     }
   }
 
-  const handleModalMouseMove = (e) => {
-    if (isModalDragging) {
-      e.preventDefault()
-      const newX = e.clientX - modalDragStart.x
-      const newY = e.clientY - modalDragStart.y
-
-      // Keep modal within viewport bounds
-      const modalWidth = modalRef.current?.offsetWidth || 600
-      const modalHeight = modalRef.current?.offsetHeight || 500
-      const maxX = window.innerWidth - modalWidth
-      const maxY = window.innerHeight - modalHeight
-
-      setModalPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
-      })
-    }
-  }
-
-  const handleModalMouseUp = () => {
-    setIsModalDragging(false)
-  }
-
+  // Handle modal dragging with proper event listeners
   useEffect(() => {
     if (isModalDragging) {
       document.addEventListener('mousemove', handleModalMouseMove)
@@ -174,10 +176,11 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
         document.removeEventListener('mouseup', handleModalMouseUp)
       }
     }
-  }, [isModalDragging, modalDragStart, modalPosition])
+  }, [isModalDragging, handleModalMouseMove, handleModalMouseUp])
 
   const handleMouseDown = (e) => {
     if (zoom > 1) {
+      e.stopPropagation() // Prevent modal drag when dragging image
       setIsDragging(true)
       setDragStart({
         x: e.clientX - position.x,
@@ -363,8 +366,15 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
           {/* Zoom hint - Compact */}
           {!isPDF && zoom <= 1 && (
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white text-xs px-3 py-1.5 rounded">
-              Use zoom to enlarge
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white text-xs px-4 py-2 rounded shadow-lg">
+              💡 Click <strong>+</strong> to zoom, then drag to pan
+            </div>
+          )}
+
+          {/* Dragging hint when zoomed */}
+          {!isPDF && zoom > 1 && !isDragging && (
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-80 text-white text-xs px-4 py-2 rounded shadow-lg animate-pulse">
+              ✋ Click & drag to pan around
             </div>
           )}
         </div>
