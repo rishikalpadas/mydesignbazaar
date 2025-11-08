@@ -74,7 +74,9 @@ export async function GET(request) {
       mobileNumber: designer.mobileNumber,
       alternativeContact: designer.alternativeContact,
       aadhaarNumber: designer.aadhaarNumber,
+      aadhaarFiles: designer.aadhaarFiles || [],
       panNumber: designer.panNumber,
+      panCardFile: designer.panCardFile || null,
       gstNumber: designer.gstNumber,
 
       // Address
