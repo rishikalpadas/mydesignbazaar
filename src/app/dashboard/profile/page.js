@@ -18,14 +18,19 @@ import {
   Wallet,
   AlertCircle,
   Shield,
-  FileText
+  FileText,
+  Eye,
+  Download
 } from "lucide-react"
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
+import DocumentLightbox from "../../../components/dashboard/DocumentLightbox"
 
 const ProfileContent = () => {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showDocuments, setShowDocuments] = useState(false)
+  const [documentIndex, setDocumentIndex] = useState(0)
 
   useEffect(() => {
     fetchProfile()
@@ -302,6 +307,76 @@ const ProfileContent = () => {
         </div>
       </div>
 
+      {/* Uploaded ID Documents */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b border-indigo-100">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-indigo-600" />
+            Uploaded ID Documents
+          </h2>
+        </div>
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Aadhaar Documents */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-gray-600" />
+                Aadhaar Card
+              </h3>
+              {profile.aadhaarFiles && profile.aadhaarFiles.length > 0 ? (
+                <div className="space-y-2">
+                  {profile.aadhaarFiles.map((file, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setDocumentIndex(index)
+                        setShowDocuments(true)
+                      }}
+                      className="flex items-center justify-between w-full p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-indigo-600" />
+                        <span className="text-sm text-gray-700">
+                          Aadhaar {profile.aadhaarFiles.length > 1 ? `(${index + 1}/${profile.aadhaarFiles.length})` : ''}
+                        </span>
+                      </div>
+                      <Eye className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No Aadhaar documents uploaded</p>
+              )}
+            </div>
+
+            {/* PAN Card Document */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-gray-600" />
+                PAN Card
+              </h3>
+              {profile.panCardFile ? (
+                <button
+                  onClick={() => {
+                    setDocumentIndex(profile.aadhaarFiles?.length || 0)
+                    setShowDocuments(true)
+                  }}
+                  className="flex items-center justify-between w-full p-3 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-colors group"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5 text-indigo-600" />
+                    <span className="text-sm text-gray-700">PAN Card</span>
+                  </div>
+                  <Eye className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+                </button>
+              ) : (
+                <p className="text-gray-500 text-sm">No PAN card uploaded</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Bank Details */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-100">
@@ -438,6 +513,27 @@ const ProfileContent = () => {
           />
         </div>
       </div>
+
+      {/* Document Lightbox */}
+      {showDocuments && (
+        <DocumentLightbox
+          isOpen={showDocuments}
+          onClose={() => setShowDocuments(false)}
+          documents={[
+            ...(profile.aadhaarFiles || []).map((file, index) => ({
+              url: `/api/uploads/${file}`,
+              label: `Aadhaar Card ${profile.aadhaarFiles.length > 1 ? `(${index + 1}/${profile.aadhaarFiles.length})` : ''}`,
+              type: file.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+            })),
+            ...(profile.panCardFile ? [{
+              url: `/api/uploads/${profile.panCardFile}`,
+              label: 'PAN Card',
+              type: profile.panCardFile.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
+            }] : [])
+          ]}
+          initialIndex={documentIndex}
+        />
+      )}
     </div>
   )
 }
