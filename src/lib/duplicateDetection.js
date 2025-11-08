@@ -55,12 +55,13 @@ export function hammingDistance(hash1, hash2) {
  */
 export async function checkDuplicate(imageHash, uploaderId, threshold = 5) {
   try {
-    // Get all designs by this uploader (only check against same designer's uploads)
+    // Get all APPROVED/REJECTED designs by this uploader
+    // Don't check against pending designs to avoid false duplicates within same batch upload
     const designs = await Design.find({
       uploadedBy: uploaderId,
       primaryImageHash: { $exists: true },
-      status: { $ne: 'deleted' } // Don't check against deleted designs
-    }).select('designId title primaryImageHash previewImages').lean()
+      status: { $in: ['approved', 'rejected'] } // Only check against reviewed designs
+    }).select('designId title primaryImageHash previewImages status').lean()
 
     if (!designs || designs.length === 0) {
       return {
