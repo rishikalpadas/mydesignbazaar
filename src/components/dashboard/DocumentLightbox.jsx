@@ -107,15 +107,18 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
     }
   }
 
-  const handleZoomIn = () => {
+  const handleZoomIn = (e) => {
+    e?.stopPropagation()
     setZoom(prev => Math.min(prev + 0.25, 3))
   }
 
-  const handleZoomOut = () => {
+  const handleZoomOut = (e) => {
+    e?.stopPropagation()
     setZoom(prev => Math.max(prev - 0.25, 0.5))
   }
 
-  const handleRotate = () => {
+  const handleRotate = (e) => {
+    e?.stopPropagation()
     setRotation(prev => (prev + 90) % 360)
   }
 
@@ -177,6 +180,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
   const handleMouseDown = (e) => {
     if (zoom > 1) {
+      e.stopPropagation() // Prevent modal drag when dragging image
       setIsDragging(true)
       setDragStart({
         x: e.clientX - position.x,
@@ -362,8 +366,15 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
           {/* Zoom hint - Compact */}
           {!isPDF && zoom <= 1 && (
-            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-60 text-white text-xs px-3 py-1.5 rounded">
-              Use zoom to enlarge
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white text-xs px-4 py-2 rounded shadow-lg">
+              💡 Click <strong>+</strong> to zoom, then drag to pan
+            </div>
+          )}
+
+          {/* Dragging hint when zoomed */}
+          {!isPDF && zoom > 1 && !isDragging && (
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-green-600 bg-opacity-80 text-white text-xs px-4 py-2 rounded shadow-lg animate-pulse">
+              ✋ Click & drag to pan around
             </div>
           )}
         </div>
