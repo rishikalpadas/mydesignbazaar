@@ -10,18 +10,31 @@ export async function GET(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
+    if (authResult.error) {
+      console.error('[PROFILE] Auth failed:', authResult.error);
       return NextResponse.json(
-        { success: false, message: authResult.message },
-        { status: 401 }
+        { success: false, message: authResult.error },
+        { status: authResult.status || 401 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
+    console.log('[PROFILE] Fetching profile for user:', userId);
 
     // Get user
     const user = await User.findById(userId);
-    if (!user || user.userType !== 'designer') {
+    if (!user) {
+      console.error('[PROFILE] User not found:', userId);
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log('[PROFILE] User found, type:', user.userType);
+
+    if (user.userType !== 'designer') {
+      console.error('[PROFILE] Not a designer account:', user.userType);
       return NextResponse.json(
         { success: false, message: 'Designer account not found' },
         { status: 404 }
@@ -31,11 +44,14 @@ export async function GET(request) {
     // Get designer details
     const designer = await Designer.findOne({ userId: user._id });
     if (!designer) {
+      console.error('[PROFILE] Designer profile not found for user:', userId);
       return NextResponse.json(
         { success: false, message: 'Designer profile not found' },
         { status: 404 }
       );
     }
+
+    console.log('[PROFILE] Designer profile found:', designer.fullName);
 
     // Get design statistics
     const totalDesigns = await Design.countDocuments({ uploadedBy: user._id });

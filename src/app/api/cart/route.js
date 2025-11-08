@@ -10,14 +10,14 @@ export async function GET(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: authResult.message },
-        { status: 401 }
+        { success: false, message: authResult.error },
+        { status: authResult.status || 401 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
 
     // Get or create cart
     let cart = await Cart.getOrCreateCart(userId);
@@ -64,14 +64,14 @@ export async function POST(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: authResult.message },
-        { status: 401 }
+        { success: false, message: authResult.error },
+        { status: authResult.status || 401 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
     const { designId } = await request.json();
 
     if (!designId) {
@@ -131,14 +131,14 @@ export async function DELETE(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
+    if (authResult.error) {
       return NextResponse.json(
-        { success: false, message: authResult.message },
-        { status: 401 }
+        { success: false, message: authResult.error },
+        { status: authResult.status || 401 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
     const { searchParams } = new URL(request.url);
     const designId = searchParams.get('designId');
 

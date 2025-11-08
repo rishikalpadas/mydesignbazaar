@@ -9,14 +9,14 @@ export async function GET(request) {
     await connectDB();
 
     const authResult = await verifyToken(request);
-    if (!authResult.valid) {
+    if (authResult.error) {
       return NextResponse.json(
         { success: true, count: 0 },
         { status: 200 }
       );
     }
 
-    const userId = authResult.user.id;
+    const userId = authResult.decoded.userId;
 
     const wishlist = await Wishlist.findOne({ userId });
     const count = wishlist ? wishlist.items.length : 0;
