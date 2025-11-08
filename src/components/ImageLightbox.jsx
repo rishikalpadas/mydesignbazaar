@@ -15,36 +15,7 @@ export default function ImageLightbox({
   const isGallery = srcs && srcs.length > 1
   const images = isGallery ? srcs : [src].filter(Boolean)
   const currentSrc = images[currentIndex] || src
-  const istStamp = useMemo(() => {
-    try {
-      return new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-    } catch {
-      return new Date().toLocaleString("en-IN")
-    }
-  }, [])
-
-  const watermarkUrl = useMemo(() => {
-    const text = `mydesignbazaar — ${istStamp}`
-    const svg = `
-      <svg xmlns='http://www.w3.org/2000/svg' width='280' height='180'>
-        <style>
-          text {
-            font: 600 16px system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-            fill: rgba(255,255,255,0.22);
-            stroke: rgba(0,0,0,0.18);
-            stroke-width: 1;
-            paint-order: stroke;
-          }
-        </style>
-        <g transform='rotate(-30 140 90)'>
-          <text x='20' y='40'>${text}</text>
-          <text x='20' y='100'>${text}</text>
-          <text x='20' y='160'>${text}</text>
-        </g>
-      </svg>
-    `.trim()
-    return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}")`
-  }, [istStamp])
+  // Frontend watermark generation removed - server-side watermarks are sufficient
 
   const goToPrevious = () => {
     if (!isGallery) return
@@ -95,18 +66,7 @@ export default function ImageLightbox({
           draggable={false}
         />
 
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            backgroundImage: watermarkUrl,
-            backgroundRepeat: "repeat",
-            backgroundSize: "280px 180px",
-            // Helps remain visible on both light/dark image regions
-            mixBlendMode: "multiply",
-            opacity: 1,
-          }}
-        />
+        {/* Frontend watermark removed - server-side watermarks are sufficient */}
 
         {/* Gallery Navigation */}
         {isGallery && (
