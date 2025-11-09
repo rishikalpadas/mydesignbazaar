@@ -23,6 +23,12 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes (for Vercel/production)
 
+// Configure request handling
+export const fetchCache = 'force-no-store'
+export const bodyParser = {
+  sizeLimit: '100mb' // Increase body parser size limit
+}
+
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const RAW_TYPES = {
@@ -93,6 +99,29 @@ async function saveFile(file, designId, folder) {
 
 export async function POST(request) {
   try {
+    // Verify content type
+    const contentType = request.headers.get('content-type') || ''
+    if (!contentType.includes('multipart/form-data')) {
+      return NextResponse.json({ 
+        error: "Invalid request format. Expected multipart/form-data.",
+        contentType 
+      }, { status: 400 })
+    }
+
+    
+    try {
+      formData = await request.formData()
+    } catch (formError) {
+      console.error("FormData parsing error:", formError)
+      return NextResponse.json({ 
+        error: "Failed to parse form data",
+        details: formError.message,
+        cause: "This might be due to file size limits or network issues",
+        contentLength: request.headers.get('content-length'),
+        contentType: request.headers.get('content-type')
+      }, { status: 400 })
+    }
+
     // Connect to database
     await connectDB()
 

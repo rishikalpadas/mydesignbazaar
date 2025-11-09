@@ -10,6 +10,13 @@ const nextConfig = {
   // Experimental features
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    serverActions: true,
+  },
+   api: {
+    bodyParser: {
+      sizeLimit: '100mb',
+    },
+    responseLimit: false,
   },
   // Disable static page generation for dashboard routes
   async headers() {
