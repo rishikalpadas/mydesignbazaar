@@ -152,13 +152,24 @@ async function handler(request, { params }) {
     // Function to sanitize text for PDF encoding
     const sanitizeText = (text) => {
       if (!text) return '';
-      // Replace problematic characters with their closest ASCII equivalents
-      return text.toString()
+      // Convert to string and normalize
+      const normalized = text.toString()
+        // Replace newlines and special whitespace
+        .replace(/\r\n/g, ' ')
+        .replace(/\n/g, ' ')
+        .replace(/\r/g, ' ')
+        .replace(/\t/g, ' ')
+        // Replace smart quotes and dashes
         .replace(/['']/g, "'")
         .replace(/[""]/g, '"')
         .replace(/[–—]/g, '-')
-        .replace(/[^\x00-\x7F]/g, '') // Remove any remaining non-ASCII characters
+        // Replace other special characters
+        .replace(/[^\x20-\x7E]/g, '') // Only keep printable ASCII characters
+        // Clean up multiple spaces
+        .replace(/\s+/g, ' ')
         .trim();
+      
+      return normalized;
     }
 
     // Function to draw text with word wrap
