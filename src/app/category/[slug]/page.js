@@ -11,7 +11,7 @@ import Footer from "../../../components/Footer"
 const PER_PAGE_DEFAULT = 12
 
 export default async function CategoryPage({ params, searchParams }) {
-  const { slug } = params
+    const { slug } = await params
   const category = getCategoryFromSlug(slug);
 
 

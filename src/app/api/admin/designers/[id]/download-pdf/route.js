@@ -14,9 +14,19 @@ async function getImageBuffer(filePath) {
     // Remove leading slash and convert to absolute path
     const relativePath = filePath.startsWith('/') ? filePath.substring(1) : filePath
     const absolutePath = path.join(process.cwd(), 'public', relativePath)
-
+    
+    console.log('Attempting to access file at:', absolutePath)
+    console.log('Current working directory:', process.cwd())
+    
     if (!existsSync(absolutePath)) {
-      console.log("File not found:", absolutePath)
+      console.error("File not found:", absolutePath)
+      console.error("Full path details:", {
+        originalPath: filePath,
+        relativePath,
+        absolutePath,
+        cwd: process.cwd(),
+        publicPath: path.join(process.cwd(), 'public')
+      })
       return null
     }
 
@@ -729,11 +739,22 @@ async function handler(request, { params }) {
     console.error("Error stack:", error.stack)
     console.error("Error name:", error.name)
     console.error("Error message:", error.message)
+    console.error("Server environment:", {
+      nodeVersion: process.version,
+      platform: process.platform,
+      cwd: process.cwd(),
+      env: process.env.NODE_ENV,
+      memory: process.memoryUsage()
+    })
 
     return NextResponse.json({
       error: "Failed to generate PDF",
       details: error.message,
-      timestamp: new Date().toISOString()
+      environment: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        timestamp: new Date().toISOString()
+      }
     }, { status: 500 })
   }
 }
