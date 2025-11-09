@@ -326,9 +326,12 @@ const UploadContent = ({ user }) => {
     let hasErrors = false
     const errors = {}
 
-    // Check minimum designs requirement - strict check
-    if (designs.length < minDesignsRequired) {
-      errors.submit = `${isFirstTimeUpload ? 'First-time uploaders must' : 'You must'} upload at least ${minDesignsRequired} design${minDesignsRequired > 1 ? 's' : ''}. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+    // Always enforce minimum designs requirement for first-time uploaders
+    if (isFirstTimeUpload && designs.length < 10) {
+      errors.submit = `First-time uploaders must upload at least 10 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+      hasErrors = true
+    } else if (!isFirstTimeUpload && designs.length < 1) {
+      errors.submit = `You must upload at least 1 design.`
       hasErrors = true
     }
 
@@ -584,8 +587,9 @@ const UploadContent = ({ user }) => {
         <p className="text-purple-100">Share your creative work with our community</p>
         {isFirstTimeUpload && (
           <div className="mt-4 bg-orange-500/20 border border-orange-300/30 rounded-lg p-3">
-            <p className="text-orange-100 text-sm">
-              <strong>First-time upload:</strong> You need to upload at least 10 designs to get started.
+            <p className="text-orange-100 text-sm font-semibold flex items-center">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              <strong>First-time upload requirement:</strong> You must upload exactly 10 designs to get started. Single design uploads are not allowed for first-time uploaders.
             </p>
           </div>
         )}
