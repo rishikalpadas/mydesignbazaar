@@ -214,7 +214,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-5 z-[60]"
+      className="fixed inset-0 bg-black bg-transparent z-[60]"
       onClick={handleBackdropClick}
     >
       {/* Modal Container - Compact and Draggable */}
@@ -238,7 +238,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
             {/* Document counter */}
             {documents.length > 1 && (
-              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded px-2 py-1 text-white font-medium text-xs">
+              <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded px-2 py-1 text-black font-medium text-xs">
                 {currentIndex + 1} / {documents.length}
               </div>
             )}
@@ -258,21 +258,21 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
                 <button
                   onClick={handleZoomOut}
                   disabled={zoom <= 0.5}
-                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-black disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Zoom out"
                   title="Zoom Out"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
 
-                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded px-2 py-1 text-white font-medium text-xs min-w-[45px] text-center">
+                <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded px-2 py-1 text-black font-medium text-xs min-w-[45px] text-center">
                   {Math.round(zoom * 100)}%
                 </div>
 
                 <button
                   onClick={handleZoomIn}
                   disabled={zoom >= 3}
-                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-black disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Zoom in"
                   title="Zoom In"
                 >
@@ -281,7 +281,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
                 <button
                   onClick={handleRotate}
-                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-white"
+                  className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-black"
                   aria-label="Rotate"
                   title="Rotate 90°"
                 >
@@ -292,7 +292,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
             <button
               onClick={handleDownload}
-              className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-white"
+              className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-black"
               aria-label="Download"
               title="Download"
             >
@@ -301,7 +301,7 @@ const DocumentLightbox = ({ isOpen, onClose, documents, initialIndex = 0 }) => {
 
             <button
               onClick={onClose}
-              className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-white"
+              className="p-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded transition-all text-black"
               aria-label="Close"
               title="Close (Esc)"
             >
