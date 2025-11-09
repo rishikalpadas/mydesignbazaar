@@ -713,7 +713,7 @@ const UploadContent = ({ user }) => {
             ) : (
               <>
                 <Upload className="w-5 h-5 mr-2" />
-                {designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`}
+                {!isFirstTimeUpload && designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`}
               </>
             )}
           </button>
