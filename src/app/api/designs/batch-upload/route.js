@@ -494,8 +494,13 @@ export async function POST(request) {
 
   } catch (error) {
     console.error("Batch upload error:", error)
+    console.error("Error stack:", error.stack)
     return NextResponse.json({ 
-      error: "Failed to process batch upload. Please try again." 
+      error: "Failed to process batch upload. Please try again.",
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+      code: error.code
     }, { status: 500 })
   }
 }
