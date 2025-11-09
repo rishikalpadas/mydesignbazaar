@@ -167,9 +167,9 @@ export async function POST(request) {
     const existingDesignsCount = await Design.countDocuments({ uploadedBy: user._id })
     const isFirstTimeUpload = existingDesignsCount === 0
     
-    if (isFirstTimeUpload && designCount < 10) {
+    if (isFirstTimeUpload && designCount < 1) {
       return NextResponse.json({ 
-        error: "First-time uploaders must upload at least 10 designs" 
+        error: "First-time uploaders must upload at least 1 design" 
       }, { status: 400 })
     }
 
