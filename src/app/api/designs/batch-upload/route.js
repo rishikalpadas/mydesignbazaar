@@ -108,7 +108,8 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    
+    // Parse form data
+    let formData
     try {
       formData = await request.formData()
     } catch (formError) {
@@ -151,9 +152,6 @@ export async function POST(request) {
       )
     }
 
-    // Parse form data
-    const formData = await request.formData()
-    
     // Get the number of designs to upload
     const designCount = parseInt(formData.get("designCount") || "1")
     
