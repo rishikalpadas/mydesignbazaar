@@ -278,7 +278,27 @@ const UploadContent = ({ user }) => {
   const handleRawFileChange = (designIndex, file) => {
     if (!file) return
 
-    // Validate file size (50MB)
+    // Calculate total upload size including this file
+    const totalSize = designs.reduce((total, design, idx) => {
+      const previewSizes = design.previewImages.reduce((sum, img) => sum + img.size, 0)
+      const rawSize = idx === designIndex ? file.size : (design.rawFile?.size || 0)
+      return total + previewSizes + rawSize
+    }, 0)
+
+    // Show warning if total size is approaching limit (400MB)
+    if (totalSize > 400 * 1024 * 1024) {
+      setGlobalErrors(prev => ({
+        ...prev,
+        sizeWarning: 'Total upload size is approaching the limit. Consider uploading fewer designs or smaller files.'
+      }))
+    } else {
+      setGlobalErrors(prev => {
+        const { sizeWarning, ...rest } = prev
+        return rest
+      })
+    }
+
+    // Validate individual file size (50MB)
     if (file.size > 50 * 1024 * 1024) {
       const error = 'Raw file must be less than 50MB'
       setDesigns(prev => 
@@ -371,10 +391,16 @@ const UploadContent = ({ user }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Log submission attempt
     console.log('Submit attempt:', {
       designsCount: designs.length,
       minRequired: minDesignsRequired,
-      isFirstTime: isFirstTimeUpload
+      isFirstTime: isFirstTimeUpload,
+      totalFileSize: designs.reduce((total, design) => {
+        const previewSizes = design.previewImages.reduce((sum, file) => sum + file.size, 0)
+        const rawSize = design.rawFile ? design.rawFile.size : 0
+        return total + previewSizes + rawSize
+      }, 0) / (1024 * 1024) + ' MB'
     })
 
     if (!validateAllDesigns()) {
@@ -583,10 +609,33 @@ const UploadContent = ({ user }) => {
         <h1 className="text-3xl font-bold mb-2">Upload Designs</h1>
         <p className="text-purple-100">Share your creative work with our community</p>
         {isFirstTimeUpload && (
-          <div className="mt-4 bg-orange-500/20 border border-orange-300/30 rounded-lg p-3">
-            <p className="text-orange-100 text-sm">
-              <strong>First-time upload:</strong> You need to upload at least 10 designs to get started.
-            </p>
+          <div className="mt-4 bg-orange-500/20 border border-orange-300/30 rounded-lg p-4">
+            <div className="flex items-start">
+              <AlertCircle className="w-5 h-5 text-orange-100 mt-0.5 flex-shrink-0" />
+              <div className="ml-3">
+                <h3 className="text-lg font-bold text-orange-100 mb-1">First-Time Designer Upload Requirements</h3>
+                <div className="space-y-2 text-orange-100">
+                  <p className="flex items-center">
+                    <span className="font-semibold">Required:</span>
+                    <span className="ml-2">Exactly 10 designs must be uploaded together</span>
+                  </p>
+                  <p className="text-sm">
+                    • You cannot upload fewer than 10 designs for your first submission
+                    <br />
+                    • The upload button will remain disabled until exactly 10 designs are prepared
+                    <br />
+                    • All designs must pass quality checks and follow our guidelines
+                  </p>
+                  <div className="flex items-center mt-2 bg-orange-500/30 rounded-lg px-3 py-2">
+                    <span className="font-semibold">Current Status:</span>
+                    <span className="ml-2">
+                      {designs.length}/10 designs prepared
+                      {designs.length < 10 ? ` (${10 - designs.length} more required)` : ''}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -694,12 +743,30 @@ const UploadContent = ({ user }) => {
           </div>
         )}
 
+        {/* First Time Upload Warning */}
+        {isFirstTimeUpload && designs.length < 10 && (
+          <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="w-6 h-6 text-orange-500 mt-1 flex-shrink-0" />
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-orange-800">First-Time Upload Requirements</h3>
+                <p className="text-orange-700 mt-1">
+                  As a first-time uploader, you must upload exactly 10 designs together. 
+                  Currently selected: {designs.length} design{designs.length !== 1 ? 's' : ''}.
+                  {designs.length < 10 ? ` Please add ${10 - designs.length} more design${10 - designs.length !== 1 ? 's' : ''}.` : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Submit Button */}
         <div className="text-center">
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (isFirstTimeUpload && designs.length !== 10)}
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isFirstTimeUpload && designs.length !== 10 ? 'First-time uploaders must upload exactly 10 designs' : ''}
           >
             {loading ? (
               <>
@@ -709,10 +776,20 @@ const UploadContent = ({ user }) => {
             ) : (
               <>
                 <Upload className="w-5 h-5 mr-2" />
-                {designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`}
+                {isFirstTimeUpload ? (
+                  `Upload All 10 Designs (${designs.length}/10)`
+                ) : (
+                  designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`
+                )}
               </>
             )}
           </button>
+          {isFirstTimeUpload && designs.length !== 10 && (
+            <p className="text-sm text-orange-600 mt-2">
+              <AlertCircle className="w-4 h-4 inline mr-1" />
+              Please prepare exactly 10 designs before uploading
+            </p>
+          )}
         </div>
 
         {/* Progress Bar */}

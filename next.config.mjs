@@ -14,9 +14,13 @@ const nextConfig = {
   },
    api: {
     bodyParser: {
-      sizeLimit: '100mb',
+      sizeLimit: '500mb', // Increased to handle multiple large files
     },
     responseLimit: false,
+  },
+  experimental: {
+    serverComponentsExternalPackages: ['sharp'],
+    largePageDataBytes: 128 * 100000, // Increased for large form submissions
   },
   // Disable static page generation for dashboard routes
   async headers() {
