@@ -149,6 +149,18 @@ async function handler(request, { params }) {
       return false
     }
 
+    // Function to sanitize text for PDF encoding
+    const sanitizeText = (text) => {
+      if (!text) return '';
+      // Replace problematic characters with their closest ASCII equivalents
+      return text.toString()
+        .replace(/['']/g, "'")
+        .replace(/[""]/g, '"')
+        .replace(/[–—]/g, '-')
+        .replace(/[^\x00-\x7F]/g, '') // Remove any remaining non-ASCII characters
+        .trim();
+    }
+
     // Function to draw text with word wrap
     const drawText = (text, x, y, options = {}) => {
       const {
@@ -159,7 +171,10 @@ async function handler(request, { params }) {
         lineHeight: customLineHeight = size * 1.2
       } = options
 
-      const words = text.toString().split(' ')
+      // Sanitize the text before drawing
+      const sanitizedText = sanitizeText(text)
+
+      const words = sanitizedText.split(' ')
       let line = ''
       let currentY = y
 
