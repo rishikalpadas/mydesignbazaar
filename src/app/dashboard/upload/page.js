@@ -30,7 +30,7 @@ const CATEGORIES = [
   'AI-Generated'
 ]
 
-const MAX_DESIGNS = 25
+const MAX_DESIGNS = 10
 const MAX_PREVIEW_IMAGES = 5
 
 const UploadContent = ({ user }) => {

@@ -15,7 +15,7 @@ import { validateRawFileMatch } from "../../../../lib/rawFileValidator"
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
 const MAX_RAW_SIZE = 50 * 1024 * 1024 // 50MB per raw file
-const MAX_DESIGNS_PER_BATCH = 25
+const MAX_DESIGNS_PER_BATCH = 10
 const MAX_PREVIEW_IMAGES_PER_DESIGN = 5
 
 // Route segment config for Next.js App Router
