@@ -13,9 +13,6 @@ const nextConfig = {
     serverActions: true,
   },
    api: {
-    bodyParser: {
-      sizeLimit: '500mb', // Increased to handle multiple large files
-    },
     responseLimit: false,
   },
   experimental: {
