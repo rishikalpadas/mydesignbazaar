@@ -521,12 +521,12 @@ const ProfileContent = () => {
           onClose={() => setShowDocuments(false)}
           documents={[
             ...(profile.aadhaarFiles || []).map((file, index) => ({
-              url: `/api/uploads/${file}`,
+              url: `/api/${file}`,
               label: `Aadhaar Card ${profile.aadhaarFiles.length > 1 ? `(${index + 1}/${profile.aadhaarFiles.length})` : ''}`,
               type: file.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
             })),
             ...(profile.panCardFile ? [{
-              url: `/api/uploads/${profile.panCardFile}`,
+              url: `/api/${profile.panCardFile}`,
               label: 'PAN Card',
               type: profile.panCardFile.toLowerCase().endsWith('.pdf') ? 'pdf' : 'image'
             }] : [])
