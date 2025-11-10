@@ -165,9 +165,15 @@ export async function POST(request) {
     const existingDesignsCount = await Design.countDocuments({ uploadedBy: user._id })
     const isFirstTimeUpload = existingDesignsCount === 0
     
-    if (isFirstTimeUpload && designCount < 1) {
+    // Enforce strict 10-design requirement for first-time uploaders
+    if (isFirstTimeUpload && designCount !== 10) {
       return NextResponse.json({ 
-        error: "First-time uploaders must upload at least 1 design" 
+        success: false,
+        error: "First-time uploaders must upload exactly 10 designs",
+        message: `You attempted to upload ${designCount} design${designCount !== 1 ? 's' : ''}, but first-time uploaders are required to upload exactly 10 designs together. This is to ensure quality and commitment to the platform.`,
+        requiredDesigns: 10,
+        attemptedDesigns: designCount,
+        isFirstTimeUpload: true
       }, { status: 400 })
     }
 

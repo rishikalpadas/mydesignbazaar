@@ -346,9 +346,9 @@ const UploadContent = ({ user }) => {
     let hasErrors = false
     const errors = {}
 
-    // Check minimum designs requirement - strict check
-    if (designs.length < minDesignsRequired) {
-      errors.submit = `${isFirstTimeUpload ? 'First-time uploaders must' : 'You must'} upload at least ${minDesignsRequired} design${minDesignsRequired > 1 ? 's' : ''}. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+    // Always enforce minimum designs requirement for first-time uploaders
+    if (isFirstTimeUpload && designs.length < 10) {
+      errors.submit = `First-time uploaders must upload at least 10 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
       hasErrors = true
     }
 
@@ -362,6 +362,22 @@ const UploadContent = ({ user }) => {
         return { ...design, errors: designErrors }
       })
     )
+
+    // Additional check: For first-time uploaders, ensure ALL 10 designs are complete
+    if (isFirstTimeUpload && designs.length === 10) {
+      let incompleteDesigns = 0
+      designs.forEach((design, index) => {
+        const designErrors = validateDesign(design)
+        if (Object.keys(designErrors).length > 0) {
+          incompleteDesigns++
+        }
+      })
+      
+      if (incompleteDesigns > 0) {
+        errors.submit = `All 10 designs must be complete before uploading. You have ${incompleteDesigns} incomplete design${incompleteDesigns !== 1 ? 's' : ''}. Please fill in all required fields (title, description, category, preview images, and raw file).`
+        hasErrors = true
+      }
+    }
 
     // Set global errors after design validation
     if (hasErrors) {
@@ -444,6 +460,18 @@ const UploadContent = ({ user }) => {
       setUploadResults(result)
 
       console.log('Upload result:', result)
+
+      // Handle first-time uploader validation error from backend
+      if (!response.ok && result.isFirstTimeUpload) {
+        clearInterval(progressInterval)
+        setUploadProgress(0)
+        setLoading(false)
+        setGlobalErrors({ 
+          submit: result.message || `First-time uploaders must upload exactly 10 designs. You attempted to upload ${result.attemptedDesigns} design${result.attemptedDesigns !== 1 ? 's' : ''}.`
+        })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
+      }
 
       if (!result.success && result.totalUploaded === 0) {
         // All uploads failed
@@ -757,6 +785,38 @@ const UploadContent = ({ user }) => {
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Incomplete Designs Warning for First-Time Uploaders */}
+        {isFirstTimeUpload && designs.length === 10 && (
+          <div>
+            {(() => {
+              const incompleteCount = designs.filter(design => {
+                const errors = validateDesign(design)
+                return Object.keys(errors).length > 0
+              }).length
+              
+              if (incompleteCount > 0) {
+                return (
+                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+                    <div className="flex items-start">
+                      <AlertCircle className="w-6 h-6 text-red-500 mt-1 flex-shrink-0" />
+                      <div className="ml-3">
+                        <h3 className="text-lg font-semibold text-red-800">Incomplete Designs Detected</h3>
+                        <p className="text-red-700 mt-1">
+                          All 10 designs must be complete before uploading. You have {incompleteCount} incomplete design{incompleteCount !== 1 ? 's' : ''}.
+                        </p>
+                        <p className="text-red-600 text-sm mt-2">
+                          Each design requires: Title, Description, Category, at least 1 preview image, and 1 raw file.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })()}
           </div>
         )}
 
