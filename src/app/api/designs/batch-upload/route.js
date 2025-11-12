@@ -23,12 +23,6 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes (for Vercel/production)
 
-// Configure request handling
-export const fetchCache = 'force-no-store'
-export const bodyParser = {
-  sizeLimit: '100mb' // Increase body parser size limit
-}
-
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
 const RAW_TYPES = {
