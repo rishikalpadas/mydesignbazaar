@@ -14,6 +14,7 @@ import {
   Package,
   LayoutDashboard,
   UserCircle,
+  DollarSign 
 } from "lucide-react"
 import { getSlugFromCategory } from "../lib/category-map"
 import NoContextMenu from "../components/NoContextMenu"
@@ -294,15 +295,38 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
           Dashboard
         </button>
 
-        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
-          <UserCircle className="w-4 h-4" />
-          My Profile
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/profile")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+          <User className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+          <span className="font-medium">My Profile</span>
         </button>
 
-        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
-          <Package className="w-4 h-4" />
-          {user?.userType === "designer" ? "My Designs" : "My Orders"}
+
+                <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push(user?.userType === "designer" ? "/dashboard/my-designs" : "/dashboard/orders")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+          <Package className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+          <span className="font-medium">{user?.userType === "designer" ? "My Designs" : "My Orders"}</span>
         </button>
+
+        {user?.userType === "designer" && (
+          <button 
+            onClick={() => {
+              setUserDropdownOpen(false)
+              router.push("/dashboard/earnings")
+            }}
+            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+            <DollarSign className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+            <span className="font-medium">Earnings</span>
+          </button>
+        )}
 
         <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
           <Settings className="w-4 h-4" />
@@ -434,18 +458,21 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
             </button>
 
             {/* Wishlist */}
-            <button
-              onClick={handleWishlistClick}
-              className="hidden sm:flex text-gray-700 hover:text-amber-500 transition-colors p-2 relative"
-              aria-label="Wishlist"
-            >
-              <Heart size={20} />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
-                  {wishlistCount > 99 ? '99+' : wishlistCount}
-                </span>
-              )}
-            </button>
+            {user?.userType === 'buyer' && (
+              <button
+                onClick={handleWishlistClick}
+                className="hidden sm:flex text-gray-700 hover:text-amber-500 transition-colors p-2 relative"
+                aria-label="Wishlist"
+              >
+                <Heart size={20} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
+              </button>
+            )}
+           
 
             {/* User account with dropdown */}
             <div className="relative" ref={userDropdownRef}>
@@ -462,18 +489,21 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
             </div>
 
             {/* Shopping cart */}
-            <button
-              onClick={handleCartClick}
-              className="relative text-gray-700 hover:text-amber-500 transition-colors p-2 group"
-              aria-label="Shopping cart"
-            >
-              <ShoppingCart size={20} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
-                  {cartCount > 99 ? '99+' : cartCount}
-                </span>
-              )}
-            </button>
+            {user?.userType === 'buyer' && (
+              <button
+                onClick={handleCartClick}
+                className="relative text-gray-700 hover:text-amber-500 transition-colors p-2 group"
+                aria-label="Shopping cart"
+              >
+                <ShoppingCart size={20} />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
+              </button>
+            )}
+            
           </div>
         </div>
 

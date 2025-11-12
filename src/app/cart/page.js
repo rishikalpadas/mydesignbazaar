@@ -16,7 +16,7 @@ const CartPage = () => {
   const fetchCart = useCallback(async () => {
     try {
       setLoading(true)
-      const response = await fetch("/api/cart", {
+      const response = await fetch("/api/cart/items", {
         credentials: "include",
       })
 
@@ -47,7 +47,7 @@ const CartPage = () => {
   const removeItem = async (designId) => {
     try {
       setRemoving(designId)
-      const response = await fetch(`/api/cart?designId=${designId}`, {
+      const response = await fetch(`/api/cart/items?designId=${designId}`, {
         method: "DELETE",
         credentials: "include",
       })
@@ -59,6 +59,10 @@ const CartPage = () => {
       const data = await response.json()
       if (data.success) {
         setCartItems(data.cart.items || [])
+        // Reload page after removing item
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
       }
     } catch (error) {
       console.error("Error removing item:", error)

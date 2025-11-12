@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../lib/mongodb';
-import Cart from '../../../models/Cart';
-import Design from '../../../models/Design';
-import { verifyToken } from '../../../middleware/auth';
+import connectDB from '../../../../lib/mongodb';
+import Cart from '../../../../models/Cart';
+import Design from '../../../../models/Design';
+import { verifyToken } from '../../../../middleware/auth';
 
-// GET - Fetch user's cart with populated design details
+// GET - Fetch cart items with design details
 export async function GET(request) {
   try {
     await connectDB();
@@ -22,10 +22,10 @@ export async function GET(request) {
     // Get or create cart
     let cart = await Cart.getOrCreateCart(userId);
 
-    // Populate design details - simpler version without nested populate
+    // Populate design details
     await cart.populate({
       path: 'items.designId',
-      select: 'designId title description category previewImages previewImage tags uploadedBy status featured views downloads',
+      select: 'designId title description category previewImages previewImage price status featured views downloads uploadedBy',
     });
 
     // Filter out any null designs (in case design was deleted)
@@ -84,7 +84,7 @@ export async function POST(request) {
 
     if (design.status !== 'approved') {
       return NextResponse.json(
-        { success: false, message: 'Design is not available for purchase' },
+        { success: false, message: 'Design is not available' },
         { status: 400 }
       );
     }
@@ -96,7 +96,7 @@ export async function POST(request) {
     // Populate and return updated cart
     await cart.populate({
       path: 'items.designId',
-      select: 'designId title description category previewImages previewImage tags uploadedBy status',
+      select: 'designId title description category previewImages previewImage price status featured views downloads',
     });
 
     return NextResponse.json({
@@ -156,7 +156,7 @@ export async function DELETE(request) {
     // Populate and return updated cart
     await cart.populate({
       path: 'items.designId',
-      select: 'designId title description category previewImages previewImage tags uploadedBy status',
+      select: 'designId title description category previewImages previewImage price status featured views downloads',
     });
 
     return NextResponse.json({

@@ -60,6 +60,10 @@ const WishlistPage = () => {
       const data = await response.json()
       if (data.success) {
         setWishlistItems(data.wishlist.items || [])
+        // Reload page after removing from wishlist
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
       }
     } catch (error) {
       console.error("Error removing from wishlist:", error)
@@ -72,7 +76,7 @@ const WishlistPage = () => {
   const addToCart = async (designId) => {
     try {
       setAddingToCart(designId)
-      const response = await fetch("/api/cart", {
+      const response = await fetch("/api/cart/items", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -87,7 +91,10 @@ const WishlistPage = () => {
 
       const data = await response.json()
       if (data.success) {
-        alert("Design added to cart successfully!")
+        // Reload page after adding to cart
+        setTimeout(() => {
+          window.location.reload()
+        }, 500)
       }
     } catch (error) {
       console.error("Error adding to cart:", error)

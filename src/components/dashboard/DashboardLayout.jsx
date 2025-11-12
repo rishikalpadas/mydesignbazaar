@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Menu, Bell, Search, ChevronDown, User, Settings, Package, LogOut } from "lucide-react"
+import { Menu, Bell, Search, ChevronDown, User, Settings, Package, LogOut, DollarSign } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Sidebar from "./Sidebar"
 
@@ -75,17 +75,44 @@ const DashboardLayout = ({ children, user }) => {
 
       {/* Menu Items */}
       <div className="py-2">
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/profile")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <User className="w-4 h-4 mr-3 group-hover:text-orange-600" />
           <span className="font-medium">My Profile</span>
         </button>
 
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push(user?.userType === "designer" ? "/dashboard/my-designs" : "/dashboard/orders")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <Package className="w-4 h-4 mr-3 group-hover:text-orange-600" />
-          <span className="font-medium">My Orders</span>
+          <span className="font-medium">{user?.userType === "designer" ? "My Designs" : "My Orders"}</span>
         </button>
 
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        {user?.userType === "designer" && (
+          <button 
+            onClick={() => {
+              setUserDropdownOpen(false)
+              router.push("/dashboard/earnings")
+            }}
+            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+            <DollarSign className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+            <span className="font-medium">Earnings</span>
+          </button>
+        )}
+
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/settings")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <Settings className="w-4 h-4 mr-3 group-hover:text-orange-600" />
           <span className="font-medium">Settings</span>
         </button>
