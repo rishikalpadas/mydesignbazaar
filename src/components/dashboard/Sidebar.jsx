@@ -17,6 +17,8 @@ import {
   TrendingUp,
   Heart,
   Download,
+  Image as ImageIcon,
+  Layers,
 } from "lucide-react"
 
 const Sidebar = ({ user, isOpen, onClose }) => {
@@ -63,6 +65,8 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           { name: "Orders", href: "/dashboard/orders", icon: Package },
           { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
           { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+          { name: "Hero Sliders", href: "/dashboard/hero-sliders", icon: Layers },
+          { name: "Add Slider", href: "/dashboard/slider-addition", icon: ImageIcon },
           { name: "System Settings", href: "/dashboard/settings", icon: Settings },
         ]
 
