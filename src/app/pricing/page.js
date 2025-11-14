@@ -140,7 +140,8 @@ export default function PricingPage() {
       const orderData = await orderResponse.json();
 
       if (!orderResponse.ok) {
-        throw new Error(orderData.error || 'Failed to create order');
+        console.error('Order creation failed:', orderData);
+        throw new Error(orderData.error || orderData.message || 'Failed to create order');
       }
 
       // Initialize Razorpay payment

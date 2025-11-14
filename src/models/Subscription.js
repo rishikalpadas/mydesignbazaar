@@ -85,11 +85,27 @@ const userSubscriptionSchema = new mongoose.Schema({
 
   // Payment Info
   paymentId: String,
+  orderId: String,
   paymentMethod: String,
   amountPaid: {
     type: Number,
     required: true,
   },
+
+  // Additional Purchases (for stacking subscriptions)
+  additionalPurchases: [{
+    planId: String,
+    planName: String,
+    creditsAdded: Number,
+    validityExtended: Number,
+    amountPaid: Number,
+    paymentId: String,
+    orderId: String,
+    purchaseDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
 
   // Auto-renewal
   autoRenew: {

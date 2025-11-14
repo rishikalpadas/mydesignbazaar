@@ -61,41 +61,83 @@ export async function POST(request) {
       );
     }
 
-    // Payment verified successfully - Create subscription
-    const startDate = new Date();
-    const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + validityDays);
-
-    const subscription = await UserSubscription.create({
+    // Payment verified successfully - Create or update subscription
+    
+    // Check if user has an existing active subscription
+    const existingSubscription = await UserSubscription.findOne({
       userId,
-      planId,
-      planName,
-      creditsTotal: credits,
-      creditsRemaining: credits,
-      creditsUsed: 0,
-      startDate,
-      expiryDate,
       status: 'active',
-      paymentId: razorpay_payment_id,
-      orderId: razorpay_order_id,
-      paymentMethod: 'razorpay',
-      amountPaid: amount,
-      autoRenew: false
+      expiryDate: { $gt: new Date() }
     });
 
-    // Update buyer profile
-    await Buyer.findOneAndUpdate(
-      { userId },
-      {
-        currentSubscription: subscription._id,
-        $push: { subscriptionHistory: subscription._id },
-        $inc: { subscriptionCount: 1 }
+    let subscription;
+
+    if (existingSubscription) {
+      // Stack credits and extend validity
+      const newExpiryDate = new Date(existingSubscription.expiryDate);
+      newExpiryDate.setDate(newExpiryDate.getDate() + validityDays);
+
+      existingSubscription.creditsTotal += credits;
+      existingSubscription.creditsRemaining += credits;
+      existingSubscription.expiryDate = newExpiryDate;
+      
+      // Track additional purchase
+      if (!existingSubscription.additionalPurchases) {
+        existingSubscription.additionalPurchases = [];
       }
-    );
+      existingSubscription.additionalPurchases.push({
+        planId,
+        planName,
+        creditsAdded: credits,
+        validityExtended: validityDays,
+        amountPaid: amount,
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        purchaseDate: new Date()
+      });
+
+      await existingSubscription.save();
+      subscription = existingSubscription;
+    } else {
+      // Create new subscription
+      const startDate = new Date();
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + validityDays);
+
+      subscription = await UserSubscription.create({
+        userId,
+        planId,
+        planName,
+        creditsTotal: credits,
+        creditsRemaining: credits,
+        creditsUsed: 0,
+        startDate,
+        expiryDate,
+        status: 'active',
+        paymentId: razorpay_payment_id,
+        orderId: razorpay_order_id,
+        paymentMethod: 'razorpay',
+        amountPaid: amount,
+        autoRenew: false,
+        additionalPurchases: []
+      });
+
+      // Update buyer profile with new subscription
+      await Buyer.findOneAndUpdate(
+        { userId },
+        {
+          currentSubscription: subscription._id,
+          $push: { subscriptionHistory: subscription._id },
+          $inc: { subscriptionCount: 1 }
+        }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: 'Payment verified and subscription activated successfully!',
+      message: existingSubscription 
+        ? `Payment verified! ${credits} credits added to your existing subscription and validity extended by ${validityDays} days.`
+        : 'Payment verified and subscription activated successfully!',
       subscription: {
         id: subscription._id,
         planId: subscription.planId,
@@ -104,7 +146,8 @@ export async function POST(request) {
         creditsRemaining: subscription.creditsRemaining,
         startDate: subscription.startDate,
         expiryDate: subscription.expiryDate,
-        status: subscription.status
+        status: subscription.status,
+        isStacked: !!existingSubscription
       }
     }, { status: 201 });
 

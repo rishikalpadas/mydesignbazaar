@@ -20,12 +20,14 @@ import {
   Shield,
   FileText,
   Eye,
-  Download
+  Download,
+  ShoppingBag,
+  Package
 } from "lucide-react"
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
 import DocumentLightbox from "../../../components/dashboard/DocumentLightbox"
 
-const ProfileContent = () => {
+const DesignerProfileContent = () => {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -566,12 +568,354 @@ const StatCard = ({ icon, label, value, color }) => (
   </div>
 )
 
-const ProfilePage = () => {
+// Buyer Profile Content Component
+const BuyerProfileContent = () => {
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/buyer/profile", {
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
+        throw new Error(errorData.message || "Failed to fetch profile")
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setProfile(data.profile)
+      } else {
+        throw new Error(data.message || "Failed to load profile")
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error)
+      setError(error.message || "Failed to load profile data")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+        <p className="text-red-700">{error}</p>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return null
+  }
+
+  const getBusinessTypeLabel = (type) => {
+    const labels = {
+      manufacturer: "Manufacturer",
+      exporter: "Exporter",
+      boutique: "Boutique",
+      freelancer: "Freelancer",
+      "fashion-brand": "Fashion Brand",
+      student: "Student",
+      other: "Other",
+    }
+    return labels[type] || type
+  }
+
+  const getPurchaseFrequencyLabel = (freq) => {
+    const labels = {
+      weekly: "Weekly",
+      monthly: "Monthly",
+      quarterly: "Quarterly",
+      occasionally: "Occasionally",
+    }
+    return labels[freq] || freq
+  }
+
   return (
-    <DashboardPageWrapper requiredUserType="designer">
-      <ProfileContent />
-    </DashboardPageWrapper>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-md">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Buyer Profile</h1>
+            <p className="text-blue-100">View your profile information and purchase history</p>
+          </div>
+          <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+            <ShoppingBag className="w-12 h-12" />
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Incomplete Notice */}
+      {profile.isComplete === false && (
+        <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-amber-600 flex-shrink-0" />
+            <div>
+              <h3 className="font-semibold text-amber-900">Profile Incomplete</h3>
+              <p className="text-sm text-amber-700">
+                Your buyer profile hasn&apos;t been fully set up yet. Some information may be missing. Please contact support if you need assistance.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase Statistics */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-100">
+          <div className="flex items-center gap-3">
+            <Package className="w-6 h-6 text-green-600" />
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Purchase Overview</h2>
+              <p className="text-sm text-gray-600">Your shopping statistics</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-blue-600 font-medium">Total Purchases</p>
+                <p className="text-2xl font-bold text-blue-900">{profile.stats.totalPurchases}</p>
+              </div>
+              <Package className="w-8 h-8 text-blue-500" />
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-600 font-medium">Total Spent</p>
+                <p className="text-2xl font-bold text-green-900">₹{profile.stats.totalSpent.toLocaleString()}</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-orange-600 font-medium">Credit Points</p>
+                <p className="text-2xl font-bold text-orange-900">{profile.creditPoints}</p>
+              </div>
+              <Wallet className="w-8 h-8 text-orange-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Personal Information */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <User className="w-5 h-5 text-blue-600" />
+            Personal Information
+          </h2>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoField
+            icon={<User className="w-5 h-5 text-gray-500" />}
+            label="Full Name"
+            value={profile.fullName}
+          />
+          <InfoField
+            icon={<Mail className="w-5 h-5 text-gray-500" />}
+            label="Email"
+            value={profile.email}
+            verified={profile.isVerified}
+          />
+          <InfoField
+            icon={<Phone className="w-5 h-5 text-gray-500" />}
+            label="Mobile Number"
+            value={profile.mobileNumber}
+          />
+          <InfoField
+            icon={<Building className="w-5 h-5 text-gray-500" />}
+            label="Business Type"
+            value={getBusinessTypeLabel(profile.businessType)}
+          />
+        </div>
+      </div>
+
+      {/* Address */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-purple-100">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <MapPin className="w-5 h-5 text-purple-600" />
+            Address
+          </h2>
+        </div>
+        <div className="p-6">
+          <div className="space-y-2">
+            <p className="text-gray-900">{profile.address.street}</p>
+            <p className="text-gray-700">
+              {profile.address.city}, {profile.address.state} {profile.address.postalCode}
+            </p>
+            <p className="text-gray-700">{profile.address.country}</p>
+            {profile.address.gstNumber && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <InfoField
+                  icon={<CreditCard className="w-5 h-5 text-gray-500" />}
+                  label="GST Number"
+                  value={profile.address.gstNumber}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Purchase Preferences */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-orange-100">
+          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-orange-600" />
+            Purchase Preferences
+          </h2>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* Interested Categories */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Interested Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              {profile.interestedCategories && profile.interestedCategories.length > 0 ? (
+                profile.interestedCategories.map((category, index) => (
+                  <span
+                    key={index}
+                    className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {category}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-500">No categories selected</span>
+              )}
+            </div>
+          </div>
+
+          {/* Purchase Frequency */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <InfoField
+              icon={<Clock className="w-5 h-5 text-gray-500" />}
+              label="Purchase Frequency"
+              value={getPurchaseFrequencyLabel(profile.purchaseFrequency)}
+            />
+            <InfoField
+              icon={<DollarSign className="w-5 h-5 text-gray-500" />}
+              label="Billing Currency"
+              value={profile.billingCurrency}
+            />
+          </div>
+
+          {/* Payment Methods */}
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Payment Methods</h3>
+            <div className="flex flex-wrap gap-2">
+              {profile.paymentMethods && profile.paymentMethods.length > 0 ? (
+                profile.paymentMethods.map((method, index) => (
+                  <span
+                    key={index}
+                    className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {method}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-500">No payment methods added</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscription Info */}
+      {profile.currentSubscription && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-indigo-50 to-purple-50 px-6 py-4 border-b border-indigo-100">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <Award className="w-5 h-5 text-indigo-600" />
+              Active Subscription
+            </h2>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-600">You have an active subscription</p>
+          </div>
+        </div>
+      )}
+    </div>
   )
+}
+
+const ProfilePage = () => {
+  const [userType, setUserType] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchUserType = async () => {
+      try {
+        const response = await fetch("/api/user/profile", {
+          credentials: "include",
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          setUserType(data.user.userType)
+        }
+      } catch (error) {
+        console.error("Error fetching user type:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserType()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+      </div>
+    )
+  }
+
+  // Route to appropriate profile based on user type
+  if (userType === "buyer") {
+    return (
+      <DashboardPageWrapper requiredUserType="buyer">
+        <BuyerProfileContent />
+      </DashboardPageWrapper>
+    )
+  }
+
+  if (userType === "designer") {
+    return (
+      <DashboardPageWrapper requiredUserType="designer">
+        <DesignerProfileContent />
+      </DashboardPageWrapper>
+    )
+  }
+
+  return null
 }
 
 
