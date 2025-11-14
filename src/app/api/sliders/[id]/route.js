@@ -11,10 +11,18 @@ export const dynamic = 'force-dynamic';
 // Helper function to delete image file
 async function deleteImage(imagePath) {
   try {
-    // Remove leading slash and construct full path
-    const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+    // Handle both old format (/uploads/...) and new format (/api/uploads/...)
+    let cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath;
+
+    // If path starts with api/uploads, remove the 'api/' part
+    if (cleanPath.startsWith('api/uploads/')) {
+      cleanPath = cleanPath.replace('api/uploads/', 'uploads/');
+    }
+
     const fullPath = path.join(process.cwd(), "public", cleanPath);
+    console.log("Attempting to delete file:", fullPath);
     await unlink(fullPath);
+    console.log("File deleted successfully:", fullPath);
   } catch (error) {
     console.error("Error deleting image file:", error);
     // Don't throw error if file doesn't exist
@@ -22,11 +30,11 @@ async function deleteImage(imagePath) {
 }
 
 // DELETE: Delete a slider
-export async function DELETE(request, { params }) {
+export async function DELETE(request, context) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
 
     console.log("DELETE request for slider ID:", id);
 
@@ -75,11 +83,11 @@ export async function DELETE(request, { params }) {
 }
 
 // PATCH: Update slider (e.g., toggle isActive)
-export async function PATCH(request, { params }) {
+export async function PATCH(request, context) {
   try {
     await connectDB();
 
-    const { id } = params;
+    const { id } = await context.params;
     const body = await request.json();
 
     console.log("PATCH request for slider ID:", id);

@@ -312,15 +312,8 @@ const HeroSlidersContent = () => {
                   </span>
                 </div>
 
-                {/* Debug: Show ID */}
-                <div className="mb-4 p-2 bg-gray-50 rounded text-xs">
-                  <span className="font-semibold text-gray-700">ID:</span>{" "}
-                  <span className="font-mono text-gray-600">{slider._id || "No ID"}</span>
-                  <span className="ml-2 text-gray-500">({slider._id?.length || 0} chars)</span>
-                </div>
-
                 {/* Action Buttons */}
-                {/* <div className="flex gap-3">
+                <div className="flex gap-3">
                   <button
                     onClick={() => handleToggleActive(slider._id, slider.isActive)}
                     disabled={togglingId === slider._id}
@@ -350,7 +343,7 @@ const HeroSlidersContent = () => {
                   <button
                     onClick={() => handleDelete(slider._id)}
                     disabled={deletingId === slider._id}
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {deletingId === slider._id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -359,7 +352,7 @@ const HeroSlidersContent = () => {
                     )}
                     Delete
                   </button>
-                </div> */}
+                </div>
               </div>
             </div>
           ))}
