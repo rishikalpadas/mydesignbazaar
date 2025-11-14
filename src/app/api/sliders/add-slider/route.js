@@ -34,12 +34,8 @@ async function saveImage(file) {
   // Write file
   await writeFile(filePath, buffer);
 
-  // Get base URL from environment variable, fallback to relative path
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
-  const imagePath = `/uploads/sliders/${uniqueFilename}`;
-
-  // Return full URL if base URL is set, otherwise return relative path
-  return baseUrl ? `${baseUrl}${imagePath}` : imagePath;
+  // Return API route path - images will be served via /api/uploads/[...path] route
+  return `/api/uploads/sliders/${uniqueFilename}`;
 }
 
 export async function POST(request) {
