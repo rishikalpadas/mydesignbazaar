@@ -77,7 +77,7 @@ const BuyerDashboard = ({ user }) => {
             <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
               <div>
                 <p className="text-emerald-100 text-xs mb-1">Total Credits</p>
-                <p className="text-lg font-semibold">{subscription.subscription?.creditsTotal}</p>
+                <p className="text-lg font-semibold">{subscription.subscription?.creditsRemaining}</p>
               </div>
               <div>
                 <p className="text-emerald-100 text-xs mb-1">Used</p>

@@ -13,7 +13,6 @@ import {
   Tag,
   Type,
   FileImage,
-  Copy,
   Trash2,
   Move
 } from 'lucide-react'
@@ -59,41 +58,50 @@ const UploadContent = ({ user }) => {
   const [expandedDesigns, setExpandedDesigns] = useState(new Set([0])) // First design expanded by default
 
   // Check if user is first-time uploader
-  const checkFirstTimeUpload = useCallback(async () => {
-    try {
-      const response = await fetch('/api/designs/my-designs?limit=1')
-      const data = await response.json()
-      if (data.success && data.stats) {
-        const isFirstTime = data.stats.totalDesigns === 0
-        setIsFirstTimeUpload(isFirstTime)
-        setMinDesignsRequired(isFirstTime ? 10 : 1)
-
-        // If first time, initialize with exactly 10 designs (only if we still have 1 design)
-        if (isFirstTime) {
-          setDesigns(prev => {
-            // Only add designs if we still have the initial single design
-            if (prev.length === 1) {
-              const additionalDesigns = Array.from({ length: 9 }, (_, i) => ({
-                id: Date.now() + i,
-                title: '',
-                description: '',
-                category: '',
-                tags: '',
-                previewImages: [],
-                previewImageUrls: [],
-                rawFile: null,
-                errors: {}
-              }))
-              return [...prev, ...additionalDesigns]
-            }
-            return prev
+  useEffect(() => {
+    const checkFirstTimeUpload = async () => {
+      try {
+        const response = await fetch('/api/designs/check-first-upload')
+        const data = await response.json()
+        
+        if (data.success) {
+          console.log('First-time upload check:', {
+            isFirstTimeUpload: data.isFirstTimeUpload,
+            totalDesigns: data.totalDesigns,
+            minDesignsRequired: data.minDesignsRequired
           })
+          setIsFirstTimeUpload(data.isFirstTimeUpload)
+          setMinDesignsRequired(data.minDesignsRequired)
+          
+          // If first time, initialize with 2 designs (only if we currently have 1)
+          if (data.isFirstTimeUpload) {
+            setDesigns(prev => {
+              // Only initialize if we still have just 1 design
+              if (prev.length === 1) {
+                const additionalDesigns = Array.from({ length: 1 }, (_, i) => ({
+                  id: Date.now() + i,
+                  title: '',
+                  description: '',
+                  category: '',
+                  tags: '',
+                  previewImages: [],
+                  previewImageUrls: [],
+                  rawFile: null,
+                  errors: {}
+                }))
+                return [...prev, ...additionalDesigns]
+              }
+              return prev
+            })
+          }
         }
+      } catch (error) {
+        console.error('Error checking first-time upload status:', error)
       }
-    } catch (error) {
-      console.error('Error checking first-time upload status:', error)
     }
-  }, []) // Empty deps - only run when explicitly called
+
+    checkFirstTimeUpload()
+  }, [])
 
   const updateDesign = (index, field, value) => {
     setDesigns(prev => 
@@ -105,13 +113,14 @@ const UploadContent = ({ user }) => {
     )
   }
 
-  // Load first-time upload status on component mount
-  useEffect(() => {
-    checkFirstTimeUpload()
-  }, [checkFirstTimeUpload])
-
   const addDesign = () => {
-    if (designs.length >= MAX_DESIGNS) return
+    if (designs.length >= MAX_DESIGNS) {
+      setGlobalErrors(prev => ({
+        ...prev,
+        maxDesigns: `Maximum ${MAX_DESIGNS} designs allowed per upload`
+      }))
+      return
+    }
 
     const newIndex = designs.length
     setDesigns(prev => [
@@ -128,6 +137,11 @@ const UploadContent = ({ user }) => {
         errors: {}
       }
     ])
+    // Clear max designs error if it exists
+    setGlobalErrors(prev => {
+      const { maxDesigns, ...rest } = prev
+      return rest
+    })
     // Expand the newly added design
     setExpandedDesigns(prev => new Set([...prev, newIndex]))
   }
@@ -145,24 +159,6 @@ const UploadContent = ({ user }) => {
       })
       return newSet
     })
-  }
-
-  const duplicateDesign = (index) => {
-    if (designs.length >= MAX_DESIGNS) return
-    
-    const designToDuplicate = designs[index]
-    setDesigns(prev => [
-      ...prev,
-      {
-        ...designToDuplicate,
-        id: Date.now(),
-        title: designToDuplicate.title + ' (Copy)',
-        previewImages: [], // Don't duplicate files
-        previewImageUrls: [],
-        rawFile: null,
-        errors: {}
-      }
-    ])
   }
 
   const toggleDesignExpanded = (index) => {
@@ -346,9 +342,15 @@ const UploadContent = ({ user }) => {
     let hasErrors = false
     const errors = {}
 
-    // Always enforce minimum designs requirement for first-time uploaders
-    if (isFirstTimeUpload && designs.length < 10) {
-      errors.submit = `First-time uploaders must upload at least 10 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+    // Check max designs limit
+    if (designs.length > MAX_DESIGNS) {
+      errors.submit = `Maximum ${MAX_DESIGNS} designs allowed per upload. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+      hasErrors = true
+    }
+
+    // Enforce minimum 2 designs for first-time uploaders only
+    if (isFirstTimeUpload && designs.length < 2) {
+      errors.submit = `First-time uploaders must upload at least 2 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
       hasErrors = true
     }
 
@@ -362,22 +364,6 @@ const UploadContent = ({ user }) => {
         return { ...design, errors: designErrors }
       })
     )
-
-    // Additional check: For first-time uploaders, ensure ALL 10 designs are complete
-    if (isFirstTimeUpload && designs.length === 10) {
-      let incompleteDesigns = 0
-      designs.forEach((design, index) => {
-        const designErrors = validateDesign(design)
-        if (Object.keys(designErrors).length > 0) {
-          incompleteDesigns++
-        }
-      })
-      
-      if (incompleteDesigns > 0) {
-        errors.submit = `All 10 designs must be complete before uploading. You have ${incompleteDesigns} incomplete design${incompleteDesigns !== 1 ? 's' : ''}. Please fill in all required fields (title, description, category, preview images, and raw file).`
-        hasErrors = true
-      }
-    }
 
     // Set global errors after design validation
     if (hasErrors) {
@@ -433,7 +419,7 @@ const UploadContent = ({ user }) => {
     const progressInterval = simulateProgress()
 
     try {
-      // Always use batch upload now
+      // Create FormData for batch upload
       const formData = new FormData()
       formData.append('designCount', designs.length.toString())
       
@@ -467,7 +453,7 @@ const UploadContent = ({ user }) => {
         setUploadProgress(0)
         setLoading(false)
         setGlobalErrors({ 
-          submit: result.message || `First-time uploaders must upload exactly 10 designs. You attempted to upload ${result.attemptedDesigns} design${result.attemptedDesigns !== 1 ? 's' : ''}.`
+          submit: result.message || `First-time uploaders must upload at least 2 designs. You attempted to upload ${result.attemptedDesigns} design${result.attemptedDesigns !== 1 ? 's' : ''}.`
         })
         window.scrollTo({ top: 0, behavior: 'smooth' })
         return
@@ -529,31 +515,9 @@ const UploadContent = ({ user }) => {
               {/* Success Summary */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-green-800 font-medium">
-                  {uploadResults.totalUploaded} design(s) uploaded successfully
+                  {uploadResults.totalUploaded} design{uploadResults.totalUploaded !== 1 ? 's' : ''} uploaded successfully
                 </p>
               </div>
-
-              {/* Failure Summary */}
-              {uploadResults.totalFailed > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <p className="text-orange-800 font-medium mb-2">
-                    {uploadResults.totalFailed} design(s) failed to upload
-                  </p>
-                  {uploadResults.errors && uploadResults.errors.length > 0 && (
-                    <div className="mt-3 text-left">
-                      <p className="text-sm text-orange-700 font-medium mb-2">Failed designs:</p>
-                      <ul className="text-sm text-orange-600 space-y-1 max-h-40 overflow-y-auto">
-                        {uploadResults.errors.map((err, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-orange-500 mt-0.5">•</span>
-                            <span>{err.message || err.error}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
@@ -645,22 +609,22 @@ const UploadContent = ({ user }) => {
                 <div className="space-y-2 text-orange-100">
                   <p className="flex items-center">
                     <span className="font-semibold">Required:</span>
-                    <span className="ml-2">Exactly 10 designs must be uploaded together</span>
+                    <span className="ml-2">Minimum 2 designs must be uploaded together</span>
                   </p>
                   <p className="text-sm">
-                    • You cannot upload fewer than 10 designs for your first submission
+                    • You cannot upload fewer than 2 designs for your first submission
                     <br />
-                    • The upload button will remain disabled until exactly 10 designs are prepared
+                    • You can upload up to 10 designs in your first batch
                     <br />
                     • All designs must pass quality checks and follow our guidelines
                   </p>
-                  <div className="flex items-center mt-2 bg-orange-500/30 rounded-lg px-3 py-2">
+                  {/* <div className="flex items-center mt-2 bg-orange-500/30 rounded-lg px-3 py-2">
                     <span className="font-semibold">Current Status:</span>
                     <span className="ml-2">
                       {designs.length}/10 designs prepared
                       {designs.length < 10 ? ` (${10 - designs.length} more required)` : ''}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
@@ -701,12 +665,12 @@ const UploadContent = ({ user }) => {
                 </button>
               </div>
             )}
-            <div className="text-right">
+            {/* <div className="text-right">
               <div className="text-2xl font-bold text-purple-600">{designs.length}</div>
               <div className="text-sm text-gray-500">
                 {isFirstTimeUpload ? `of ${minDesignsRequired} min` : 'designs'}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -742,7 +706,6 @@ const UploadContent = ({ user }) => {
             onMovePreviewImage={movePreviewImage}
             onRawFileChange={handleRawFileChange}
             onRemove={() => removeDesign(designIndex)}
-            onDuplicate={() => duplicateDesign(designIndex)}
             getFileIcon={getFileIcon}
           />
         ))}
@@ -753,11 +716,23 @@ const UploadContent = ({ user }) => {
             <button
               type="button"
               onClick={addDesign}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={designs.length >= MAX_DESIGNS}
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Another Design ({designs.length}/{MAX_DESIGNS})
             </button>
+            {globalErrors.maxDesigns && (
+              <p className="text-red-500 text-sm mt-2">{globalErrors.maxDesigns}</p>
+            )}
+          </div>
+        )}
+
+        {designs.length >= MAX_DESIGNS && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+            <p className="text-amber-700">
+              Maximum limit reached. You can upload up to {MAX_DESIGNS} designs at a time.
+            </p>
           </div>
         )}
 
@@ -772,61 +747,31 @@ const UploadContent = ({ user }) => {
         )}
 
         {/* First Time Upload Warning */}
-        {isFirstTimeUpload && designs.length < 10 && (
+        {isFirstTimeUpload && designs.length < 2 && (
           <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
             <div className="flex items-start">
               <AlertCircle className="w-6 h-6 text-orange-500 mt-1 flex-shrink-0" />
               <div className="ml-3">
                 <h3 className="text-lg font-semibold text-orange-800">First-Time Upload Requirements</h3>
                 <p className="text-orange-700 mt-1">
-                  As a first-time uploader, you must upload exactly 10 designs together. 
-                  Currently selected: {designs.length} design{designs.length !== 1 ? 's' : ''}.
-                  {designs.length < 10 ? ` Please add ${10 - designs.length} more design${10 - designs.length !== 1 ? 's' : ''}.` : ''}
+                  As a first-time uploader, you must upload at least 2 designs together. 
+                  Currently prepared: {designs.length} design{designs.length !== 1 ? 's' : ''}.
+                  {designs.length < 2 ? ` Please add ${2 - designs.length} more design${2 - designs.length !== 1 ? 's' : ''} to meet the minimum requirement.` : ''}
                 </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Incomplete Designs Warning for First-Time Uploaders */}
-        {isFirstTimeUpload && designs.length === 10 && (
-          <div>
-            {(() => {
-              const incompleteCount = designs.filter(design => {
-                const errors = validateDesign(design)
-                return Object.keys(errors).length > 0
-              }).length
-              
-              if (incompleteCount > 0) {
-                return (
-                  <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
-                    <div className="flex items-start">
-                      <AlertCircle className="w-6 h-6 text-red-500 mt-1 flex-shrink-0" />
-                      <div className="ml-3">
-                        <h3 className="text-lg font-semibold text-red-800">Incomplete Designs Detected</h3>
-                        <p className="text-red-700 mt-1">
-                          All 10 designs must be complete before uploading. You have {incompleteCount} incomplete design{incompleteCount !== 1 ? 's' : ''}.
-                        </p>
-                        <p className="text-red-600 text-sm mt-2">
-                          Each design requires: Title, Description, Category, at least 1 preview image, and 1 raw file.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-              return null
-            })()}
-          </div>
-        )}
+
 
         {/* Submit Button */}
         <div className="text-center">
           <button
             type="submit"
-            disabled={loading || (isFirstTimeUpload && designs.length !== 10)}
+            disabled={loading || (isFirstTimeUpload && designs.length < 2)}
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            title={isFirstTimeUpload && designs.length !== 10 ? 'First-time uploaders must upload exactly 10 designs' : ''}
+            title={isFirstTimeUpload && designs.length < 2 ? 'First-time uploaders must upload at least 2 designs' : ''}
           >
             {loading ? (
               <>
@@ -836,18 +781,17 @@ const UploadContent = ({ user }) => {
             ) : (
               <>
                 <Upload className="w-5 h-5 mr-2" />
-                {isFirstTimeUpload ? (
-                  `Upload All 10 Designs (${designs.length}/10)`
-                ) : (
-                  designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`
-                )}
+                {isFirstTimeUpload
+                  ? `Upload ${designs.length} Design${designs.length > 1 ? 's' : ''}`
+                  : 'Upload'
+                }
               </>
             )}
           </button>
-          {isFirstTimeUpload && designs.length !== 10 && (
+          {isFirstTimeUpload && designs.length < 2 && (
             <p className="text-sm text-orange-600 mt-2">
               <AlertCircle className="w-4 h-4 inline mr-1" />
-              Please prepare exactly 10 designs before uploading
+              First-time uploaders need at least 2 designs ({designs.length}/2)
             </p>
           )}
         </div>
@@ -881,7 +825,6 @@ const DesignForm = ({
   onMovePreviewImage,
   onRawFileChange,
   onRemove,
-  onDuplicate,
   getFileIcon
 }) => {
   return (
@@ -957,14 +900,6 @@ const DesignForm = ({
         </div>
 
         <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-          {/* <button
-            type="button"
-            onClick={onDuplicate}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Duplicate design"
-          >
-            <Copy className="w-4 h-4" />
-          </button> */}
           {canRemove && (
             <button
               type="button"

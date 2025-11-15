@@ -96,8 +96,10 @@ export async function POST(request) {
             { status: 400 }
           );
         }
+        // Only reduce creditsRemaining, do NOT increase creditsUsed
+        // Admin deduction should not be counted as buyer usage
+        // creditsTotal remains unchanged - it represents total credits available
         subscription.creditsRemaining -= credits;
-        subscription.creditsUsed += credits;
       }
 
       await subscription.save();
