@@ -40,6 +40,8 @@ const UploadContent = ({ user }) => {
   const [uploadResults, setUploadResults] = useState(null)
   const [isFirstTimeUpload, setIsFirstTimeUpload] = useState(false)
   const [minDesignsRequired, setMinDesignsRequired] = useState(1)
+  const [currentUploadingIndex, setCurrentUploadingIndex] = useState(-1)
+  const [designUploadStatus, setDesignUploadStatus] = useState([])
 
   // Designs state (always batch mode now)
   const [designs, setDesigns] = useState([{
@@ -375,19 +377,33 @@ const UploadContent = ({ user }) => {
     return !hasErrors
   }
 
-  const simulateProgress = () => {
-    setUploadProgress(0)
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval)
-          return 90
-        }
-        return prev + Math.random() * 15
-      })
-    }, 300)
-    
-    return interval
+  const uploadSingleDesign = async (design, designIndex, totalDesigns) => {
+    const formData = new FormData()
+
+    // Add design metadata
+    formData.append('title', design.title.trim())
+    formData.append('description', design.description.trim())
+    formData.append('category', design.category)
+    formData.append('tags', design.tags.trim())
+    formData.append('designIndex', designIndex.toString())
+    formData.append('totalDesigns', totalDesigns.toString())
+    formData.append('isFirstTimeUpload', isFirstTimeUpload.toString())
+
+    // Add preview images
+    design.previewImages.forEach((file, imageIndex) => {
+      formData.append(`preview_${imageIndex}`, file)
+    })
+
+    // Add raw file
+    formData.append('raw', design.rawFile)
+
+    const response = await fetch('/api/designs/single-upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const result = await response.json()
+    return { response, result }
   }
 
   const handleSubmit = async (e) => {
@@ -415,77 +431,126 @@ const UploadContent = ({ user }) => {
     setLoading(true)
     setSuccess(false)
     setGlobalErrors({})
-    
-    const progressInterval = simulateProgress()
+    setUploadProgress(0)
+
+    // Initialize upload status for each design
+    const initialStatus = designs.map(() => ({ status: 'pending', error: null, design: null }))
+    setDesignUploadStatus(initialStatus)
+
+    const uploadedDesigns = []
+    const errors = []
 
     try {
-      // Create FormData for batch upload
-      const formData = new FormData()
-      formData.append('designCount', designs.length.toString())
-      
-      designs.forEach((design, designIndex) => {
-        formData.append(`design_${designIndex}_title`, design.title.trim())
-        formData.append(`design_${designIndex}_description`, design.description.trim())
-        formData.append(`design_${designIndex}_category`, design.category)
-        formData.append(`design_${designIndex}_tags`, design.tags.trim())
-        
-        // Add multiple preview images for this design
-        design.previewImages.forEach((file, imageIndex) => {
-          formData.append(`design_${designIndex}_preview_${imageIndex}`, file)
-        })
-        
-        formData.append(`design_${designIndex}_raw`, design.rawFile)
-      })
+      // Upload designs one by one
+      for (let i = 0; i < designs.length; i++) {
+        const design = designs[i]
 
-      const response = await fetch('/api/designs/batch-upload', {
-        method: 'POST',
-        body: formData,
-      })
+        // Update current uploading index
+        setCurrentUploadingIndex(i)
 
-      const result = await response.json()
-      setUploadResults(result)
+        // Update status to uploading
+        setDesignUploadStatus(prev =>
+          prev.map((status, idx) =>
+            idx === i ? { ...status, status: 'uploading' } : status
+          )
+        )
 
-      console.log('Upload result:', result)
+        console.log(`Uploading design ${i + 1}/${designs.length}: ${design.title}`)
 
-      // Handle first-time uploader validation error from backend
-      if (!response.ok && result.isFirstTimeUpload) {
-        clearInterval(progressInterval)
-        setUploadProgress(0)
-        setLoading(false)
-        setGlobalErrors({ 
-          submit: result.message || `First-time uploaders must upload at least 2 designs. You attempted to upload ${result.attemptedDesigns} design${result.attemptedDesigns !== 1 ? 's' : ''}.`
-        })
+        try {
+          const { response, result } = await uploadSingleDesign(design, i, designs.length)
+
+          if (result.success) {
+            console.log(`Design ${i + 1} uploaded successfully:`, result.design)
+            uploadedDesigns.push(result.design)
+
+            // Update status to success
+            setDesignUploadStatus(prev =>
+              prev.map((status, idx) =>
+                idx === i ? { status: 'success', error: null, design: result.design } : status
+              )
+            )
+          } else {
+            console.error(`Design ${i + 1} failed:`, result.error)
+            errors.push({
+              designIndex: i,
+              title: design.title,
+              error: result.error,
+              isDuplicate: result.isDuplicate,
+              matchedDesign: result.matchedDesign
+            })
+
+            // Update status to failed
+            setDesignUploadStatus(prev =>
+              prev.map((status, idx) =>
+                idx === i ? { status: 'failed', error: result.error } : status
+              )
+            )
+          }
+        } catch (uploadError) {
+          console.error(`Design ${i + 1} upload error:`, uploadError)
+          errors.push({
+            designIndex: i,
+            title: design.title,
+            error: uploadError.message || 'Upload failed'
+          })
+
+          // Update status to failed
+          setDesignUploadStatus(prev =>
+            prev.map((status, idx) =>
+              idx === i ? { status: 'failed', error: uploadError.message || 'Upload failed' } : status
+            )
+          )
+        }
+
+        // Update overall progress
+        const progress = ((i + 1) / designs.length) * 100
+        setUploadProgress(progress)
+      }
+
+      // All uploads complete
+      setCurrentUploadingIndex(-1)
+
+      const uploadResults = {
+        success: uploadedDesigns.length > 0,
+        message: `${uploadedDesigns.length} design(s) uploaded successfully`,
+        uploadedDesigns,
+        totalUploaded: uploadedDesigns.length,
+        totalFailed: errors.length,
+        totalProcessed: designs.length,
+        errors: errors.length > 0 ? errors.map(err => ({
+          ...err,
+          message: `Design #${err.designIndex + 1}${err.title ? ` (${err.title})` : ''}: ${err.error}`
+        })) : undefined
+      }
+
+      setUploadResults(uploadResults)
+
+      if (uploadedDesigns.length === 0) {
+        // All uploads failed
+        const errorMessages = errors.map(err => err.error).join('\n') || 'All uploads failed'
+        setGlobalErrors({ submit: errorMessages })
         window.scrollTo({ top: 0, behavior: 'smooth' })
+        setLoading(false)
         return
       }
 
-      if (!result.success && result.totalUploaded === 0) {
-        // All uploads failed
-        const errorMessages = result.errors?.map(err => err.message || err.error).join('\n') || 'All uploads failed'
-        throw new Error(errorMessages)
-      }
-
-      // Complete progress
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-
-      // Show success even if some failed
+      // Show success
       setTimeout(() => {
         setSuccess(true)
         // Stay on success screen longer if there were failures
-        const delay = result.totalFailed > 0 ? 5000 : 3000
+        const delay = errors.length > 0 ? 5000 : 3000
         setTimeout(() => {
           router.push('/dashboard/my-designs')
         }, delay)
       }, 500)
 
     } catch (error) {
-      clearInterval(progressInterval)
-      setUploadProgress(0)
       console.error('Upload error:', error)
       setGlobalErrors({ submit: error.message })
-    } finally {
       setLoading(false)
+      setUploadProgress(0)
+      setCurrentUploadingIndex(-1)
     }
   }
 
@@ -506,7 +571,7 @@ const UploadContent = ({ user }) => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center max-w-2xl w-full">
+        <div className="text-center max-w-3xl w-full">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Complete!</h2>
 
@@ -517,14 +582,56 @@ const UploadContent = ({ user }) => {
                 <p className="text-green-800 font-medium">
                   {uploadResults.totalUploaded} design{uploadResults.totalUploaded !== 1 ? 's' : ''} uploaded successfully
                 </p>
+                {uploadResults.totalFailed > 0 && (
+                  <p className="text-orange-700 text-sm mt-1">
+                    {uploadResults.totalFailed} design{uploadResults.totalFailed !== 1 ? 's' : ''} failed to upload
+                  </p>
+                )}
               </div>
+
+              {/* Failed Designs */}
+              {uploadResults.errors && uploadResults.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+                  <h3 className="font-semibold text-red-800 mb-2 flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    Failed Uploads
+                  </h3>
+                  <ul className="space-y-1 text-sm text-red-700">
+                    {uploadResults.errors.map((err, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>{err.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Successful Designs */}
+              {uploadResults.uploadedDesigns && uploadResults.uploadedDesigns.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                  <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Successfully Uploaded Designs
+                  </h3>
+                  <ul className="space-y-1 text-sm text-blue-700">
+                    {uploadResults.uploadedDesigns.map((design, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-2">✓</span>
+                        <span className="font-medium">{design.title}</span>
+                        <span className="text-blue-600 ml-2">({design.status})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
           <p className="text-gray-600 mb-2">
             {uploadResults?.totalUploaded > 0
-              ? 'Your uploaded design(s) are pending approval.'
-              : 'Please check the errors and try again.'}
+              ? 'Your uploaded design(s) are pending approval from admin.'
+              : 'All uploads failed. Please check the errors and try again.'}
           </p>
           <p className="text-sm text-gray-500">
             {uploadResults?.totalUploaded > 0
@@ -798,11 +905,86 @@ const UploadContent = ({ user }) => {
 
         {/* Progress Bar */}
         {loading && (
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+          <div className="space-y-4">
+            {/* Overall Progress */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-gray-800">Upload Progress</h3>
+                <span className="text-sm font-medium text-purple-600">
+                  {uploadProgress.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Uploading {currentUploadingIndex + 1} of {designs.length} designs...
+              </p>
+            </div>
+
+            {/* Individual Design Status */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Design Status</h3>
+              <div className="space-y-3">
+                {designs.map((design, index) => {
+                  const status = designUploadStatus[index] || { status: 'pending' }
+                  return (
+                    <div
+                      key={design.id}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                        status.status === 'uploading'
+                          ? 'bg-blue-50 border-2 border-blue-300'
+                          : status.status === 'success'
+                          ? 'bg-green-50 border border-green-200'
+                          : status.status === 'failed'
+                          ? 'bg-red-50 border border-red-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {status.status === 'uploading' && (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 flex-shrink-0"></div>
+                        )}
+                        {status.status === 'success' && (
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                        )}
+                        {status.status === 'failed' && (
+                          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                        )}
+                        {status.status === 'pending' && (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
+                            Design #{index + 1}: {design.title || 'Untitled'}
+                          </p>
+                          {status.status === 'failed' && status.error && (
+                            <p className="text-sm text-red-600 mt-1">{status.error}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium flex-shrink-0 ml-3">
+                        {status.status === 'uploading' && (
+                          <span className="text-blue-600">Uploading...</span>
+                        )}
+                        {status.status === 'success' && (
+                          <span className="text-green-600">Uploaded</span>
+                        )}
+                        {status.status === 'failed' && (
+                          <span className="text-red-600">Failed</span>
+                        )}
+                        {status.status === 'pending' && (
+                          <span className="text-gray-500">Waiting</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </form>
