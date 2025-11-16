@@ -54,13 +54,17 @@ const userSubscriptionSchema = new mongoose.Schema({
   // Credits & Validity
   creditsTotal: {
     type: Number,
-    required: true,
+    default: 0,
   },
   creditsRemaining: {
     type: Number,
     required: true,
   },
   creditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  adminCredits: {
     type: Number,
     default: 0,
   },
@@ -96,6 +100,7 @@ const userSubscriptionSchema = new mongoose.Schema({
   additionalPurchases: [{
     planId: String,
     planName: String,
+    credits: Number,
     creditsAdded: Number,
     validityExtended: Number,
     amountPaid: Number,
@@ -124,6 +129,19 @@ const userSubscriptionSchema = new mongoose.Schema({
 // Indexes for better query performance
 userSubscriptionSchema.index({ userId: 1, status: 1 });
 userSubscriptionSchema.index({ expiryDate: 1 });
+
+// Pre-save hook to calculate creditsTotal
+userSubscriptionSchema.pre('save', function(next) {
+  // Calculate total credits from additionalPurchases
+  const additionalCredits = this.additionalPurchases.reduce((total, purchase) => {
+    return total + (purchase.credits || 0);
+  }, 0);
+  
+  // Update creditsTotal: adminCredits + credits from additionalPurchases
+  this.creditsTotal = (this.adminCredits || 0) + additionalCredits;
+  
+  next();
+});
 
 // Method to check if subscription is valid
 userSubscriptionSchema.methods.isValid = function() {
@@ -256,10 +274,406 @@ const creditTransactionSchema = new mongoose.Schema({
 
 creditTransactionSchema.index({ userId: 1, transactionDate: -1 });
 
+// Credits of Users Schema - Stores user credit information
+const creditsOfUsersSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  },
+  
+  planId: {
+    type: String,
+    default: 'basic',
+  },
+  
+  planName: {
+    type: String,
+    default: 'Manual Credit Addition',
+  },
+  
+  creditsTotal: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsRemaining: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Dates
+  startDate: {
+    type: Date,
+    default: Date.now,
+  },
+  
+  expiryDate: {
+    type: Date,
+  },
+  
+  // Status
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active',
+  },
+  
+  // Payment Info
+  paymentId: String,
+  paymentMethod: {
+    type: String,
+    default: 'manual',
+  },
+  amountPaid: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Auto-renewal
+  autoRenew: {
+    type: Boolean,
+    default: false,
+  },
+  
+  // Additional credit purchases
+  additionalPurchases: [{
+    planId: String,
+    planName: String,
+    credits: Number,
+    creditsAdded: Number,
+    validityExtended: Number,
+    amountPaid: Number,
+    paymentId: String,
+    orderId: String,
+    purchaseDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+}, {
+  timestamps: true
+});
+
+// Index for better query performance
+creditsOfUsersSchema.index({ userId: 1 });
+
+// User_Credits Schema - Stores user credit information with admin credits
+const user_creditsSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  },
+  
+  planId: {
+    type: String,
+    default: 'basic',
+  },
+  
+  planName: {
+    type: String,
+    default: 'Manual Credit Addition',
+  },
+  
+  adminCredits: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsTotal: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsRemaining: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Dates
+  startDate: {
+    type: Date,
+    default: Date.now,
+  },
+  
+  expiryDate: {
+    type: Date,
+  },
+  
+  // Status
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active',
+  },
+  
+  // Payment Info
+  paymentId: String,
+  paymentMethod: {
+    type: String,
+    default: 'manual',
+  },
+  amountPaid: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Auto-renewal
+  autoRenew: {
+    type: Boolean,
+    default: false,
+  },
+  
+  // Additional credit purchases
+  additionalPurchases: [{
+    planId: String,
+    planName: String,
+    credits: Number,
+    creditsAdded: Number,
+    validityExtended: Number,
+    amountPaid: Number,
+    paymentId: String,
+    orderId: String,
+    purchaseDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+}, {
+  timestamps: true
+});
+
+// Index for better query performance
+user_creditsSchema.index({ userId: 1 });
+
+// User_Subscription_Credits Schema - Stores credit points from paid plans (Razorpay)
+const user_subscription_creditsSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  },
+  
+  planId: {
+    type: String,
+    enum: ['basic', 'premium', 'elite'],
+  },
+  
+  planName: {
+    type: String,
+  },
+  
+  creditsTotal: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsRemaining: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Dates
+  startDate: {
+    type: Date,
+    default: Date.now,
+  },
+  
+  expiryDate: {
+    type: Date,
+  },
+  
+  // Status
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active',
+  },
+  
+  // Payment Info (Razorpay)
+  paymentId: String,
+  orderId: String,
+  paymentMethod: {
+    type: String,
+    default: 'razorpay',
+  },
+  amountPaid: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Auto-renewal
+  autoRenew: {
+    type: Boolean,
+    default: false,
+  },
+  
+  // Additional credit purchases from plans
+  additionalPurchases: [{
+    planId: String,
+    planName: String,
+    credits: Number,
+    creditsAdded: Number,
+    validityExtended: Number,
+    amountPaid: Number,
+    paymentId: String,
+    orderId: String,
+    purchaseDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+}, {
+  timestamps: true
+});
+
+// Index for better query performance
+user_subscription_creditsSchema.index({ userId: 1 });
+
+// User Credits Schema - Stores admin-added credits and additional purchases
+const userCreditsSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  },
+  
+  planId: {
+    type: String,
+    default: 'basic',
+  },
+  
+  planName: {
+    type: String,
+    default: 'Manual Credit Addition',
+  },
+  
+  // Credits added by admin
+  adminCredits: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Total credits (auto-calculated)
+  creditsTotal: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsRemaining: {
+    type: Number,
+    default: 0,
+  },
+  
+  creditsUsed: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Dates
+  startDate: {
+    type: Date,
+    default: Date.now,
+  },
+  
+  expiryDate: {
+    type: Date,
+  },
+  
+  // Status
+  status: {
+    type: String,
+    enum: ['active', 'expired', 'cancelled'],
+    default: 'active',
+  },
+  
+  // Payment Info
+  paymentId: String,
+  paymentMethod: {
+    type: String,
+    default: 'manual',
+  },
+  amountPaid: {
+    type: Number,
+    default: 0,
+  },
+  
+  // Auto-renewal
+  autoRenew: {
+    type: Boolean,
+    default: false,
+  },
+  
+  // Additional credit purchases
+  additionalPurchases: [{
+    planId: String,
+    planName: String,
+    credits: Number,
+    creditsAdded: Number,
+    validityExtended: Number,
+    amountPaid: Number,
+    paymentId: String,
+    orderId: String,
+    purchaseDate: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  
+}, {
+  timestamps: true
+});
+
+// Index for better query performance
+userCreditsSchema.index({ userId: 1 });
+
+// Pre-save hook to calculate creditsTotal
+userCreditsSchema.pre('save', function(next) {
+  // Calculate total credits from additionalPurchases
+  const additionalCredits = this.additionalPurchases.reduce((total, purchase) => {
+    return total + (purchase.credits || 0);
+  }, 0);
+  
+  // Update creditsTotal: adminCredits + credits from additionalPurchases
+  this.creditsTotal = (this.adminCredits || 0) + additionalCredits;
+  
+  next();
+});
+
 // Create models
 const SubscriptionPlan = mongoose.models.SubscriptionPlan || mongoose.model('SubscriptionPlan', subscriptionPlanSchema);
 const UserSubscription = mongoose.models.UserSubscription || mongoose.model('UserSubscription', userSubscriptionSchema);
 const DownloadHistory = mongoose.models.DownloadHistory || mongoose.model('DownloadHistory', downloadHistorySchema);
 const CreditTransaction = mongoose.models.CreditTransaction || mongoose.model('CreditTransaction', creditTransactionSchema);
+const CreditsOfUsers = mongoose.models.CreditsOfUsers || mongoose.model('CreditsOfUsers', creditsOfUsersSchema);
+const User_Credits = mongoose.models.User_Credits || mongoose.model('User_Credits', user_creditsSchema);
+const User_Subscription_Credits = mongoose.models.User_Subscription_Credits || mongoose.model('User_Subscription_Credits', user_subscription_creditsSchema);
+const UserCredits = mongoose.models.UserCredits || mongoose.model('UserCredits', userCreditsSchema);
 
-export { SubscriptionPlan, UserSubscription, DownloadHistory, CreditTransaction };
+export { SubscriptionPlan, UserSubscription, DownloadHistory, CreditTransaction, CreditsOfUsers, User_Credits, User_Subscription_Credits, UserCredits };

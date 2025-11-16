@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/mongodb';
-import { UserSubscription, CreditTransaction } from '../../../../../models/Subscription';
+import { UserSubscription, CreditTransaction, UserCredits, CreditsOfUsers, User_Credits } from '../../../../../models/Subscription';
 import { Buyer, User } from '../../../../../models/User';
 import { verifyToken } from '../../../../../middleware/auth';
 
@@ -45,25 +45,21 @@ export async function POST(request) {
       );
     }
 
-    // Get active subscription
-    let subscription = await UserSubscription.findOne({
-      userId: buyerId,
-      status: 'active',
-      expiryDate: { $gt: new Date() }
-    });
-
-    // If no active subscription, create one
-    if (!subscription) {
-      const startDate = new Date();
-      const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 30); // 30 days validity
-
-      subscription = await UserSubscription.create({
+    // Get or create User_Credits record
+    let userCreditsRecord = await User_Credits.findOne({ userId: buyerId });
+    
+    const startDate = new Date();
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 30); // 30 days validity
+    
+    if (!userCreditsRecord) {
+      userCreditsRecord = await User_Credits.create({
         userId: buyerId,
-        planId: 'basic', // Use basic as default for manual additions
+        planId: 'basic',
         planName: 'Manual Credit Addition',
-        creditsTotal: credits,
-        creditsRemaining: credits,
+        adminCredits: 0,
+        creditsTotal: 0,
+        creditsRemaining: 0,
         creditsUsed: 0,
         startDate,
         expiryDate,
@@ -71,47 +67,49 @@ export async function POST(request) {
         paymentId: 'admin_manual_' + Date.now(),
         paymentMethod: 'manual',
         amountPaid: 0,
-        autoRenew: false
+        autoRenew: false,
+        additionalPurchases: []
       });
-
-      // Update buyer profile
-      await Buyer.findOneAndUpdate(
-        { userId: buyerId },
-        {
-          currentSubscription: subscription._id,
-          $push: { subscriptionHistory: subscription._id }
-        }
-      );
-    } else {
-      // Update existing subscription
-      if (operation === 'add') {
-        subscription.creditsRemaining += credits;
-        subscription.creditsTotal += credits;
-      } else if (operation === 'set') {
-        subscription.creditsRemaining = credits;
-      } else if (operation === 'deduct') {
-        if (subscription.creditsRemaining < credits) {
-          return NextResponse.json(
-            { error: 'Insufficient credits to deduct' },
-            { status: 400 }
-          );
-        }
-        // Only reduce creditsRemaining, do NOT increase creditsUsed
-        // Admin deduction should not be counted as buyer usage
-        // creditsTotal remains unchanged - it represents total credits available
-        subscription.creditsRemaining -= credits;
-      }
-
-      await subscription.save();
     }
+
+    // Store previous values for calculating changes
+    const previousAdminCredits = userCreditsRecord.adminCredits || 0;
+    
+    // Update User_Credits based on operation
+    if (operation === 'add') {
+      userCreditsRecord.adminCredits = previousAdminCredits + credits;
+      userCreditsRecord.creditsTotal = (userCreditsRecord.creditsTotal || 0) + credits;
+      userCreditsRecord.creditsRemaining = (userCreditsRecord.creditsRemaining || 0) + credits;
+    } else if (operation === 'set') {
+      userCreditsRecord.adminCredits = credits;
+      userCreditsRecord.creditsTotal = credits;
+      userCreditsRecord.creditsRemaining = credits;
+      userCreditsRecord.creditsUsed = 0;
+    } else if (operation === 'deduct') {
+      if (userCreditsRecord.creditsRemaining < credits) {
+        return NextResponse.json(
+          { error: 'Insufficient credits to deduct' },
+          { status: 400 }
+        );
+      }
+      userCreditsRecord.adminCredits = Math.max(0, previousAdminCredits - credits);
+      userCreditsRecord.creditsTotal = Math.max(0, (userCreditsRecord.creditsTotal || 0) - credits);
+      userCreditsRecord.creditsRemaining = Math.max(0, (userCreditsRecord.creditsRemaining || 0) - credits);
+      userCreditsRecord.creditsUsed = (userCreditsRecord.creditsUsed || 0) + credits;
+    }
+    
+    // Update other fields
+    userCreditsRecord.paymentId = 'admin_manual_' + Date.now();
+    userCreditsRecord.status = userCreditsRecord.creditsRemaining > 0 ? 'active' : 'expired';
+
+    await userCreditsRecord.save();
 
     // Create credit transaction record
     await CreditTransaction.create({
       userId: buyerId,
-      subscriptionId: subscription._id,
       type: operation === 'deduct' ? 'debit' : 'credit',
       amount: credits,
-      balanceAfter: subscription.creditsRemaining,
+      balanceAfter: userCreditsRecord.creditsRemaining,
       description: reason || `Admin ${operation} credits: ${credits}`
     });
 
@@ -123,17 +121,37 @@ export async function POST(request) {
       message: `Successfully ${operation === 'add' ? 'added' : operation === 'set' ? 'set' : 'deducted'} ${credits} credits`,
       buyer: {
         email: user.email,
-        creditsRemaining: subscription.creditsRemaining,
-        creditsTotal: subscription.creditsTotal,
-        planName: subscription.planName,
-        expiryDate: subscription.expiryDate
+        creditsRemaining: userCreditsRecord.creditsRemaining,
+        creditsTotal: userCreditsRecord.creditsTotal,
+        planName: userCreditsRecord.planName,
+        expiryDate: userCreditsRecord.expiryDate
+      },
+      user_credits: {
+        planId: userCreditsRecord.planId,
+        planName: userCreditsRecord.planName,
+        adminCredits: userCreditsRecord.adminCredits,
+        creditsTotal: userCreditsRecord.creditsTotal,
+        creditsRemaining: userCreditsRecord.creditsRemaining,
+        creditsUsed: userCreditsRecord.creditsUsed,
+        startDate: userCreditsRecord.startDate,
+        expiryDate: userCreditsRecord.expiryDate,
+        status: userCreditsRecord.status,
+        paymentId: userCreditsRecord.paymentId,
+        paymentMethod: userCreditsRecord.paymentMethod,
+        amountPaid: userCreditsRecord.amountPaid,
+        autoRenew: userCreditsRecord.autoRenew,
+        additionalPurchases: userCreditsRecord.additionalPurchases
       }
     }, { status: 200 });
 
   } catch (error) {
     console.error('Admin credit management error:', error);
     return NextResponse.json(
-      { error: 'Failed to manage credits' },
+      { 
+        error: 'Failed to manage credits',
+        details: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     );
   }

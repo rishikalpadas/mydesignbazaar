@@ -184,11 +184,15 @@ export default function PricingPage() {
               alert(`🎉 ${verifyData.message}\n\nYour subscription is now active!`);
               router.push('/dashboard/profile');
             } else {
-              throw new Error(verifyData.error);
+              console.error('Payment verification failed:', verifyData);
+              const errorMessage = verifyData.details 
+                ? `${verifyData.error}\n\nDetails: ${JSON.stringify(verifyData.details, null, 2)}`
+                : verifyData.error;
+              throw new Error(errorMessage);
             }
           } catch (error) {
             console.error('Payment verification error:', error);
-            alert('Payment verification failed. Please contact support.');
+            alert(`Payment verification failed: ${error.message}\n\nPlease contact support if amount was deducted.`);
           } finally {
             setProcessingPayment(false);
           }
