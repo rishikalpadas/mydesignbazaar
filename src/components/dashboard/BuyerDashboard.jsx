@@ -115,20 +115,21 @@ const BuyerDashboard = ({ user }) => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-white h-full transition-all duration-500"
-                        style={{
-                          width: `${(userCredits.remaining / userCredits.total) * 100}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-emerald-100 ml-4">
-                    {Math.round((userCredits.remaining / userCredits.total) * 100)}% remaining
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-emerald-100 font-medium">Progress</p>
+                  <p className="text-xs text-emerald-100 font-semibold">
+                    {Math.round((userCredits.remaining / userCredits.total) * 100)}%
                   </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-emerald-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(userCredits.remaining / userCredits.total) * 100}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -176,20 +177,21 @@ const BuyerDashboard = ({ user }) => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-white h-full transition-all duration-500"
-                        style={{
-                          width: `${(basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-pink-100 ml-4">
-                    {Math.round((basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100)}% remaining
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-pink-100 font-medium">Progress</p>
+                  <p className="text-xs text-pink-100 font-semibold">
+                    {Math.round((basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100)}%
                   </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-pink-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -237,20 +239,21 @@ const BuyerDashboard = ({ user }) => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-white h-full transition-all duration-500"
-                        style={{
-                          width: `${(premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-blue-100 ml-4">
-                    {Math.round((premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100)}% remaining
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-blue-100 font-medium">Progress</p>
+                  <p className="text-xs text-blue-100 font-semibold">
+                    {Math.round((premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100)}%
                   </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-blue-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -298,20 +301,21 @@ const BuyerDashboard = ({ user }) => {
               </div>
 
               <div className="mt-4 pt-4 border-t border-white/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-white h-full transition-all duration-500"
-                        style={{
-                          width: `${(elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100}%`
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-purple-100 ml-4">
-                    {Math.round((elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100)}% remaining
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-purple-100 font-medium">Progress</p>
+                  <p className="text-xs text-purple-100 font-semibold">
+                    {Math.round((elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100)}%
                   </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-purple-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
