@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import connectDB from "../../../../../lib/mongodb"
 import Design from "../../../../../models/Design"
+import { Designer } from "../../../../../models/User"
 import { withPermission } from "../../../../../middleware/auth"
 
 async function handler(request) {
@@ -22,6 +23,14 @@ async function handler(request) {
     design.approvalDate = new Date()
     design.approvedBy = request.user._id
     await design.save()
+
+    // Increment designer's approved designs count
+    await Designer.findOneAndUpdate(
+      { userId: design.uploadedBy },
+      { $inc: { approvedDesigns: 1 } }
+    )
+
+    console.log(`[DESIGN-APPROVAL] Design ${design._id} approved. Designer approvedDesigns count incremented.`)
 
     return NextResponse.json({
       success: true,

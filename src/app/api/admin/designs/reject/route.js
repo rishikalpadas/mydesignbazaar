@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import connectDB from "../../../../../lib/mongodb"
 import Design from "../../../../../models/Design"
+import { Designer } from "../../../../../models/User"
 import { withPermission } from "../../../../../middleware/auth"
 
 async function handler(request) {
@@ -11,6 +12,14 @@ async function handler(request) {
     if (!designId || !reason) {
       return NextResponse.json({ error: "designId and reason are required" }, { status: 400 })
     }
+
+    // Get design before update to check if it was approved
+    const designBefore = await Design.findById(designId)
+    if (!designBefore) {
+      return NextResponse.json({ error: "Design not found" }, { status: 404 })
+    }
+
+    const wasApproved = designBefore.status === "approved"
 
     const design = await Design.findByIdAndUpdate(
       designId,
@@ -23,8 +32,13 @@ async function handler(request) {
       { new: true, runValidators: false }
     )
 
-    if (!design) {
-      return NextResponse.json({ error: "Design not found" }, { status: 404 })
+    // If design was previously approved, decrement designer's approved count
+    if (wasApproved) {
+      await Designer.findOneAndUpdate(
+        { userId: design.uploadedBy },
+        { $inc: { approvedDesigns: -1 } }
+      )
+      console.log(`[DESIGN-REJECTION] Previously approved design ${design._id} rejected. Designer approvedDesigns count decremented.`)
     }
 
     return NextResponse.json({

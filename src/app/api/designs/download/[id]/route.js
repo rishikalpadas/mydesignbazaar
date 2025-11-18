@@ -4,6 +4,7 @@ import Design from '../../../../../models/Design';
 import { UserSubscription, DownloadHistory, CreditTransaction, User_Subscription_Credits, User_Credits } from '../../../../../models/Subscription';
 import { Buyer } from '../../../../../models/User';
 import { verifyToken } from '../../../../../middleware/auth';
+import { creditDesignerWallet } from '../../../../../lib/walletService';
 
 export async function POST(request, { params }) {
   try {
@@ -167,6 +168,23 @@ export async function POST(request, { params }) {
     await Design.findByIdAndUpdate(designId, {
       $inc: { downloads: 1 }
     });
+
+    // Credit designer wallet (₹10 if designer has 10+ approved designs)
+    try {
+      console.log(`[DOWNLOAD] Attempting to credit designer wallet for design: ${designId}`);
+      const walletResult = await creditDesignerWallet(designId, userId, downloadRecord._id);
+      console.log(`[DOWNLOAD] Wallet result:`, walletResult);
+      if (walletResult.success && walletResult.credited) {
+        console.log(`[DOWNLOAD] ✓ Designer wallet credited: ₹${walletResult.amount}, new balance: ₹${walletResult.newBalance}`);
+      } else if (walletResult.success && !walletResult.eligible) {
+        console.log(`[DOWNLOAD] Designer not yet eligible for wallet earnings (${walletResult.approvedDesigns}/10 approved designs)`);
+      } else if (!walletResult.success) {
+        console.error(`[DOWNLOAD] Wallet credit failed: ${walletResult.error}`);
+      }
+    } catch (walletError) {
+      // Don't fail the download if wallet credit fails, just log it
+      console.error('[DOWNLOAD] Wallet credit failed but download proceeds:', walletError);
+    }
 
     // Return download URL with appropriate credit info
     const responseData = {
