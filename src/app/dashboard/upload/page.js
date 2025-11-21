@@ -58,6 +58,8 @@ const UploadContent = ({ user }) => {
 
   const [globalErrors, setGlobalErrors] = useState({})
   const [expandedDesigns, setExpandedDesigns] = useState(new Set([0])) // First design expanded by default
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false)
+  const [duplicateCheckResults, setDuplicateCheckResults] = useState(null)
 
   // Check if user is first-time uploader
   useEffect(() => {
@@ -377,6 +379,61 @@ const UploadContent = ({ user }) => {
     return !hasErrors
   }
 
+  const checkForDuplicates = async () => {
+    setCheckingDuplicates(true)
+    setDuplicateCheckResults(null)
+    setGlobalErrors({})
+
+    try {
+      const formData = new FormData()
+      let imageCounter = 0
+
+      // Add all images from all designs
+      for (let designIndex = 0; designIndex < designs.length; designIndex++) {
+        const design = designs[designIndex]
+        
+        for (let imageIndex = 0; imageIndex < design.previewImages.length; imageIndex++) {
+          const imageFile = design.previewImages[imageIndex]
+          
+          formData.append(`image_${imageCounter}`, imageFile)
+          formData.append(`designIndex_${imageCounter}`, designIndex.toString())
+          formData.append(`imageIndex_${imageCounter}`, imageIndex.toString())
+          
+          imageCounter++
+        }
+      }
+
+      console.log(`[DUPLICATE-CHECK] Checking ${imageCounter} images for duplicates`)
+
+      const response = await fetch('/api/designs/check-duplicates', {
+        method: 'POST',
+        body: formData
+      })
+
+      const result = await response.json()
+      
+      console.log('[DUPLICATE-CHECK] Response status:', response.status)
+      console.log('[DUPLICATE-CHECK] Response data:', result)
+
+      if (!response.ok) {
+        console.error('[DUPLICATE-CHECK] API Error:', result)
+        throw new Error(result.error || result.details || 'Failed to check for duplicates')
+      }
+
+      setDuplicateCheckResults(result)
+      return result
+
+    } catch (error) {
+      console.error('Duplicate check error:', error)
+      setGlobalErrors({ 
+        submit: `Duplicate check failed: ${error.message}. Please try again.` 
+      })
+      return { error: error.message, hasDuplicates: false }
+    } finally {
+      setCheckingDuplicates(false)
+    }
+  }
+
   const uploadSingleDesign = async (design, designIndex, totalDesigns) => {
     const formData = new FormData()
 
@@ -428,10 +485,32 @@ const UploadContent = ({ user }) => {
       return
     }
 
+    // Check for duplicate images before uploading
+    console.log('[UPLOAD] Running duplicate check...')
+    const duplicateCheckResult = await checkForDuplicates()
+    
+    if (duplicateCheckResult.error) {
+      console.error('[UPLOAD] Duplicate check failed:', duplicateCheckResult.error)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    if (duplicateCheckResult.hasDuplicates) {
+      console.log('[UPLOAD] Duplicates found, blocking upload')
+      setGlobalErrors({ 
+        submit: 'Duplicate images detected. Please review and remove duplicate images before uploading.' 
+      })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    console.log('[UPLOAD] No duplicates found, proceeding with upload')
+
     setLoading(true)
     setSuccess(false)
     setGlobalErrors({})
     setUploadProgress(0)
+    setDuplicateCheckResults(null)
 
     // Initialize upload status for each design
     const initialStatus = designs.map(() => ({ status: 'pending', error: null, design: null }))
@@ -795,6 +874,80 @@ const UploadContent = ({ user }) => {
         </div>
       )}
 
+      {/* Duplicate Images Warning */}
+      {duplicateCheckResults && duplicateCheckResults.hasDuplicates && (
+        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-lg">
+          <div className="flex items-start">
+            <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-red-800 mb-3">Duplicate Images Detected</h3>
+              
+              {/* Duplicates within batch */}
+              {duplicateCheckResults.duplicatesInBatch > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-semibold text-red-700 mb-2">
+                    Duplicates Within Your Upload ({duplicateCheckResults.duplicatesInBatch}):
+                  </h4>
+                  <ul className="space-y-2 text-sm text-red-700">
+                    {duplicateCheckResults.batchDuplicates.map((dup, idx) => (
+                      <li key={idx} className="bg-red-100 p-3 rounded-lg">
+                        <div className="font-medium mb-1">
+                          ⚠️ Image {dup.current.imageNumber} in Design #{dup.current.designNumber} 
+                          <span className="text-red-800"> is a duplicate of </span>
+                          Image {dup.duplicate.imageNumber} in Design #{dup.duplicate.designNumber}
+                        </div>
+                        <div className="text-xs text-red-600 mt-1">
+                          Files: <span className="font-mono">{dup.current.filename}</span> ≈ <span className="font-mono">{dup.duplicate.filename}</span>
+                          <span className="ml-2">({dup.similarity} similar)</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-red-600 mt-2">
+                    💡 <strong>Solution:</strong> Remove duplicate images. Each image must be unique across all designs.
+                  </p>
+                </div>
+              )}
+
+              {/* Duplicates from database */}
+              {duplicateCheckResults.duplicatesInDatabase > 0 && (
+                <div>
+                  <h4 className="font-semibold text-red-700 mb-2">
+                    Duplicates Found in Your Previous Uploads ({duplicateCheckResults.duplicatesInDatabase}):
+                  </h4>
+                  <ul className="space-y-2 text-sm text-red-700">
+                    {duplicateCheckResults.databaseMatches.map((match, idx) => (
+                      <li key={idx} className="bg-red-100 p-3 rounded-lg">
+                        <div className="font-medium mb-1">
+                          ⚠️ Image {match.uploaded.imageNumber} in Design #{match.uploaded.designNumber}
+                          <span className="text-red-800"> already exists in design: </span>
+                          <span className="font-semibold">"{match.existingDesign.title}"</span>
+                        </div>
+                        <div className="text-xs text-red-600 mt-1">
+                          File: <span className="font-mono">{match.uploaded.filename}</span>
+                          <span className="ml-2">({match.similarity} similar)</span>
+                          <span className="ml-2 text-gray-600">Design ID: {match.existingDesign.designId}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-red-600 mt-2">
+                    💡 <strong>Solution:</strong> You cannot upload images that already exist in your approved or pending designs.
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> We use advanced image matching technology to detect visually similar images, 
+                  not just identical filenames. Please ensure all images are unique and original.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Design Forms */}
         {designs.map((design, designIndex) => (
@@ -874,13 +1027,32 @@ const UploadContent = ({ user }) => {
 
         {/* Submit Button */}
         <div className="text-center">
+          {checkingDuplicates && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">
+                  Checking for duplicate images...
+                </span>
+              </div>
+              <p className="text-sm text-blue-600 mt-2">
+                This may take a moment. We're analyzing image content to ensure uniqueness.
+              </p>
+            </div>
+          )}
+          
           <button
             type="submit"
-            disabled={loading || (isFirstTimeUpload && designs.length < 2)}
+            disabled={loading || checkingDuplicates || (isFirstTimeUpload && designs.length < 2)}
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             title={isFirstTimeUpload && designs.length < 2 ? 'First-time uploaders must upload at least 2 designs' : ''}
           >
-            {loading ? (
+            {checkingDuplicates ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                Checking Duplicates...
+              </>
+            ) : loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                 Uploading... {uploadProgress.toFixed(0)}%
