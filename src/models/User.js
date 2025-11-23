@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  // Profile Picture
+  profile_pic: {
+    type: String,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
@@ -70,6 +75,10 @@ const designerSchema = new mongoose.Schema({
     required: true,
   },
   displayName: String,
+  profile_pic: {
+    type: String,
+    default: null,
+  },
   mobileNumber: {
     type: String,
     required: true,
@@ -169,6 +178,10 @@ const buyerSchema = new mongoose.Schema({
   fullName: {
     type: String,
     required: true,
+  },
+  profile_pic: {
+    type: String,
+    default: null,
   },
   mobileNumber: {
     type: String,

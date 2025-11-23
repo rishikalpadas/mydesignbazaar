@@ -1188,6 +1188,7 @@ const DesignerSignupForm = ({
                 "Kidswear",
                 "Menswear",
                 "Womenswear",
+                "Infantwear",
                 "Ethnic/Festival",
                 "Floral Patterns",
                 "Typography",
@@ -1669,40 +1670,47 @@ const BuyerSignupForm = ({
             <label className="block text-sm font-medium text-gray-700 mb-3">
               What design categories are you interested in? (Multi-select)
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 "Kidswear",
                 "Menswear",
                 "Womenswear",
-                "Festival & Ethnic",
+                "Infantwear",
+                "Ethnic/Festival",
+                "Floral Patterns",
                 "Typography",
-                "Floral / Nature",
-                "Abstract / Geometric",
-                "Minimal / Modern",
                 "AI-Generated",
-                "Custom Design Requests",
-              ].map((category) => (
-                <label key={category} className="flex items-center">
+                "Others",
+              ].map((spec) => (
+                <label key={spec} className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.interestedCategories?.includes(category) || false}
+                    checked={formData.specializations?.includes(spec) || false}
                     onChange={(e) => {
-                      const current = formData.interestedCategories || []
+                      const current = formData.specializations || []
                       if (e.target.checked) {
-                        handleInputChange("interestedCategories", [...current, category])
+                        handleInputChange("specializations", [...current, spec])
                       } else {
                         handleInputChange(
-                          "interestedCategories",
-                          current.filter((c) => c !== category),
+                          "specializations",
+                          current.filter((s) => s !== spec),
                         )
                       }
                     }}
                     className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{category}</span>
+                  <span className="ml-2 text-sm text-gray-700">{spec}</span>
                 </label>
               ))}
             </div>
+            <input
+              type="text"
+              value={formData.otherSpecialization || ""}
+              onChange={(e) => handleInputChange("otherSpecialization", e.target.value)}
+              disabled={!formData.specializations?.includes("Others")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 focus:border-transparent mt-3 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              placeholder={formData.specializations?.includes("Others") ? "Please specify your specialization" : "Select 'Others' to enable this field"}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Frequency of Purchase</label>

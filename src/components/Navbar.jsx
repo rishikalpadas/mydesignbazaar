@@ -14,6 +14,7 @@ import {
   Package,
   LayoutDashboard,
   UserCircle,
+  DollarSign 
 } from "lucide-react"
 import { getSlugFromCategory } from "../lib/category-map"
 import NoContextMenu from "../components/NoContextMenu"
@@ -28,8 +29,13 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const [internalIsAuthenticated, setInternalIsAuthenticated] = useState(false)
   const [internalUser, setInternalUser] = useState(null)
   const [subscription, setSubscription] = useState(null)
+  const [profilePicture, setProfilePicture] = useState(null)
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
+  const [designerAccessModalOpen, setDesignerAccessModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [searchResults, setSearchResults] = useState([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
   const router = useRouter()
 
   const mobileSearchRef = useRef(null)
@@ -88,6 +94,21 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     }
   }
 
+  const fetchProfilePicture = async () => {
+    try {
+      const response = await fetch('/api/upload/profile-pic', {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      
+      if (data.success && data.profilePicture) {
+        setProfilePicture(data.profilePicture.imageUrl)
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture:', error)
+    }
+  }
+
   const fetchCartCount = async () => {
     try {
       const response = await fetch("/api/cart/count", {
@@ -116,6 +137,61 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     }
   }
 
+  // Handle search query
+  const handleSearchChange = async (query) => {
+    setSearchQuery(query)
+    
+    if (query.trim().length < 1) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/designs/search?q=${encodeURIComponent(query)}`, {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setSearchResults(data.designs || [])
+        setShowSearchResults(true)
+      }
+    } catch (error) {
+      console.error("Search error:", error)
+      setSearchResults([])
+    }
+  }
+
+  // Handle search result click
+  const handleSearchResultClick = (design) => {
+    if (design && design._id) {
+      setSearchQuery("")
+      setSearchResults([])
+      setShowSearchResults(false)
+      router.push(`/product/details/${design._id}`)
+    }
+  }
+
+  // Handle search submit on Enter - redirect based on number of results
+  const handleSearchSubmit = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault()
+      
+      if (searchResults.length === 1) {
+        // Single result - open product details
+        handleSearchResultClick(searchResults[0])
+      } else if (searchResults.length > 1) {
+        // Multiple results - open search page with query
+        const currentQuery = searchQuery
+        setSearchQuery("")
+        setSearchResults([])
+        setShowSearchResults(false)
+        router.push(`/search?q=${encodeURIComponent(currentQuery)}`)
+      }
+      // If no results, do nothing
+    }
+  }
+
   // Fetch auth state if not provided via props
   useEffect(() => {
     setIsMounted(true)
@@ -136,9 +212,11 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     if (isAuthenticated) {
       fetchCartCount()
       fetchWishlistCount()
+      fetchProfilePicture()
     } else {
       setCartCount(0)
       setWishlistCount(0)
+      setProfilePicture(null)
     }
   }, [isAuthenticated])
 
@@ -163,6 +241,24 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Check if click is outside search container
+      const searchContainer = document.querySelector('[data-search-container]')
+      if (searchContainer && !searchContainer.contains(event.target)) {
+        setShowSearchResults(false)
+      }
+    }
+
+    if (showSearchResults) {
+      document.addEventListener("mousedown", handleClickOutside)
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside)
+      }
+    }
+  }, [showSearchResults])
 
   // Don't render until mounted on client
   if (!isMounted) {
@@ -213,18 +309,22 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   }
 
   const handleWishlistClick = () => {
-    if (isAuthenticated) {
-      router.push("/wishlist")
-    } else {
+    if (!isAuthenticated) {
       handleAuthClick()
+    } else if (user?.userType === "designer" && !user?.isAdmin) {
+      setDesignerAccessModalOpen(true)
+    } else {
+      router.push("/wishlist")
     }
   }
 
   const handleCartClick = () => {
-    if (isAuthenticated) {
-      router.push("/cart")
-    } else {
+    if (!isAuthenticated) {
       handleAuthClick()
+    } else if (user?.userType === "designer" && !user?.isAdmin) {
+      setDesignerAccessModalOpen(true)
+    } else {
+      router.push("/cart")
     }
   }
 
@@ -272,9 +372,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
         <div className="flex items-center gap-3">
           <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
             alt="Profile"
-            className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+            className="w-10 h-10 rounded-full ring-2 ring-orange-200 object-cover"
           />
           <div>
             <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
@@ -294,15 +394,38 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
           Dashboard
         </button>
 
-        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
-          <UserCircle className="w-4 h-4" />
-          My Profile
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/profile")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+          <User className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+          <span className="font-medium">My Profile</span>
         </button>
 
-        <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
-          <Package className="w-4 h-4" />
-          {user?.userType === "designer" ? "My Designs" : "My Orders"}
+
+                <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push(user?.userType === "designer" ? "/dashboard/my-designs" : "/dashboard/orders")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+          <Package className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+          <span className="font-medium">{user?.userType === "designer" ? "My Designs" : "My Orders"}</span>
         </button>
+
+        {user?.userType === "designer" && (
+          <button 
+            onClick={() => {
+              setUserDropdownOpen(false)
+              router.push("/dashboard/earnings")
+            }}
+            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+            <DollarSign className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+            <span className="font-medium">Earnings</span>
+          </button>
+        )}
 
         <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-700 flex items-center gap-3 transition-colors">
           <Settings className="w-4 h-4" />
@@ -356,6 +479,41 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     )
   }
 
+  const DesignerAccessModal = () => {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md mx-4">
+          <div className="text-center">
+            <div className="mx-auto w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+              <Package className="w-6 h-6 text-orange-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Buyer Access Required</h3>
+            <p className="text-gray-600 mb-6">
+              This feature is only available for buyers. As a designer, you can upload and manage your designs through the dashboard.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDesignerAccessModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  setDesignerAccessModalOpen(false)
+                  router.push("/dashboard")
+                }}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:shadow-lg transition-all font-medium"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
     <header className="bg-white shadow-lg sticky top-0 z-50 border-b border-gray-100">
@@ -402,7 +560,7 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
           </div>
 
           {/* Center: Enhanced Search */}
-          <div className="flex-1 max-w-2xl mx-6 hidden lg:block">
+          <div className="flex-1 max-w-2xl mx-6 hidden lg:block" data-search-container>
             <div className={`relative transition-all duration-300 ${searchFocused ? "transform scale-105" : ""}`}>
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -410,10 +568,67 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
               <input
                 type="text"
                 placeholder="Search from thousands of unique Indian designs..."
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all duration-300"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyPress={handleSearchSubmit}
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
+                onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
+                className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-full text-sm bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all duration-300"
               />
+              
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  <div className="p-3 bg-gray-50 border-b border-gray-100 sticky top-0">
+                    <p className="text-xs font-semibold text-gray-600">
+                      Found {searchResults.length} Design{searchResults.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  {searchResults.slice(0, 8).map((design) => (
+                    <button
+                      key={design._id}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleSearchResultClick(design)
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                          {design.previewImageUrls && design.previewImageUrls[0] && (
+                            <img 
+                              src={design.previewImageUrls[0].url} 
+                              alt={design.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate group-hover:text-orange-600">{design.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">{design.category}</span>
+                            {design.designId && (
+                              <span className="text-xs text-gray-500">ID: {design.designId}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-gray-400 group-hover:text-orange-500 flex-shrink-0">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showSearchResults && searchQuery.trim().length >= 1 && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-6 text-center">
+                  <p className="text-gray-500 text-sm">No designs found matching "{searchQuery}"</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -440,12 +655,13 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
               aria-label="Wishlist"
             >
               <Heart size={20} />
-              {wishlistCount > 0 && (
+              {wishlistCount > 0 && isAuthenticated && user?.userType !== "designer" && (
                 <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium">
                   {wishlistCount > 99 ? '99+' : wishlistCount}
                 </span>
               )}
             </button>
+           
 
             {/* User account with dropdown */}
             <div className="relative" ref={userDropdownRef}>
@@ -468,12 +684,13 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
               aria-label="Shopping cart"
             >
               <ShoppingCart size={20} />
-              {cartCount > 0 && (
+              {cartCount > 0 && isAuthenticated && user?.userType !== "designer" && (
                 <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium group-hover:scale-110 transition-transform">
                   {cartCount > 99 ? '99+' : cartCount}
                 </span>
               )}
             </button>
+            
           </div>
         </div>
 
@@ -512,8 +729,61 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
                 ref={mobileSearchRef}
                 type="text"
                 placeholder="Search from thousands of unique Indian designs..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyPress={handleSearchSubmit}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               />
+              
+              {/* Mobile Search Results */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+                  <div className="p-3 bg-gray-50 border-b border-gray-100 sticky top-0">
+                    <p className="text-xs font-semibold text-gray-600">
+                      Found {searchResults.length} Design{searchResults.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  {searchResults.slice(0, 5).map((design) => (
+                    <button
+                      key={design._id}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleSearchResultClick(design)
+                        setMobileMenuOpen(false)
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-orange-50 border-b border-gray-100 last:border-b-0 transition-colors group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden shadow-sm group-hover:shadow-md transition-shadow">
+                          {design.previewImageUrls && design.previewImageUrls[0] && (
+                            <img 
+                              src={design.previewImageUrls[0].url} 
+                              alt={design.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate group-hover:text-orange-600">{design.title}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">{design.category}</span>
+                            {design.designId && (
+                              <span className="text-xs text-gray-500">ID: {design.designId}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showSearchResults && searchQuery.trim().length >= 1 && searchResults.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-6 text-center">
+                  <p className="text-gray-500 text-sm">No designs found matching "{searchQuery}"</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -545,9 +815,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
               <div className="space-y-2">
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+                    src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
                     alt="Profile"
-                    className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+                    className="w-10 h-10 rounded-full ring-2 ring-orange-200 object-cover"
                   />
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
@@ -620,6 +890,8 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
         onSuccess={handleAuthSuccess}
       />
     )}
+    {/* Designer Access Modal */}
+    {designerAccessModalOpen && <DesignerAccessModal />}
   </>
   )
 }

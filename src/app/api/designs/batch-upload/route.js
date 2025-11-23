@@ -15,19 +15,13 @@ import { validateRawFileMatch } from "../../../../lib/rawFileValidator"
 // File size limits (in bytes)
 const MAX_PREVIEW_SIZE = 5 * 1024 * 1024 // 5MB per preview image
 const MAX_RAW_SIZE = 50 * 1024 * 1024 // 50MB per raw file
-const MAX_DESIGNS_PER_BATCH = 25
+const MAX_DESIGNS_PER_BATCH = 10
 const MAX_PREVIEW_IMAGES_PER_DESIGN = 5
 
 // Route segment config for Next.js App Router
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300 // 5 minutes (for Vercel/production)
-
-// Configure request handling
-export const fetchCache = 'force-no-store'
-export const bodyParser = {
-  sizeLimit: '100mb' // Increase body parser size limit
-}
 
 // Allowed file types
 const PREVIEW_TYPES = ["image/jpeg", "image/png", "image/webp"]
@@ -165,17 +159,16 @@ export async function POST(request) {
     const existingDesignsCount = await Design.countDocuments({ uploadedBy: user._id })
     const isFirstTimeUpload = existingDesignsCount === 0
     
-    if (isFirstTimeUpload) {
-      if (designCount < 10) {
-        return NextResponse.json({ 
-          error: "First-time uploaders must upload at least 10 designs in their first batch",
-          isFirstTimeUpload: true,
-          minimumRequired: 10,
-          currentCount: designCount,
-          remainingNeeded: 10 - designCount
-        }, { status: 400 })
-      }
-      console.log("First-time upload with required minimum designs:", designCount)
+    // Enforce minimum 2 designs requirement for first-time uploaders
+    if (isFirstTimeUpload && designCount < 2) {
+      return NextResponse.json({ 
+        success: false,
+        error: "First-time uploaders must upload at least 2 designs",
+        message: `You attempted to upload ${designCount} design${designCount !== 1 ? 's' : ''}, but first-time uploaders are required to upload at least 2 designs together. This is to ensure quality and commitment to the platform.`,
+        requiredDesigns: 2,
+        attemptedDesigns: designCount,
+        isFirstTimeUpload: true
+      }, { status: 400 })
     }
 
     const uploadedDesigns = []

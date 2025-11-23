@@ -14,6 +14,10 @@ const BuyerDashboard = ({ user }) => {
 
   const [subscription, setSubscription] = useState(null)
   const [loadingSubscription, setLoadingSubscription] = useState(true)
+  const [userCredits, setUserCredits] = useState(null)
+  const [basicPlan, setBasicPlan] = useState(null)
+  const [premiumPlan, setPremiumPlan] = useState(null)
+  const [elitePlan, setElitePlan] = useState(null)
 
   useEffect(() => {
     fetchSubscriptionStatus()
@@ -27,6 +31,22 @@ const BuyerDashboard = ({ user }) => {
       if (response.ok) {
         const data = await response.json()
         setSubscription(data)
+        
+        // Separate admin credits and subscription plans
+        if (data.subscription?.adminCredits) {
+          setUserCredits(data.subscription.adminCredits)
+        }
+        
+        // Find and set individual plans from allSubscriptions
+        if (data.subscription?.allSubscriptions && data.subscription.allSubscriptions.length > 0) {
+          const basic = data.subscription.allSubscriptions.find(sub => sub.planId === 'basic' && sub.status === 'active')
+          const premium = data.subscription.allSubscriptions.find(sub => sub.planId === 'premium' && sub.status === 'active')
+          const elite = data.subscription.allSubscriptions.find(sub => sub.planId === 'elite' && sub.status === 'active')
+          
+          setBasicPlan(basic || null)
+          setPremiumPlan(premium || null)
+          setElitePlan(elite || null)
+        }
       }
     } catch (error) {
       console.error("Failed to fetch subscription:", error)
@@ -52,100 +72,293 @@ const BuyerDashboard = ({ user }) => {
         <p className="text-green-100">Discover amazing designs from talented creators around India.</p>
       </div>
 
-      {/* Subscription Card */}
+      {/* Subscription Cards */}
       {!loadingSubscription && (
-        subscription?.isValid ? (
-          <div className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-2xl p-6 text-white shadow-xl border-2 border-emerald-300">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                  <Zap className="h-6 w-6 text-white" />
+        <div className="space-y-4">
+          {/* Admin Credits Card - Emerald Green */}
+          {userCredits && userCredits.remaining > 0 && (
+            <div className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-2xl p-6 text-white shadow-xl border-2 border-emerald-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                    <Zap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Admin Credits</h2>
+                    <p className="text-emerald-100 text-sm">Bonus Credits Added</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                    <p className="text-3xl font-bold">{userCredits.remaining}</p>
+                    <p className="text-xs text-emerald-100">Credits Available</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                <div>
+                  <p className="text-emerald-100 text-xs mb-1">Total Credits</p>
+                  <p className="text-lg font-semibold">{userCredits.total}</p>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">{subscription.subscription?.planName} Plan</h2>
-                  <p className="text-emerald-100 text-sm">Active Subscription</p>
+                  <p className="text-emerald-100 text-xs mb-1">Used</p>
+                  <p className="text-lg font-semibold">{userCredits.used}</p>
+                </div>
+                <div>
+                  <p className="text-emerald-100 text-xs mb-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Status
+                  </p>
+                  <p className="text-lg font-semibold">{userCredits.status}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
-                  <p className="text-3xl font-bold">{subscription.subscription?.creditsRemaining}</p>
-                  <p className="text-xs text-emerald-100">Credits Available</p>
+
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-emerald-100 font-medium">Progress</p>
+                  <p className="text-xs text-emerald-100 font-semibold">
+                    {Math.round((userCredits.remaining / userCredits.total) * 100)}%
+                  </p>
                 </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
-              <div>
-                <p className="text-emerald-100 text-xs mb-1">Total Credits</p>
-                <p className="text-lg font-semibold">{subscription.subscription?.creditsTotal}</p>
-              </div>
-              <div>
-                <p className="text-emerald-100 text-xs mb-1">Used</p>
-                <p className="text-lg font-semibold">{subscription.subscription?.creditsUsed}</p>
-              </div>
-              <div>
-                <p className="text-emerald-100 text-xs mb-1 flex items-center">
-                  <Calendar className="h-3 w-3 mr-1" />
-                  Expires in
-                </p>
-                <p className="text-lg font-semibold">{subscription.subscription?.daysRemaining} days</p>
-              </div>
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-white/20">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full h-2 overflow-hidden">
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-white h-full transition-all duration-500"
+                      className="bg-gradient-to-r from-white to-emerald-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
                       style={{
-                        width: `${(subscription.subscription?.creditsRemaining / subscription.subscription?.creditsTotal) * 100}%`
+                        width: `${(userCredits.remaining / userCredits.total) * 100}%`
                       }}
                     ></div>
                   </div>
                 </div>
-                <p className="text-xs text-emerald-100 ml-4">
-                  {Math.round((subscription.subscription?.creditsRemaining / subscription.subscription?.creditsTotal) * 100)}% remaining
-                </p>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-2xl p-6 shadow-lg border-2 border-orange-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="bg-orange-500 rounded-full p-3">
-                  <CreditCard className="h-6 w-6 text-white" />
+          )}
+
+          {/* Basic Plan Card - Pink */}
+          {basicPlan && (
+            <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 rounded-2xl p-6 text-white shadow-xl border-2 border-pink-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                    <Zap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{basicPlan.planName} Plan</h2>
+                    <p className="text-pink-100 text-sm">Active Subscription</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                    <p className="text-3xl font-bold">{basicPlan.creditsRemaining}</p>
+                    <p className="text-xs text-pink-100">Credits Available</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                <div>
+                  <p className="text-pink-100 text-xs mb-1">Total Credits</p>
+                  <p className="text-lg font-semibold">{basicPlan.creditsTotal}</p>
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">No Active Subscription</h2>
-                  <p className="text-gray-600 text-sm">Subscribe to download unlimited designs</p>
+                  <p className="text-pink-100 text-xs mb-1">Used</p>
+                  <p className="text-lg font-semibold">{basicPlan.creditsUsed}</p>
+                </div>
+                <div>
+                  <p className="text-pink-100 text-xs mb-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Expires in
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {Math.ceil((new Date(basicPlan.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days
+                  </p>
                 </div>
               </div>
-              <a
-                href="/pricing"
-                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
-              >
-                View Plans
-              </a>
-            </div>
 
-            <div className="mt-4 pt-4 border-t border-orange-200 grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-2xl font-bold text-gray-900">10</p>
-                <p className="text-xs text-gray-600">Basic - ₹600/mo</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">100</p>
-                <p className="text-xs text-gray-600">Premium - ₹5,000/mo</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-gray-900">1200</p>
-                <p className="text-xs text-gray-600">Elite - ₹50,000/mo</p>
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-pink-100 font-medium">Progress</p>
+                  <p className="text-xs text-pink-100 font-semibold">
+                    {Math.round((basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100)}%
+                  </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-pink-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(basicPlan.creditsRemaining / basicPlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )
+          )}
+
+          {/* Premium Plan Card - Blue */}
+          {premiumPlan && (
+            <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 rounded-2xl p-6 text-white shadow-xl border-2 border-blue-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                    <Zap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{premiumPlan.planName} Plan</h2>
+                    <p className="text-blue-100 text-sm">Active Subscription</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                    <p className="text-3xl font-bold">{premiumPlan.creditsRemaining}</p>
+                    <p className="text-xs text-blue-100">Credits Available</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                <div>
+                  <p className="text-blue-100 text-xs mb-1">Total Credits</p>
+                  <p className="text-lg font-semibold">{premiumPlan.creditsTotal}</p>
+                </div>
+                <div>
+                  <p className="text-blue-100 text-xs mb-1">Used</p>
+                  <p className="text-lg font-semibold">{premiumPlan.creditsUsed}</p>
+                </div>
+                <div>
+                  <p className="text-blue-100 text-xs mb-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Expires in
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {Math.ceil((new Date(premiumPlan.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-blue-100 font-medium">Progress</p>
+                  <p className="text-xs text-blue-100 font-semibold">
+                    {Math.round((premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100)}%
+                  </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-blue-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(premiumPlan.creditsRemaining / premiumPlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Elite Plan Card - Purple */}
+          {elitePlan && (
+            <div className="bg-gradient-to-r from-purple-500 via-violet-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl border-2 border-purple-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
+                    <Zap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">{elitePlan.planName} Plan</h2>
+                    <p className="text-purple-100 text-sm">Active Subscription</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2">
+                    <p className="text-3xl font-bold">{elitePlan.creditsRemaining}</p>
+                    <p className="text-xs text-purple-100">Credits Available</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/20">
+                <div>
+                  <p className="text-purple-100 text-xs mb-1">Total Credits</p>
+                  <p className="text-lg font-semibold">{elitePlan.creditsTotal}</p>
+                </div>
+                <div>
+                  <p className="text-purple-100 text-xs mb-1">Used</p>
+                  <p className="text-lg font-semibold">{elitePlan.creditsUsed}</p>
+                </div>
+                <div>
+                  <p className="text-purple-100 text-xs mb-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    Expires in
+                  </p>
+                  <p className="text-lg font-semibold">
+                    {Math.ceil((new Date(elitePlan.expiryDate) - new Date()) / (1000 * 60 * 60 * 24))} days
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-white/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-purple-100 font-medium">Progress</p>
+                  <p className="text-xs text-purple-100 font-semibold">
+                    {Math.round((elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100)}%
+                  </p>
+                </div>
+                <div className="relative">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-white to-purple-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${(elitePlan.creditsRemaining / elitePlan.creditsTotal) * 100}%`
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* No Active Subscription Card */}
+          {!userCredits && !basicPlan && !premiumPlan && !elitePlan && (
+            <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-2xl p-6 shadow-lg border-2 border-orange-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-orange-500 rounded-full p-3">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">No Active Subscription</h2>
+                    <p className="text-gray-600 text-sm">Subscribe to download unlimited designs</p>
+                  </div>
+                </div>
+                <a
+                  href="/pricing"
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+                >
+                  View Plans
+                </a>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-orange-200 grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">10</p>
+                  <p className="text-xs text-gray-600">Basic - ₹600/mo</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">100</p>
+                  <p className="text-xs text-gray-600">Premium - ₹5,000/mo</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">1200</p>
+                  <p className="text-xs text-gray-600">Elite - ₹50,000/mo</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Stats Grid */}

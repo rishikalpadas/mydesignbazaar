@@ -10,7 +10,8 @@ import "swiper/css/effect-fade";
 const HeroSlider = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-
+  const [slides, setSlides] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -20,7 +21,50 @@ const HeroSlider = () => {
     return () => window.removeEventListener("resize", checkIsMobile);
   }, []);
 
-  const slides = [
+  // Fetch sliders from API
+  useEffect(() => {
+    const fetchSliders = async () => {
+      try {
+        const response = await fetch("/api/sliders/add-slider");
+
+        if (response.ok) {
+          const data = await response.json();
+          const activeSliders = data.sliders.filter(slider => slider.isActive);
+
+          // Transform API data to match the expected slide format
+          const transformedSlides = activeSliders.map(slider => ({
+            id: slider._id,
+            image: slider.image,
+            title: slider.title,
+            subtitle: slider.theme?.name || "Featured Collection",
+            description: slider.description,
+            cta: slider.cta || "Explore Now",
+            theme: slider.theme || {
+              primary: "from-orange-500 to-amber-600",
+              accent: "text-orange-600",
+              bg: "from-orange-50/80 to-amber-50/80",
+              badge: "bg-orange-100 text-orange-800",
+            },
+            stats: slider.stats || { designs: "1K+", rating: "4.8", downloads: "10K+" },
+            trending: slider.trending || false,
+          }));
+
+          setSlides(transformedSlides);
+        }
+      } catch (error) {
+        console.error("Error fetching sliders:", error);
+        // Fallback to default slides on error
+        setSlides(defaultSlides);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSliders();
+  }, []);
+
+  // Default fallback slides (same as before)
+  const defaultSlides = [
     {
       id: 1,
       image:
@@ -114,6 +158,30 @@ const HeroSlider = () => {
     setIsPlaying(!isPlaying);
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="relative w-full h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading sliders...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no slides available
+  if (slides.length === 0) {
+    return (
+      <div className="relative w-full h-screen bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+        <div className="text-center px-4">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">No Sliders Available</h2>
+          <p className="text-gray-600 mb-6">Please check back later for exciting content!</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative w-full h-screen bg-white overflow-hidden">
       {/* Subtle Background Pattern */}
@@ -178,7 +246,7 @@ const HeroSlider = () => {
                   {/* Content Section */}
                   <div className="space-y-4 lg:space-y-8 lg:pr-8 relative z-10 text-white lg:text-inherit mt-8 lg:mt-0">
                     {/* Badge & Category */}
-                    <div className="flex items-center gap-4">
+                    {/* <div className="flex items-center gap-4">
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${slide.theme.badge}`}
                       >
@@ -190,7 +258,7 @@ const HeroSlider = () => {
                           Trending
                         </span>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* Main Title */}
                     <div className="space-y-4">
@@ -203,7 +271,7 @@ const HeroSlider = () => {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 lg:flex lg:items-center gap-4 lg:gap-8 py-4 lg:py-6">
+                    {/* <div className="grid grid-cols-3 lg:flex lg:items-center gap-4 lg:gap-8 py-4 lg:py-6">
                       <div className="text-center">
                         <div className="text-lg lg:text-3xl font-bold text-white lg:text-current">
                           {slide.stats.designs}
@@ -230,7 +298,7 @@ const HeroSlider = () => {
                           Downloads
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* CTA Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4">
@@ -328,7 +396,7 @@ const HeroSlider = () => {
                         </div>
 
                         {/* User Engagement Indicator */}
-                        <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg">
+                        {/* <div className="absolute bottom-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-3 rounded-xl shadow-lg">
                           <div className="flex items-center gap-3">
                             <div className="flex -space-x-1">
                               <div className="w-6 h-6 bg-orange-400 rounded-full border-2 border-white"></div>
@@ -344,7 +412,7 @@ const HeroSlider = () => {
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </div> */}
                       </div>
 
                       {/* Subtle Decorative Elements */}

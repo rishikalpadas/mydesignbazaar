@@ -4,6 +4,7 @@ import Link from "next/link"
 import CategoryFilters from "../../../components/category/CategoryFilters.jsx"
 import DesignGrid from "../../../components/category/DesignGrid"
 import { getCategoryFromSlug } from "../../../lib/category-map"
+import { serializeObjectIds } from "../../../lib/serializeObjectIds"
 import Navbar from "../../../components/Navbar"
 import Footer from "../../../components/Footer"
 
@@ -12,6 +13,7 @@ const PER_PAGE_DEFAULT = 12
 
 export default async function CategoryPage({ params, searchParams }) {
     const { slug } = await params
+  const resolvedSearchParams = await searchParams
   const category = getCategoryFromSlug(slug);
 
 
@@ -37,13 +39,13 @@ export default async function CategoryPage({ params, searchParams }) {
   await connectDB()
 
   // Build query from searchParams
-  const page = Math.max(Number.parseInt(searchParams?.page ?? "1", 10) || 1, 1)
+  const page = Math.max(Number.parseInt(resolvedSearchParams?.page ?? "1", 10) || 1, 1)
   const perPage = Math.min(
-    Math.max(Number.parseInt(searchParams?.limit ?? PER_PAGE_DEFAULT, 10) || PER_PAGE_DEFAULT, 1),
+    Math.max(Number.parseInt(resolvedSearchParams?.limit ?? PER_PAGE_DEFAULT, 10) || PER_PAGE_DEFAULT, 1),
     48,
   )
-  const q = (searchParams?.q ?? "").trim()
-  const sortKey = searchParams?.sort ?? "newest"
+  const q = (resolvedSearchParams?.q ?? "").trim()
+  const sortKey = resolvedSearchParams?.sort ?? "newest"
 
   const query = {
     status: "approved",
@@ -59,28 +61,37 @@ export default async function CategoryPage({ params, searchParams }) {
     Design.countDocuments(query),
   ])
 
-  // Add image URLs explicitly
+  // Add image URLs explicitly and convert ObjectId to string
   const items = designs.map(design => {
     const designIdToUse = design.designId || design._id
+    const designIdString = String(designIdToUse)
+    const designIdMongoDB = String(design._id)
 
     // Handle multiple preview images
     if (design.previewImages && design.previewImages.length > 0) {
       design.previewImageUrls = design.previewImages.map(img => ({
         ...img,
-        url: `/api/uploads/designs/${designIdToUse}/preview/${img.filename}`
+        url: `/api/uploads/designs/${designIdString}/preview/${img.filename}`
       }))
       const primary = design.previewImages.find(img => img.isPrimary) || design.previewImages[0]
-      design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${primary.filename}`
+      design.previewImageUrl = `/api/uploads/designs/${designIdString}/preview/${primary.filename}`
     } else if (design.previewImage) {
-      design.previewImageUrl = `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`
+      design.previewImageUrl = `/api/uploads/designs/${designIdString}/preview/${design.previewImage.filename}`
       design.previewImageUrls = [{
         ...design.previewImage,
-        url: `/api/uploads/designs/${designIdToUse}/preview/${design.previewImage.filename}`,
+        url: `/api/uploads/designs/${designIdString}/preview/${design.previewImage.filename}`,
         isPrimary: true
       }]
     }
 
-    return design
+    // Convert MongoDB ObjectId fields to strings for client component compatibility
+    const serialized = serializeObjectIds({
+      ...design,
+      _id: designIdMongoDB,
+      designId: designIdString
+    })
+    
+    return serialized
   })
 
   const totalPages = Math.max(Math.ceil(total / perPage), 1)

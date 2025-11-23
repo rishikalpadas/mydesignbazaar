@@ -22,19 +22,10 @@ export async function GET(request) {
     // Get or create cart
     let cart = await Cart.getOrCreateCart(userId);
 
-    // Populate design details
-    cart = await cart.populate({
+    // Populate design details - simpler version without nested populate
+    await cart.populate({
       path: 'items.designId',
-      select: 'designId title description category previewImages previewImage tags uploadedBy status',
-      populate: {
-        path: 'uploadedBy',
-        select: 'email',
-        populate: {
-          path: 'userId',
-          model: 'Designer',
-          select: 'fullName displayName'
-        }
-      }
+      select: 'designId title description category previewImages previewImage tags uploadedBy status featured views downloads',
     });
 
     // Filter out any null designs (in case design was deleted)
@@ -46,6 +37,7 @@ export async function GET(request) {
       cart: {
         items: cart.items,
         count: cart.items.length,
+        totalItems: cart.items.length
       }
     });
 
@@ -113,6 +105,7 @@ export async function POST(request) {
       cart: {
         items: cart.items,
         count: cart.items.length,
+        totalItems: cart.items.length
       }
     });
 
@@ -172,6 +165,7 @@ export async function DELETE(request) {
       cart: {
         items: cart.items,
         count: cart.items.length,
+        totalItems: cart.items.length
       }
     });
 

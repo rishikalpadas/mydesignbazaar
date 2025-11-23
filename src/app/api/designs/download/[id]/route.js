@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import connectDB from '../../../../../lib/mongodb';
 import Design from '../../../../../models/Design';
-import { UserSubscription, DownloadHistory, CreditTransaction } from '../../../../../models/Subscription';
+import { UserSubscription, DownloadHistory, CreditTransaction, User_Subscription_Credits, User_Credits } from '../../../../../models/Subscription';
 import { Buyer } from '../../../../../models/User';
 import { verifyToken } from '../../../../../middleware/auth';
+import { creditDesignerWallet } from '../../../../../lib/walletService';
 
 export async function POST(request, { params }) {
   try {
@@ -40,31 +41,43 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Get active subscription
-    const activeSubscription = await UserSubscription.findOne({
+    // Priority 1: Check for active purchased subscription plans (expiring soonest first)
+    const activePurchasedPlans = await User_Subscription_Credits.find({
       userId,
       status: 'active',
       expiryDate: { $gt: new Date() },
       creditsRemaining: { $gt: 0 }
-    }).sort({ createdAt: -1 });
+    }).sort({ expiryDate: 1 }); // Sort by expiry date ascending (earliest expiry first)
 
-    if (!activeSubscription) {
-      return NextResponse.json(
-        {
-          error: 'No active subscription found',
-          message: 'Please purchase a subscription plan to download designs',
-          requiresSubscription: true
-        },
-        { status: 403 }
-      );
+    let creditSource = null;
+    let subscriptionRecord = null;
+
+    if (activePurchasedPlans && activePurchasedPlans.length > 0) {
+      // Use the plan that expires soonest
+      creditSource = 'purchased_plan';
+      subscriptionRecord = activePurchasedPlans[0];
+      console.log(`[DOWNLOAD] Using purchased plan: ${subscriptionRecord.planName}, expires: ${subscriptionRecord.expiryDate}`);
+    } else {
+      // Priority 2: Check for admin credits only if no purchased plans
+      const adminCredits = await User_Credits.findOne({
+        userId,
+        status: 'active',
+        adminCredits: { $gt: 0 }
+      });
+
+      if (adminCredits) {
+        creditSource = 'admin_credits';
+        subscriptionRecord = adminCredits;
+        console.log(`[DOWNLOAD] Using admin credits: ${subscriptionRecord.adminCredits} remaining`);
+      }
     }
 
-    // Check if subscription is valid
-    if (!activeSubscription.isValid()) {
+    // If no credits available from any source
+    if (!creditSource || !subscriptionRecord) {
       return NextResponse.json(
         {
-          error: 'Subscription expired or no credits remaining',
-          message: 'Please renew your subscription to continue downloading',
+          error: 'No credits available',
+          message: 'Please purchase a subscription plan to download designs',
           requiresSubscription: true
         },
         { status: 403 }
@@ -75,7 +88,7 @@ export async function POST(request, { params }) {
     const existingDownload = await DownloadHistory.findOne({
       userId,
       designId,
-      subscriptionId: activeSubscription._id
+      subscriptionId: subscriptionRecord._id
     });
 
     if (existingDownload) {
@@ -89,12 +102,33 @@ export async function POST(request, { params }) {
       }, { status: 200 });
     }
 
-    // Deduct 1 credit
+    // Deduct 1 credit based on source
     try {
-      await activeSubscription.deductCredit(1);
+      if (creditSource === 'purchased_plan') {
+        // Deduct from purchased plan
+        subscriptionRecord.creditsRemaining -= 1;
+        subscriptionRecord.creditsUsed += 1;
+        
+        // Check if credits exhausted
+        if (subscriptionRecord.creditsRemaining === 0) {
+          subscriptionRecord.status = 'expired';
+        }
+        
+        await subscriptionRecord.save();
+        console.log(`[DOWNLOAD] Deducted 1 credit from purchased plan. Remaining: ${subscriptionRecord.creditsRemaining}`);
+      } else if (creditSource === 'admin_credits') {
+        // Deduct from admin credits
+        subscriptionRecord.adminCredits -= 1;
+        subscriptionRecord.creditsRemaining -= 1;
+        subscriptionRecord.creditsUsed += 1;
+        
+        await subscriptionRecord.save();
+        console.log(`[DOWNLOAD] Deducted 1 credit from admin credits. Remaining: ${subscriptionRecord.adminCredits}`);
+      }
     } catch (error) {
+      console.error('[DOWNLOAD] Credit deduction error:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: 'Failed to deduct credits' },
         { status: 400 }
       );
     }
@@ -103,9 +137,9 @@ export async function POST(request, { params }) {
     const downloadRecord = await DownloadHistory.create({
       userId,
       designId,
-      subscriptionId: activeSubscription._id,
+      subscriptionId: subscriptionRecord._id,
       creditsUsed: 1,
-      downloadType: 'subscription',
+      downloadType: creditSource === 'purchased_plan' ? 'subscription' : 'admin_credits',
       fileName: design.rawFile?.originalName || 'design.pdf',
       fileSize: design.rawFile?.size || 0
     });
@@ -113,11 +147,11 @@ export async function POST(request, { params }) {
     // Create credit transaction record
     await CreditTransaction.create({
       userId,
-      subscriptionId: activeSubscription._id,
+      subscriptionId: subscriptionRecord._id,
       type: 'debit',
       amount: 1,
-      balanceAfter: activeSubscription.creditsRemaining,
-      description: `Downloaded design: ${design.title}`,
+      balanceAfter: creditSource === 'purchased_plan' ? subscriptionRecord.creditsRemaining : subscriptionRecord.adminCredits,
+      description: `Downloaded design: ${design.title} (Source: ${creditSource === 'purchased_plan' ? subscriptionRecord.planName : 'Admin Credits'})`,
       relatedDesignId: designId,
       relatedDownloadId: downloadRecord._id
     });
@@ -135,20 +169,46 @@ export async function POST(request, { params }) {
       $inc: { downloads: 1 }
     });
 
-    // Return download URL
-    return NextResponse.json({
+    // Credit designer wallet (₹10 if designer has 10+ approved designs)
+    try {
+      console.log(`[DOWNLOAD] Attempting to credit designer wallet for design: ${designId}`);
+      const walletResult = await creditDesignerWallet(designId, userId, downloadRecord._id);
+      console.log(`[DOWNLOAD] Wallet result:`, walletResult);
+      if (walletResult.success && walletResult.credited) {
+        console.log(`[DOWNLOAD] ✓ Designer wallet credited: ₹${walletResult.amount}, new balance: ₹${walletResult.newBalance}`);
+      } else if (walletResult.success && !walletResult.eligible) {
+        console.log(`[DOWNLOAD] Designer not yet eligible for wallet earnings (${walletResult.approvedDesigns}/10 approved designs)`);
+      } else if (!walletResult.success) {
+        console.error(`[DOWNLOAD] Wallet credit failed: ${walletResult.error}`);
+      }
+    } catch (walletError) {
+      // Don't fail the download if wallet credit fails, just log it
+      console.error('[DOWNLOAD] Wallet credit failed but download proceeds:', walletError);
+    }
+
+    // Return download URL with appropriate credit info
+    const responseData = {
       success: true,
       message: 'Download authorized',
       downloadUrl: getDownloadUrl(design),
       fileName: design.rawFile?.originalName || 'design.pdf',
-      creditsRemaining: activeSubscription.creditsRemaining,
-      subscription: {
-        planName: activeSubscription.planName,
-        creditsTotal: activeSubscription.creditsTotal,
-        creditsRemaining: activeSubscription.creditsRemaining,
-        expiryDate: activeSubscription.expiryDate
-      }
-    }, { status: 200 });
+      creditSource: creditSource,
+      creditsRemaining: creditSource === 'purchased_plan' ? subscriptionRecord.creditsRemaining : subscriptionRecord.adminCredits
+    };
+
+    // Add subscription details if from purchased plan
+    if (creditSource === 'purchased_plan') {
+      responseData.subscription = {
+        planName: subscriptionRecord.planName,
+        creditsTotal: subscriptionRecord.creditsTotal,
+        creditsRemaining: subscriptionRecord.creditsRemaining,
+        expiryDate: subscriptionRecord.expiryDate
+      };
+    } else {
+      responseData.adminCreditsRemaining = subscriptionRecord.adminCredits;
+    }
+
+    return NextResponse.json(responseData, { status: 200 });
 
   } catch (error) {
     console.error('Download error:', error);

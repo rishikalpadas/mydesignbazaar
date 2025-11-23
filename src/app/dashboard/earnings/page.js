@@ -13,7 +13,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Filter,
-  FileText
+  FileText,
+  IndianRupee
 } from "lucide-react"
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
 
@@ -117,7 +118,7 @@ const EarningsContent = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard
-          icon={<DollarSign className="w-6 h-6 text-green-500" />}
+          icon={<IndianRupee className="w-6 h-6 text-green-500" />}
           label="Total Earnings"
           value={`₹${stats.totalEarnings.toLocaleString()}`}
           color="green"

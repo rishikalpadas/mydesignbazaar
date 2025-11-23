@@ -1,14 +1,35 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
-import { Menu, Bell, Search, ChevronDown, User, Settings, Package, LogOut } from "lucide-react"
+import { Menu, Bell, Search, ChevronDown, User, Settings, Package, LogOut, DollarSign } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Sidebar from "./Sidebar"
 
 const DashboardLayout = ({ children, user }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const [profilePicture, setProfilePicture] = useState(null)
   const router = useRouter()
   const userDropdownRef = useRef(null)
+
+  // Fetch profile picture on mount
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const response = await fetch('/api/upload/profile-pic', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        
+        if (data.success && data.profilePicture) {
+          setProfilePicture(data.profilePicture.imageUrl)
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,9 +80,9 @@ const DashboardLayout = ({ children, user }) => {
       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 mx-2 rounded-lg">
         <div className="flex items-center gap-3">
           <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
             alt="Profile"
-            className="h-10 w-10 rounded-full ring-2 ring-orange-200"
+            className="h-10 w-10 rounded-full ring-2 ring-orange-200 object-cover"
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{user.profile?.fullName || user.name || user.email}</p>
@@ -75,17 +96,44 @@ const DashboardLayout = ({ children, user }) => {
 
       {/* Menu Items */}
       <div className="py-2">
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/profile")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <User className="w-4 h-4 mr-3 group-hover:text-orange-600" />
           <span className="font-medium">My Profile</span>
         </button>
 
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push(user?.userType === "designer" ? "/dashboard/my-designs" : "/dashboard/orders")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <Package className="w-4 h-4 mr-3 group-hover:text-orange-600" />
-          <span className="font-medium">My Orders</span>
+          <span className="font-medium">{user?.userType === "designer" ? "My Designs" : "My Orders"}</span>
         </button>
 
-        <button className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+        {user?.userType === "designer" && (
+          <button 
+            onClick={() => {
+              setUserDropdownOpen(false)
+              router.push("/dashboard/earnings")
+            }}
+            className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
+            <DollarSign className="w-4 h-4 mr-3 group-hover:text-orange-600" />
+            <span className="font-medium">Earnings</span>
+          </button>
+        )}
+
+        <button 
+          onClick={() => {
+            setUserDropdownOpen(false)
+            router.push("/dashboard/settings")
+          }}
+          className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-orange-50 hover:to-amber-50 hover:text-orange-700 flex items-center transition-all duration-200 group">
           <Settings className="w-4 h-4 mr-3 group-hover:text-orange-600" />
           <span className="font-medium">Settings</span>
         </button>
@@ -172,9 +220,9 @@ const DashboardLayout = ({ children, user }) => {
                       <p className="text-xs text-orange-600">{getUserRole()}</p>
                     </div>
                     <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+                      src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
                       alt="Profile"
-                      className="h-8 w-8 rounded-full ring-2 ring-orange-200"
+                      className="h-8 w-8 rounded-full ring-2 ring-orange-200 object-cover"
                     />
                     <ChevronDown size={14} className="text-gray-400" />
                   </button>

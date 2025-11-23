@@ -23,6 +23,10 @@ const AdminSchema = new mongoose.Schema({
     required: [true, "Name is required"],
     trim: true,
   },
+  profile_pic: {
+    type: String,
+    default: null,
+  },
   role: {
     type: String,
     enum: ["super_admin", "designer_admin", "buyer_admin"],
@@ -79,6 +83,7 @@ async function getProfile(request) {
         id: adminData._id,
         email: adminData.email,
         name: adminData.name,
+        profile_pic: adminData.profile_pic || null,
         userType: "admin",
         role: adminData.role,
         permissions: adminData.permissions,
@@ -89,6 +94,7 @@ async function getProfile(request) {
         profile: {
           fullName: adminData.name,
           displayName: adminData.name,
+          profile_pic: adminData.profile_pic || null,
         },
       }
 

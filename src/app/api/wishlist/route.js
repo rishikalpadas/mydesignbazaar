@@ -23,18 +23,9 @@ export async function GET(request) {
     let wishlist = await Wishlist.getOrCreateWishlist(userId);
 
     // Populate design details
-    wishlist = await wishlist.populate({
+    await wishlist.populate({
       path: 'items.designId',
-      select: 'designId title description category previewImages previewImage tags uploadedBy status featured',
-      populate: {
-        path: 'uploadedBy',
-        select: 'email',
-        populate: {
-          path: 'userId',
-          model: 'Designer',
-          select: 'fullName displayName'
-        }
-      }
+      select: 'designId title description category previewImages previewImage price status featured views downloads uploadedBy',
     });
 
     // Filter out any null designs (in case design was deleted)
@@ -46,6 +37,7 @@ export async function GET(request) {
       wishlist: {
         items: wishlist.items,
         count: wishlist.items.length,
+        totalItems: wishlist.items.length
       }
     });
 
@@ -113,6 +105,7 @@ export async function POST(request) {
       wishlist: {
         items: wishlist.items,
         count: wishlist.items.length,
+        totalItems: wishlist.items.length
       }
     });
 
@@ -172,6 +165,7 @@ export async function DELETE(request) {
       wishlist: {
         items: wishlist.items,
         count: wishlist.items.length,
+        totalItems: wishlist.items.length
       }
     });
 

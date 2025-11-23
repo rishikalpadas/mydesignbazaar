@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Heart, Share2, Eye, Download, Calendar, User, Tag, ShoppingCart, Star, Brush } from 'lucide-react';
+import { Heart, Share2, Eye, Download, Calendar, User, Tag, ShoppingCart, Star, Brush, Copy, Check } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import Image from 'next/image';
@@ -93,6 +93,11 @@ const ProductView = ({ productData, isLoading = false }) => {
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [viewTracked, setViewTracked] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   // Generate watermark URL
   const watermarkUrl = useMemo(() => {
@@ -153,6 +158,43 @@ const ProductView = ({ productData, isLoading = false }) => {
     };
     fetchUser();
   }, []);
+
+  // Track view count for buyers
+  useEffect(() => {
+    if (productData?._id && user?.userType === 'buyer' && !viewTracked) {
+      const trackView = async () => {
+        try {
+          await axios.post(`/api/designs/track-view/${productData._id}`, {}, {
+            withCredentials: true,
+          });
+          setViewTracked(true);
+        } catch (error) {
+          console.log('Failed to track view:', error);
+        }
+      };
+      trackView();
+    }
+  }, [productData?._id, user?.userType, viewTracked]);
+
+  // Check if design is in wishlist
+  useEffect(() => {
+    if (productData?._id && user?.userType === 'buyer') {
+      const checkWishlist = async () => {
+        try {
+          const response = await axios.get('/api/wishlist', {
+            withCredentials: true,
+          });
+          const isInWishlist = response.data.wishlist.items.some(
+            item => item.designId._id === productData._id
+          );
+          setIsWishlisted(isInWishlist);
+        } catch (error) {
+          console.log('Failed to check wishlist:', error);
+        }
+      };
+      checkWishlist();
+    }
+  }, [productData?._id, user?.userType]);
 
 
   // Show skeleton if loading, no product data, or baseUrl not set
@@ -240,6 +282,75 @@ const ProductView = ({ productData, isLoading = false }) => {
       }
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  // Handle wishlist toggle
+  const handleWishlistToggle = async () => {
+    try {
+      if (isWishlisted) {
+        // Remove from wishlist
+        await axios.delete(`/api/wishlist?designId=${product._id}`, {
+          withCredentials: true,
+        });
+      } else {
+        // Add to wishlist
+        await axios.post(
+          '/api/wishlist',
+          { designId: product._id },
+          { withCredentials: true }
+        );
+      }
+      setIsWishlisted(!isWishlisted);
+      // Reload page after wishlist update
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error('Wishlist error:', error);
+      alert('Failed to update wishlist');
+    }
+  };
+
+  // Handle copy URL to clipboard
+  const handleCopyUrl = () => {
+    const url = `${typeof window !== 'undefined' ? window.location.href : ''}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    }).catch(() => {
+      alert('Failed to copy URL');
+    });
+  };
+
+  // Handle share button click - copies URL to clipboard
+  const handleShare = () => {
+    handleCopyUrl();
+  };
+
+  // Handle add to cart
+  const handleAddToCart = async () => {
+    try {
+      setIsAddingToCart(true);
+      const response = await axios.post(
+        '/api/cart/items',
+        { designId: product._id },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        setCartCount(response.data.cart.count);
+        alert('Design added to cart successfully!');
+        // Reload page after adding to cart
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Add to cart error:', error);
+      alert(error.response?.data?.message || 'Failed to add to cart. Please try again.');
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
@@ -392,40 +503,113 @@ const ProductView = ({ productData, isLoading = false }) => {
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <button
-                onClick={handleDownloadClick}
-                disabled={isDownloading}
-                className={`w-full font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
-                  isDownloading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }`}
-              >
-                <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
-                <span>{isDownloading ? 'Processing...' : 'Download Design (1 Credit)'}</span>
-              </button>
-              <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
-                <ShoppingCart className="w-5 h-5" />
-                <span>Add to Cart</span>
-              </button>
+              {/* Show download and add to cart only for buyers */}
+              {user?.userType === 'buyer' && (
+                <>
+                  <button
+                    onClick={handleDownloadClick}
+                    disabled={isDownloading}
+                    className={`w-full font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
+                      isDownloading
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
+                    }`}
+                  >
+                    <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
+                    <span>{isDownloading ? 'Processing...' : 'Download Design (1 Credit)'}</span>
+                  </button>
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                    className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <ShoppingCart className="w-5 h-5" />
+                    <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                  </button>
+                </>
+              )}
+
+              {/* Show add to cart only for admins */}
+              {user?.isAdmin && (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAddingToCart}
+                  className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>{isAddingToCart ? 'Adding...' : 'Add to Cart'}</span>
+                </button>
+              )}
+
+              {/* Show message for designers */}
+              {user?.userType === 'designer' && (
+                <div className="w-full bg-blue-50 border border-blue-200 text-blue-700 font-medium py-3 px-6 rounded-lg text-center">
+                  Designers cannot download or purchase designs
+                </div>
+              )}
+
+              {/* Show message for non-logged-in users */}
+              {!user && (
+                <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-900 font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                  <ShoppingCart className="w-5 h-5" />
+                  <span>Add to Cart</span>
+                </button>
+              )}
             </div>
 
             {/* Social Actions */}
             <div className="flex items-center space-x-4 pt-4 border-t">
+              {/* Wishlist button - only for buyers */}
+              {(user?.userType === 'buyer'|| user?.userType === 'admin') && (
+                <button
+                  onClick={handleWishlistToggle}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                    isWishlisted
+                      ? 'bg-red-50 border-red-200 text-red-600'
+                      : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                  <span className="text-sm">{isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}</span>
+                </button>
+              )}
+
+              {/* Copy Link button - for buyers */}
+              {/* {user?.userType === 'buyer' && (
+                <button
+                  onClick={handleCopyUrl}
+                  className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-5 h-5 text-green-600" />
+                      <span className="text-sm text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5" />
+                      <span className="text-sm">Copy Link</span>
+                    </>
+                  )}
+                </button>
+              )} */}
+
+              {/* Share button - for all users (designers, buyers, and non-logged-in) */}
               <button
-                onClick={() => setIsLiked(!isLiked)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                  isLiked
-                    ? 'bg-red-50 border-red-200 text-red-600'
-                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-                }`}
+                onClick={handleShare}
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
               >
-                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="text-sm">Like</span>
-              </button>
-              <button className="flex items-center space-x-2 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-                <Share2 className="w-5 h-5" />
-                <span className="text-sm">Share</span>
+                {isCopied ? (
+                  <>
+                    <Check className="w-5 h-5 text-green-600" />
+                    <span className="text-sm text-green-600">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-5 h-5" />
+                    <span className="text-sm">Share</span>
+                  </>
+                )}
               </button>
             </div>
 

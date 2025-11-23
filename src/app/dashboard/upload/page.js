@@ -13,7 +13,6 @@ import {
   Tag,
   Type,
   FileImage,
-  Copy,
   Trash2,
   Move
 } from 'lucide-react'
@@ -30,7 +29,7 @@ const CATEGORIES = [
   'AI-Generated'
 ]
 
-const MAX_DESIGNS = 25
+const MAX_DESIGNS = 10
 const MAX_PREVIEW_IMAGES = 5
 
 const UploadContent = ({ user }) => {
@@ -41,6 +40,8 @@ const UploadContent = ({ user }) => {
   const [uploadResults, setUploadResults] = useState(null)
   const [isFirstTimeUpload, setIsFirstTimeUpload] = useState(false)
   const [minDesignsRequired, setMinDesignsRequired] = useState(1)
+  const [currentUploadingIndex, setCurrentUploadingIndex] = useState(-1)
+  const [designUploadStatus, setDesignUploadStatus] = useState([])
 
   // Designs state (always batch mode now)
   const [designs, setDesigns] = useState([{
@@ -57,43 +58,54 @@ const UploadContent = ({ user }) => {
 
   const [globalErrors, setGlobalErrors] = useState({})
   const [expandedDesigns, setExpandedDesigns] = useState(new Set([0])) // First design expanded by default
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false)
+  const [duplicateCheckResults, setDuplicateCheckResults] = useState(null)
 
   // Check if user is first-time uploader
-  const checkFirstTimeUpload = useCallback(async () => {
-    try {
-      const response = await fetch('/api/designs/my-designs?limit=1')
-      const data = await response.json()
-      if (data.success && data.stats) {
-        const isFirstTime = data.stats.totalDesigns === 0
-        setIsFirstTimeUpload(isFirstTime)
-        setMinDesignsRequired(isFirstTime ? 10 : 1)
-
-        // If first time, initialize with exactly 10 designs (only if we still have 1 design)
-        if (isFirstTime) {
-          setDesigns(prev => {
-            // Only add designs if we still have the initial single design
-            if (prev.length === 1) {
-              const additionalDesigns = Array.from({ length: 9 }, (_, i) => ({
-                id: Date.now() + i,
-                title: '',
-                description: '',
-                category: '',
-                tags: '',
-                previewImages: [],
-                previewImageUrls: [],
-                rawFile: null,
-                errors: {}
-              }))
-              return [...prev, ...additionalDesigns]
-            }
-            return prev
+  useEffect(() => {
+    const checkFirstTimeUpload = async () => {
+      try {
+        const response = await fetch('/api/designs/check-first-upload')
+        const data = await response.json()
+        
+        if (data.success) {
+          console.log('First-time upload check:', {
+            isFirstTimeUpload: data.isFirstTimeUpload,
+            totalDesigns: data.totalDesigns,
+            minDesignsRequired: data.minDesignsRequired
           })
+          setIsFirstTimeUpload(data.isFirstTimeUpload)
+          setMinDesignsRequired(data.minDesignsRequired)
+          
+          // If first time, initialize with 2 designs (only if we currently have 1)
+          if (data.isFirstTimeUpload) {
+            setDesigns(prev => {
+              // Only initialize if we still have just 1 design
+              if (prev.length === 1) {
+                const additionalDesigns = Array.from({ length: 1 }, (_, i) => ({
+                  id: Date.now() + i,
+                  title: '',
+                  description: '',
+                  category: '',
+                  tags: '',
+                  previewImages: [],
+                  previewImageUrls: [],
+                  rawFile: null,
+                  errors: {}
+                }))
+                return [...prev, ...additionalDesigns]
+              }
+              return prev
+            })
+          }
         }
+      } catch (error) {
+        console.error('Error checking first-time upload status:', error)
       }
-    } catch (error) {
-      console.error('Error checking first-time upload status:', error)
     }
-  }, []) // Empty deps - only run when explicitly called
+
+    checkFirstTimeUpload()
+  }, [])
 
   const updateDesign = (index, field, value) => {
     setDesigns(prev => 
@@ -105,13 +117,14 @@ const UploadContent = ({ user }) => {
     )
   }
 
-  // Load first-time upload status on component mount
-  useEffect(() => {
-    checkFirstTimeUpload()
-  }, [checkFirstTimeUpload])
-
   const addDesign = () => {
-    if (designs.length >= MAX_DESIGNS) return
+    if (designs.length >= MAX_DESIGNS) {
+      setGlobalErrors(prev => ({
+        ...prev,
+        maxDesigns: `Maximum ${MAX_DESIGNS} designs allowed per upload`
+      }))
+      return
+    }
 
     const newIndex = designs.length
     setDesigns(prev => [
@@ -128,6 +141,11 @@ const UploadContent = ({ user }) => {
         errors: {}
       }
     ])
+    // Clear max designs error if it exists
+    setGlobalErrors(prev => {
+      const { maxDesigns, ...rest } = prev
+      return rest
+    })
     // Expand the newly added design
     setExpandedDesigns(prev => new Set([...prev, newIndex]))
   }
@@ -145,24 +163,6 @@ const UploadContent = ({ user }) => {
       })
       return newSet
     })
-  }
-
-  const duplicateDesign = (index) => {
-    if (designs.length >= MAX_DESIGNS) return
-    
-    const designToDuplicate = designs[index]
-    setDesigns(prev => [
-      ...prev,
-      {
-        ...designToDuplicate,
-        id: Date.now(),
-        title: designToDuplicate.title + ' (Copy)',
-        previewImages: [], // Don't duplicate files
-        previewImageUrls: [],
-        rawFile: null,
-        errors: {}
-      }
-    ])
   }
 
   const toggleDesignExpanded = (index) => {
@@ -278,7 +278,27 @@ const UploadContent = ({ user }) => {
   const handleRawFileChange = (designIndex, file) => {
     if (!file) return
 
-    // Validate file size (50MB)
+    // Calculate total upload size including this file
+    const totalSize = designs.reduce((total, design, idx) => {
+      const previewSizes = design.previewImages.reduce((sum, img) => sum + img.size, 0)
+      const rawSize = idx === designIndex ? file.size : (design.rawFile?.size || 0)
+      return total + previewSizes + rawSize
+    }, 0)
+
+    // Show warning if total size is approaching limit (400MB)
+    if (totalSize > 400 * 1024 * 1024) {
+      setGlobalErrors(prev => ({
+        ...prev,
+        sizeWarning: 'Total upload size is approaching the limit. Consider uploading fewer designs or smaller files.'
+      }))
+    } else {
+      setGlobalErrors(prev => {
+        const { sizeWarning, ...rest } = prev
+        return rest
+      })
+    }
+
+    // Validate individual file size (50MB)
     if (file.size > 50 * 1024 * 1024) {
       const error = 'Raw file must be less than 50MB'
       setDesigns(prev => 
@@ -326,12 +346,15 @@ const UploadContent = ({ user }) => {
     let hasErrors = false
     const errors = {}
 
-    // Always enforce minimum designs requirement for first-time uploaders
-    if (isFirstTimeUpload && designs.length < 10) {
-      errors.submit = `First-time uploaders must upload at least 10 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
+    // Check max designs limit
+    if (designs.length > MAX_DESIGNS) {
+      errors.submit = `Maximum ${MAX_DESIGNS} designs allowed per upload. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
       hasErrors = true
-    } else if (!isFirstTimeUpload && designs.length < 1) {
-      errors.submit = `You must upload at least 1 design.`
+    }
+
+    // Enforce minimum 2 designs for first-time uploaders only
+    if (isFirstTimeUpload && designs.length < 2) {
+      errors.submit = `First-time uploaders must upload at least 2 designs. You currently have ${designs.length} design${designs.length > 1 ? 's' : ''}.`
       hasErrors = true
     }
 
@@ -356,28 +379,103 @@ const UploadContent = ({ user }) => {
     return !hasErrors
   }
 
-  const simulateProgress = () => {
-    setUploadProgress(0)
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 90) {
-          clearInterval(interval)
-          return 90
+  const checkForDuplicates = async () => {
+    setCheckingDuplicates(true)
+    setDuplicateCheckResults(null)
+    setGlobalErrors({})
+
+    try {
+      const formData = new FormData()
+      let imageCounter = 0
+
+      // Add all images from all designs
+      for (let designIndex = 0; designIndex < designs.length; designIndex++) {
+        const design = designs[designIndex]
+        
+        for (let imageIndex = 0; imageIndex < design.previewImages.length; imageIndex++) {
+          const imageFile = design.previewImages[imageIndex]
+          
+          formData.append(`image_${imageCounter}`, imageFile)
+          formData.append(`designIndex_${imageCounter}`, designIndex.toString())
+          formData.append(`imageIndex_${imageCounter}`, imageIndex.toString())
+          
+          imageCounter++
         }
-        return prev + Math.random() * 15
+      }
+
+      console.log(`[DUPLICATE-CHECK] Checking ${imageCounter} images for duplicates`)
+
+      const response = await fetch('/api/designs/check-duplicates', {
+        method: 'POST',
+        body: formData
       })
-    }, 300)
-    
-    return interval
+
+      const result = await response.json()
+      
+      console.log('[DUPLICATE-CHECK] Response status:', response.status)
+      console.log('[DUPLICATE-CHECK] Response data:', result)
+
+      if (!response.ok) {
+        console.error('[DUPLICATE-CHECK] API Error:', result)
+        throw new Error(result.error || result.details || 'Failed to check for duplicates')
+      }
+
+      setDuplicateCheckResults(result)
+      return result
+
+    } catch (error) {
+      console.error('Duplicate check error:', error)
+      setGlobalErrors({ 
+        submit: `Duplicate check failed: ${error.message}. Please try again.` 
+      })
+      return { error: error.message, hasDuplicates: false }
+    } finally {
+      setCheckingDuplicates(false)
+    }
+  }
+
+  const uploadSingleDesign = async (design, designIndex, totalDesigns) => {
+    const formData = new FormData()
+
+    // Add design metadata
+    formData.append('title', design.title.trim())
+    formData.append('description', design.description.trim())
+    formData.append('category', design.category)
+    formData.append('tags', design.tags.trim())
+    formData.append('designIndex', designIndex.toString())
+    formData.append('totalDesigns', totalDesigns.toString())
+    formData.append('isFirstTimeUpload', isFirstTimeUpload.toString())
+
+    // Add preview images
+    design.previewImages.forEach((file, imageIndex) => {
+      formData.append(`preview_${imageIndex}`, file)
+    })
+
+    // Add raw file
+    formData.append('raw', design.rawFile)
+
+    const response = await fetch('/api/designs/single-upload', {
+      method: 'POST',
+      body: formData,
+    })
+
+    const result = await response.json()
+    return { response, result }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    // Log submission attempt
     console.log('Submit attempt:', {
       designsCount: designs.length,
       minRequired: minDesignsRequired,
-      isFirstTime: isFirstTimeUpload
+      isFirstTime: isFirstTimeUpload,
+      totalFileSize: designs.reduce((total, design) => {
+        const previewSizes = design.previewImages.reduce((sum, file) => sum + file.size, 0)
+        const rawSize = design.rawFile ? design.rawFile.size : 0
+        return total + previewSizes + rawSize
+      }, 0) / (1024 * 1024) + ' MB'
     })
 
     if (!validateAllDesigns()) {
@@ -387,68 +485,151 @@ const UploadContent = ({ user }) => {
       return
     }
 
+    // Check for duplicate images before uploading
+    console.log('[UPLOAD] Running duplicate check...')
+    const duplicateCheckResult = await checkForDuplicates()
+    
+    if (duplicateCheckResult.error) {
+      console.error('[UPLOAD] Duplicate check failed:', duplicateCheckResult.error)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    if (duplicateCheckResult.hasDuplicates) {
+      console.log('[UPLOAD] Duplicates found, blocking upload')
+      setGlobalErrors({ 
+        submit: 'Duplicate images detected. Please review and remove duplicate images before uploading.' 
+      })
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    console.log('[UPLOAD] No duplicates found, proceeding with upload')
+
     setLoading(true)
     setSuccess(false)
     setGlobalErrors({})
-    
-    const progressInterval = simulateProgress()
+    setUploadProgress(0)
+    setDuplicateCheckResults(null)
+
+    // Initialize upload status for each design
+    const initialStatus = designs.map(() => ({ status: 'pending', error: null, design: null }))
+    setDesignUploadStatus(initialStatus)
+
+    const uploadedDesigns = []
+    const errors = []
 
     try {
-      // Always use batch upload now
-      const formData = new FormData()
-      formData.append('designCount', designs.length.toString())
-      
-      designs.forEach((design, designIndex) => {
-        formData.append(`design_${designIndex}_title`, design.title.trim())
-        formData.append(`design_${designIndex}_description`, design.description.trim())
-        formData.append(`design_${designIndex}_category`, design.category)
-        formData.append(`design_${designIndex}_tags`, design.tags.trim())
-        
-        // Add multiple preview images for this design
-        design.previewImages.forEach((file, imageIndex) => {
-          formData.append(`design_${designIndex}_preview_${imageIndex}`, file)
-        })
-        
-        formData.append(`design_${designIndex}_raw`, design.rawFile)
-      })
+      // Upload designs one by one
+      for (let i = 0; i < designs.length; i++) {
+        const design = designs[i]
 
-      const response = await fetch('/api/designs/batch-upload', {
-        method: 'POST',
-        body: formData,
-      })
+        // Update current uploading index
+        setCurrentUploadingIndex(i)
 
-      const result = await response.json()
-      setUploadResults(result)
+        // Update status to uploading
+        setDesignUploadStatus(prev =>
+          prev.map((status, idx) =>
+            idx === i ? { ...status, status: 'uploading' } : status
+          )
+        )
 
-      console.log('Upload result:', result)
+        console.log(`Uploading design ${i + 1}/${designs.length}: ${design.title}`)
 
-      if (!result.success && result.totalUploaded === 0) {
-        // All uploads failed
-        const errorMessages = result.errors?.map(err => err.message || err.error).join('\n') || 'All uploads failed'
-        throw new Error(errorMessages)
+        try {
+          const { response, result } = await uploadSingleDesign(design, i, designs.length)
+
+          if (result.success) {
+            console.log(`Design ${i + 1} uploaded successfully:`, result.design)
+            uploadedDesigns.push(result.design)
+
+            // Update status to success
+            setDesignUploadStatus(prev =>
+              prev.map((status, idx) =>
+                idx === i ? { status: 'success', error: null, design: result.design } : status
+              )
+            )
+          } else {
+            console.error(`Design ${i + 1} failed:`, result.error)
+            errors.push({
+              designIndex: i,
+              title: design.title,
+              error: result.error,
+              isDuplicate: result.isDuplicate,
+              matchedDesign: result.matchedDesign
+            })
+
+            // Update status to failed
+            setDesignUploadStatus(prev =>
+              prev.map((status, idx) =>
+                idx === i ? { status: 'failed', error: result.error } : status
+              )
+            )
+          }
+        } catch (uploadError) {
+          console.error(`Design ${i + 1} upload error:`, uploadError)
+          errors.push({
+            designIndex: i,
+            title: design.title,
+            error: uploadError.message || 'Upload failed'
+          })
+
+          // Update status to failed
+          setDesignUploadStatus(prev =>
+            prev.map((status, idx) =>
+              idx === i ? { status: 'failed', error: uploadError.message || 'Upload failed' } : status
+            )
+          )
+        }
+
+        // Update overall progress
+        const progress = ((i + 1) / designs.length) * 100
+        setUploadProgress(progress)
       }
 
-      // Complete progress
-      clearInterval(progressInterval)
-      setUploadProgress(100)
+      // All uploads complete
+      setCurrentUploadingIndex(-1)
 
-      // Show success even if some failed
+      const uploadResults = {
+        success: uploadedDesigns.length > 0,
+        message: `${uploadedDesigns.length} design(s) uploaded successfully`,
+        uploadedDesigns,
+        totalUploaded: uploadedDesigns.length,
+        totalFailed: errors.length,
+        totalProcessed: designs.length,
+        errors: errors.length > 0 ? errors.map(err => ({
+          ...err,
+          message: `Design #${err.designIndex + 1}${err.title ? ` (${err.title})` : ''}: ${err.error}`
+        })) : undefined
+      }
+
+      setUploadResults(uploadResults)
+
+      if (uploadedDesigns.length === 0) {
+        // All uploads failed
+        const errorMessages = errors.map(err => err.error).join('\n') || 'All uploads failed'
+        setGlobalErrors({ submit: errorMessages })
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        setLoading(false)
+        return
+      }
+
+      // Show success
       setTimeout(() => {
         setSuccess(true)
         // Stay on success screen longer if there were failures
-        const delay = result.totalFailed > 0 ? 5000 : 3000
+        const delay = errors.length > 0 ? 5000 : 3000
         setTimeout(() => {
           router.push('/dashboard/my-designs')
         }, delay)
       }, 500)
 
     } catch (error) {
-      clearInterval(progressInterval)
-      setUploadProgress(0)
       console.error('Upload error:', error)
       setGlobalErrors({ submit: error.message })
-    } finally {
       setLoading(false)
+      setUploadProgress(0)
+      setCurrentUploadingIndex(-1)
     }
   }
 
@@ -469,7 +650,7 @@ const UploadContent = ({ user }) => {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center max-w-2xl w-full">
+        <div className="text-center max-w-3xl w-full">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Complete!</h2>
 
@@ -478,29 +659,49 @@ const UploadContent = ({ user }) => {
               {/* Success Summary */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <p className="text-green-800 font-medium">
-                  {uploadResults.totalUploaded} design(s) uploaded successfully
+                  {uploadResults.totalUploaded} design{uploadResults.totalUploaded !== 1 ? 's' : ''} uploaded successfully
                 </p>
+                {uploadResults.totalFailed > 0 && (
+                  <p className="text-orange-700 text-sm mt-1">
+                    {uploadResults.totalFailed} design{uploadResults.totalFailed !== 1 ? 's' : ''} failed to upload
+                  </p>
+                )}
               </div>
 
-              {/* Failure Summary */}
-              {uploadResults.totalFailed > 0 && (
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <p className="text-orange-800 font-medium mb-2">
-                    {uploadResults.totalFailed} design(s) failed to upload
-                  </p>
-                  {uploadResults.errors && uploadResults.errors.length > 0 && (
-                    <div className="mt-3 text-left">
-                      <p className="text-sm text-orange-700 font-medium mb-2">Failed designs:</p>
-                      <ul className="text-sm text-orange-600 space-y-1 max-h-40 overflow-y-auto">
-                        {uploadResults.errors.map((err, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-orange-500 mt-0.5">•</span>
-                            <span>{err.message || err.error}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+              {/* Failed Designs */}
+              {uploadResults.errors && uploadResults.errors.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+                  <h3 className="font-semibold text-red-800 mb-2 flex items-center">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    Failed Uploads
+                  </h3>
+                  <ul className="space-y-1 text-sm text-red-700">
+                    {uploadResults.errors.map((err, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-2">•</span>
+                        <span>{err.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Successful Designs */}
+              {uploadResults.uploadedDesigns && uploadResults.uploadedDesigns.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                  <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Successfully Uploaded Designs
+                  </h3>
+                  <ul className="space-y-1 text-sm text-blue-700">
+                    {uploadResults.uploadedDesigns.map((design, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="mr-2">✓</span>
+                        <span className="font-medium">{design.title}</span>
+                        <span className="text-blue-600 ml-2">({design.status})</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
@@ -508,8 +709,8 @@ const UploadContent = ({ user }) => {
 
           <p className="text-gray-600 mb-2">
             {uploadResults?.totalUploaded > 0
-              ? 'Your uploaded design(s) are pending approval.'
-              : 'Please check the errors and try again.'}
+              ? 'Your uploaded design(s) are pending approval from admin.'
+              : 'All uploads failed. Please check the errors and try again.'}
           </p>
           <p className="text-sm text-gray-500">
             {uploadResults?.totalUploaded > 0
@@ -586,11 +787,33 @@ const UploadContent = ({ user }) => {
         <h1 className="text-3xl font-bold mb-2">Upload Designs</h1>
         <p className="text-purple-100">Share your creative work with our community</p>
         {isFirstTimeUpload && (
-          <div className="mt-4 bg-orange-500/20 border border-orange-300/30 rounded-lg p-3">
-            <p className="text-orange-100 text-sm font-semibold flex items-center">
-              <AlertCircle className="w-4 h-4 mr-2" />
-              <strong>First-time upload requirement:</strong> You must upload exactly 10 designs to get started. Single design uploads are not allowed for first-time uploaders.
-            </p>
+          <div className="mt-4 bg-orange-500/20 border border-orange-300/30 rounded-lg p-4">
+            <div className="flex items-start">
+              <AlertCircle className="w-5 h-5 text-orange-100 mt-0.5 flex-shrink-0" />
+              <div className="ml-3">
+                <h3 className="text-lg font-bold text-orange-100 mb-1">First-Time Designer Upload Requirements</h3>
+                <div className="space-y-2 text-orange-100">
+                  <p className="flex items-center">
+                    <span className="font-semibold">Required:</span>
+                    <span className="ml-2">Minimum 2 designs must be uploaded together</span>
+                  </p>
+                  <p className="text-sm">
+                    • You cannot upload fewer than 2 designs for your first submission
+                    <br />
+                    • You can upload up to 10 designs in your first batch
+                    <br />
+                    • All designs must pass quality checks and follow our guidelines
+                  </p>
+                  {/* <div className="flex items-center mt-2 bg-orange-500/30 rounded-lg px-3 py-2">
+                    <span className="font-semibold">Current Status:</span>
+                    <span className="ml-2">
+                      {designs.length}/10 designs prepared
+                      {designs.length < 10 ? ` (${10 - designs.length} more required)` : ''}
+                    </span>
+                  </div> */}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -628,12 +851,12 @@ const UploadContent = ({ user }) => {
                 </button>
               </div>
             )}
-            <div className="text-right">
+            {/* <div className="text-right">
               <div className="text-2xl font-bold text-purple-600">{designs.length}</div>
               <div className="text-sm text-gray-500">
                 {isFirstTimeUpload ? `of ${minDesignsRequired} min` : 'designs'}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -646,6 +869,80 @@ const UploadContent = ({ user }) => {
             <div>
               <h3 className="text-lg font-bold text-red-800 mb-1">Upload Requirements Not Met</h3>
               <p className="text-red-700">{globalErrors.submit}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate Images Warning */}
+      {duplicateCheckResults && duplicateCheckResults.hasDuplicates && (
+        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-lg">
+          <div className="flex items-start">
+            <AlertCircle className="w-6 h-6 text-red-500 mr-3 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-red-800 mb-3">Duplicate Images Detected</h3>
+              
+              {/* Duplicates within batch */}
+              {duplicateCheckResults.duplicatesInBatch > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-semibold text-red-700 mb-2">
+                    Duplicates Within Your Upload ({duplicateCheckResults.duplicatesInBatch}):
+                  </h4>
+                  <ul className="space-y-2 text-sm text-red-700">
+                    {duplicateCheckResults.batchDuplicates.map((dup, idx) => (
+                      <li key={idx} className="bg-red-100 p-3 rounded-lg">
+                        <div className="font-medium mb-1">
+                          ⚠️ Image {dup.current.imageNumber} in Design #{dup.current.designNumber} 
+                          <span className="text-red-800"> is a duplicate of </span>
+                          Image {dup.duplicate.imageNumber} in Design #{dup.duplicate.designNumber}
+                        </div>
+                        <div className="text-xs text-red-600 mt-1">
+                          Files: <span className="font-mono">{dup.current.filename}</span> ≈ <span className="font-mono">{dup.duplicate.filename}</span>
+                          <span className="ml-2">({dup.similarity} similar)</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-red-600 mt-2">
+                    💡 <strong>Solution:</strong> Remove duplicate images. Each image must be unique across all designs.
+                  </p>
+                </div>
+              )}
+
+              {/* Duplicates from database */}
+              {duplicateCheckResults.duplicatesInDatabase > 0 && (
+                <div>
+                  <h4 className="font-semibold text-red-700 mb-2">
+                    Duplicates Found in Your Previous Uploads ({duplicateCheckResults.duplicatesInDatabase}):
+                  </h4>
+                  <ul className="space-y-2 text-sm text-red-700">
+                    {duplicateCheckResults.databaseMatches.map((match, idx) => (
+                      <li key={idx} className="bg-red-100 p-3 rounded-lg">
+                        <div className="font-medium mb-1">
+                          ⚠️ Image {match.uploaded.imageNumber} in Design #{match.uploaded.designNumber}
+                          <span className="text-red-800"> already exists in design: </span>
+                          <span className="font-semibold">"{match.existingDesign.title}"</span>
+                        </div>
+                        <div className="text-xs text-red-600 mt-1">
+                          File: <span className="font-mono">{match.uploaded.filename}</span>
+                          <span className="ml-2">({match.similarity} similar)</span>
+                          <span className="ml-2 text-gray-600">Design ID: {match.existingDesign.designId}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-sm text-red-600 mt-2">
+                    💡 <strong>Solution:</strong> You cannot upload images that already exist in your approved or pending designs.
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Note:</strong> We use advanced image matching technology to detect visually similar images, 
+                  not just identical filenames. Please ensure all images are unique and original.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -669,7 +966,6 @@ const UploadContent = ({ user }) => {
             onMovePreviewImage={movePreviewImage}
             onRawFileChange={handleRawFileChange}
             onRemove={() => removeDesign(designIndex)}
-            onDuplicate={() => duplicateDesign(designIndex)}
             getFileIcon={getFileIcon}
           />
         ))}
@@ -680,11 +976,23 @@ const UploadContent = ({ user }) => {
             <button
               type="button"
               onClick={addDesign}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={designs.length >= MAX_DESIGNS}
             >
               <Plus className="w-5 h-5 mr-2" />
               Add Another Design ({designs.length}/{MAX_DESIGNS})
             </button>
+            {globalErrors.maxDesigns && (
+              <p className="text-red-500 text-sm mt-2">{globalErrors.maxDesigns}</p>
+            )}
+          </div>
+        )}
+
+        {designs.length >= MAX_DESIGNS && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+            <p className="text-amber-700">
+              Maximum limit reached. You can upload up to {MAX_DESIGNS} designs at a time.
+            </p>
           </div>
         )}
 
@@ -698,14 +1006,53 @@ const UploadContent = ({ user }) => {
           </div>
         )}
 
+        {/* First Time Upload Warning */}
+        {isFirstTimeUpload && designs.length < 2 && (
+          <div className="bg-orange-50 border-2 border-orange-200 rounded-xl p-4 mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="w-6 h-6 text-orange-500 mt-1 flex-shrink-0" />
+              <div className="ml-3">
+                <h3 className="text-lg font-semibold text-orange-800">First-Time Upload Requirements</h3>
+                <p className="text-orange-700 mt-1">
+                  As a first-time uploader, you must upload at least 2 designs together. 
+                  Currently prepared: {designs.length} design{designs.length !== 1 ? 's' : ''}.
+                  {designs.length < 2 ? ` Please add ${2 - designs.length} more design${2 - designs.length !== 1 ? 's' : ''} to meet the minimum requirement.` : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
         {/* Submit Button */}
         <div className="text-center">
+          {checkingDuplicates && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">
+                  Checking for duplicate images...
+                </span>
+              </div>
+              <p className="text-sm text-blue-600 mt-2">
+                This may take a moment. We're analyzing image content to ensure uniqueness.
+              </p>
+            </div>
+          )}
+          
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || checkingDuplicates || (isFirstTimeUpload && designs.length < 2)}
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            title={isFirstTimeUpload && designs.length < 2 ? 'First-time uploaders must upload at least 2 designs' : ''}
           >
-            {loading ? (
+            {checkingDuplicates ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                Checking Duplicates...
+              </>
+            ) : loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                 Uploading... {uploadProgress.toFixed(0)}%
@@ -713,19 +1060,103 @@ const UploadContent = ({ user }) => {
             ) : (
               <>
                 <Upload className="w-5 h-5 mr-2" />
-                {!isFirstTimeUpload && designs.length === 1 ? 'Upload Design' : `Upload ${designs.length} Designs`}
+                {isFirstTimeUpload
+                  ? `Upload ${designs.length} Design${designs.length > 1 ? 's' : ''}`
+                  : 'Upload'
+                }
               </>
             )}
           </button>
+          {isFirstTimeUpload && designs.length < 2 && (
+            <p className="text-sm text-orange-600 mt-2">
+              <AlertCircle className="w-4 h-4 inline mr-1" />
+              First-time uploaders need at least 2 designs ({designs.length}/2)
+            </p>
+          )}
         </div>
 
         {/* Progress Bar */}
         {loading && (
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
+          <div className="space-y-4">
+            {/* Overall Progress */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-gray-800">Upload Progress</h3>
+                <span className="text-sm font-medium text-purple-600">
+                  {uploadProgress.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 h-3 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                Uploading {currentUploadingIndex + 1} of {designs.length} designs...
+              </p>
+            </div>
+
+            {/* Individual Design Status */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-orange-100 p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Design Status</h3>
+              <div className="space-y-3">
+                {designs.map((design, index) => {
+                  const status = designUploadStatus[index] || { status: 'pending' }
+                  return (
+                    <div
+                      key={design.id}
+                      className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                        status.status === 'uploading'
+                          ? 'bg-blue-50 border-2 border-blue-300'
+                          : status.status === 'success'
+                          ? 'bg-green-50 border border-green-200'
+                          : status.status === 'failed'
+                          ? 'bg-red-50 border border-red-200'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {status.status === 'uploading' && (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 flex-shrink-0"></div>
+                        )}
+                        {status.status === 'success' && (
+                          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                        )}
+                        {status.status === 'failed' && (
+                          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                        )}
+                        {status.status === 'pending' && (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0"></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 truncate">
+                            Design #{index + 1}: {design.title || 'Untitled'}
+                          </p>
+                          {status.status === 'failed' && status.error && (
+                            <p className="text-sm text-red-600 mt-1">{status.error}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-sm font-medium flex-shrink-0 ml-3">
+                        {status.status === 'uploading' && (
+                          <span className="text-blue-600">Uploading...</span>
+                        )}
+                        {status.status === 'success' && (
+                          <span className="text-green-600">Uploaded</span>
+                        )}
+                        {status.status === 'failed' && (
+                          <span className="text-red-600">Failed</span>
+                        )}
+                        {status.status === 'pending' && (
+                          <span className="text-gray-500">Waiting</span>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
       </form>
@@ -748,7 +1179,6 @@ const DesignForm = ({
   onMovePreviewImage,
   onRawFileChange,
   onRemove,
-  onDuplicate,
   getFileIcon
 }) => {
   return (
@@ -824,14 +1254,6 @@ const DesignForm = ({
         </div>
 
         <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-          {/* <button
-            type="button"
-            onClick={onDuplicate}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Duplicate design"
-          >
-            <Copy className="w-4 h-4" />
-          </button> */}
           {canRemove && (
             <button
               type="button"

@@ -140,7 +140,8 @@ export default function PricingPage() {
       const orderData = await orderResponse.json();
 
       if (!orderResponse.ok) {
-        throw new Error(orderData.error || 'Failed to create order');
+        console.error('Order creation failed:', orderData);
+        throw new Error(orderData.error || orderData.message || 'Failed to create order');
       }
 
       // Initialize Razorpay payment
@@ -183,11 +184,15 @@ export default function PricingPage() {
               alert(`🎉 ${verifyData.message}\n\nYour subscription is now active!`);
               router.push('/dashboard/profile');
             } else {
-              throw new Error(verifyData.error);
+              console.error('Payment verification failed:', verifyData);
+              const errorMessage = verifyData.details 
+                ? `${verifyData.error}\n\nDetails: ${JSON.stringify(verifyData.details, null, 2)}`
+                : verifyData.error;
+              throw new Error(errorMessage);
             }
           } catch (error) {
             console.error('Payment verification error:', error);
-            alert('Payment verification failed. Please contact support.');
+            alert(`Payment verification failed: ${error.message}\n\nPlease contact support if amount was deducted.`);
           } finally {
             setProcessingPayment(false);
           }

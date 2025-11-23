@@ -7,17 +7,15 @@ const nextConfig = {
   },
   // Skip trailing slash redirect (moved from experimental in Next.js 16)
   skipTrailingSlashRedirect: true,
-  // Experimental features
+  
+  // ✅ FIXED: Consolidated experimental configuration (Next.js 16 compliant)
   experimental: {
     optimizePackageImports: ['lucide-react'],
-    serverActions: true,
+    largePageDataBytes: 128 * 100000, // Increased for large form submissions
   },
-   api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-    responseLimit: false,
-  },
+  
+  // ✅ FIXED: Moved serverComponentsExternalPackages to top level (Next.js 16)
+  serverExternalPackages: ['sharp'],
   // Disable static page generation for dashboard routes
   async headers() {
     return [

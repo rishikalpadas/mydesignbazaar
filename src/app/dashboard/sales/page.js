@@ -3,7 +3,6 @@ import { useState, useEffect } from "react"
 import {
   ShoppingCart,
   TrendingUp,
-  DollarSign,
   Eye,
   Download,
   Calendar,
@@ -14,7 +13,8 @@ import {
   CreditCard,
   CheckCircle,
   Clock,
-  Package
+  Package,
+  IndianRupee
 } from "lucide-react"
 import DashboardPageWrapper from "../../../components/dashboard/DashboardPageWrapper"
 
@@ -86,7 +86,7 @@ const SalesContent = () => {
           color="blue"
         />
         <StatCard
-          icon={<DollarSign className="w-6 h-6 text-green-500" />}
+          icon={<IndianRupee className="w-6 h-6 text-green-500" />}
           label="Total Revenue"
           value={`₹${stats.totalRevenue.toLocaleString()}`}
           color="green"

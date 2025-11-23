@@ -21,7 +21,10 @@ import {
   XCircle,
   Tag,
   ShoppingBag,
-  X
+  X,
+  ChevronDown,
+  ChevronUp,
+  Zap
 } from 'lucide-react';
 import DashboardPageWrapper from '../../../components/dashboard/DashboardPageWrapper';
 
@@ -37,6 +40,10 @@ const BuyersContent = () => {
   const [creditAmount, setCreditAmount] = useState('');
   const [creditReason, setCreditReason] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [buyerSubscriptionDetails, setBuyerSubscriptionDetails] = useState(null);
+  const [loadingBuyerSubscription, setLoadingBuyerSubscription] = useState(false);
+  const [expandedBuyerId, setExpandedBuyerId] = useState(null);
+  const [buyerSubscriptions, setBuyerSubscriptions] = useState({});
 
   useEffect(() => {
     fetchBuyers();
@@ -74,9 +81,10 @@ const BuyersContent = () => {
     }
   };
 
-  const handleViewDetails = (buyer) => {
+  const handleViewDetails = async (buyer) => {
     setSelectedBuyer(buyer);
     setShowDetailsModal(true);
+    await fetchBuyerSubscriptionDetails(buyer.userId);
   };
 
   const handleManageCredits = (buyer) => {
@@ -85,6 +93,50 @@ const BuyersContent = () => {
     setCreditOperation('add');
     setCreditAmount('');
     setCreditReason('');
+  };
+
+  const fetchBuyerSubscriptionDetails = async (userId) => {
+    setLoadingBuyerSubscription(true);
+    setBuyerSubscriptionDetails(null);
+    try {
+      const response = await fetch(`/api/admin/buyers/subscription?userId=${userId}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBuyerSubscriptionDetails(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch buyer subscription:', error);
+    } finally {
+      setLoadingBuyerSubscription(false);
+    }
+  };
+
+  const toggleBuyerSubscription = async (buyer) => {
+    if (expandedBuyerId === buyer._id) {
+      // Collapse if already expanded
+      setExpandedBuyerId(null);
+    } else {
+      // Expand and fetch subscription details if not already loaded
+      setExpandedBuyerId(buyer._id);
+      if (!buyerSubscriptions[buyer._id]) {
+        try {
+          const response = await fetch(`/api/admin/buyers/subscription?userId=${buyer.userId}`, {
+            credentials: 'include'
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setBuyerSubscriptions(prev => ({
+              ...prev,
+              [buyer._id]: data
+            }));
+          }
+        } catch (error) {
+          console.error('Failed to fetch buyer subscription:', error);
+        }
+      }
+    }
   };
 
   const handleSubmitCredits = async () => {
@@ -175,89 +227,215 @@ const BuyersContent = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Buyer Info</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Business</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subscription</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Credits</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stats</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredBuyers.map((buyer) => (
-                <tr key={buyer._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{buyer.fullName}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Mail className="w-3 h-3 text-gray-400" />
-                        <p className="text-sm text-gray-500">{buyer.email}</p>
-                      </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Phone className="w-3 h-3 text-gray-400" />
-                        <span className="text-sm text-gray-500">{buyer.mobileNumber}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center space-x-2">
-                      <Briefcase className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600 capitalize">{buyer.businessType}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {buyer.subscription ? (
+                <>
+                  <tr key={buyer._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
                       <div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {buyer.subscription.planName}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-1">{buyer.subscription.daysRemaining} days left</p>
+                        <p className="font-medium text-gray-900">{buyer.fullName}</p>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Mail className="w-3 h-3 text-gray-400" />
+                          <p className="text-sm text-gray-500">{buyer.email}</p>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          <span className="text-sm text-gray-500">{buyer.mobileNumber}</span>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        No subscription
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    {buyer.subscription ? (
-                      <div className="text-center">
-                        <p className="text-lg font-bold text-gray-900">{buyer.subscription.creditsRemaining}</p>
-                        <p className="text-xs text-gray-500">of {buyer.subscription.creditsTotal}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center space-x-2">
+                        <Briefcase className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600 capitalize">{buyer.businessType}</span>
                       </div>
-                    ) : (
-                      <span className="text-sm text-gray-400">-</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1 text-sm">
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <Package className="w-4 h-4" />
-                        <span>{buyer.totalPurchases} purchases</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Package className="w-4 h-4" />
+                          <span>{buyer.totalPurchases} purchases</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <TrendingUp className="w-4 h-4" />
+                          <span>₹{buyer.totalSpent}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2 text-gray-600">
-                        <TrendingUp className="w-4 h-4" />
-                        <span>₹{buyer.totalSpent}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col space-y-2">
+                        <button
+                          onClick={() => toggleBuyerSubscription(buyer)}
+                          className="inline-flex items-center justify-center px-3 py-2 border border-purple-300 text-sm leading-4 font-medium rounded-md text-purple-700 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                        >
+                          {expandedBuyerId === buyer._id ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-1" />
+                              Hide Plans
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-1" />
+                              View Plans
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleViewDetails(buyer)}
+                          className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Full Details
+                        </button>
+                        <button
+                          onClick={() => handleManageCredits(buyer)}
+                          className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                        >
+                          <CreditCard className="w-4 h-4 mr-1" />
+                          Manage Credits
+                        </button>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col space-y-2">
-                      <button
-                        onClick={() => handleViewDetails(buyer)}
-                        className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        View Details
-                      </button>
-                      <button
-                        onClick={() => handleManageCredits(buyer)}
-                        className="inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                      >
-                        <CreditCard className="w-4 h-4 mr-1" />
-                        Manage Credits
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                  
+                  {/* Expandable Subscription Cards Row */}
+                  {expandedBuyerId === buyer._id && (
+                    <tr key={`${buyer._id}-subscription`}>
+                      <td colSpan="4" className="px-6 py-6 bg-gray-50">
+                        {buyerSubscriptions[buyer._id] ? (
+                          <div className="space-y-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-3">Active Subscriptions & Credits</h4>
+                            
+                            {buyerSubscriptions[buyer._id].subscription?.allSubscriptions?.length > 0 || buyerSubscriptions[buyer._id].subscription?.adminCredits ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {/* Admin Credits Card */}
+                                {buyerSubscriptions[buyer._id].subscription?.adminCredits && buyerSubscriptions[buyer._id].subscription.adminCredits.remaining > 0 && (
+                                  <div className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-lg p-4 text-white shadow-md border border-emerald-300">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <div className="flex items-center space-x-2">
+                                        <Zap className="h-5 w-5" />
+                                        <div>
+                                          <h5 className="font-bold text-sm">Admin Credits</h5>
+                                          <p className="text-emerald-100 text-xs">Bonus Credits</p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-2xl font-bold">{buyerSubscriptions[buyer._id].subscription.adminCredits.remaining}</p>
+                                        <p className="text-xs text-emerald-100">Available</p>
+                                      </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-xs">
+                                      <div>
+                                        <p className="text-emerald-100">Total</p>
+                                        <p className="font-semibold">{buyerSubscriptions[buyer._id].subscription.adminCredits.total}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-emerald-100">Used</p>
+                                        <p className="font-semibold">{buyerSubscriptions[buyer._id].subscription.adminCredits.used}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-emerald-100">Status</p>
+                                        <p className="font-semibold capitalize">{buyerSubscriptions[buyer._id].subscription.adminCredits.status}</p>
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 pt-2 border-t border-white/20">
+                                      <div className="flex items-center justify-between mb-1.5">
+                                        <p className="text-xs text-emerald-100 font-medium">Progress</p>
+                                        <p className="text-xs text-emerald-100 font-semibold">
+                                          {Math.round((buyerSubscriptions[buyer._id].subscription.adminCredits.remaining / buyerSubscriptions[buyer._id].subscription.adminCredits.total) * 100)}%
+                                        </p>
+                                      </div>
+                                      <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                                        <div
+                                          className="bg-gradient-to-r from-white to-emerald-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                                          style={{ width: `${(buyerSubscriptions[buyer._id].subscription.adminCredits.remaining / buyerSubscriptions[buyer._id].subscription.adminCredits.total) * 100}%` }}
+                                        ></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Subscription Plan Cards */}
+                                {buyerSubscriptions[buyer._id].subscription?.allSubscriptions
+                                  ?.sort((a, b) => {
+                                    const order = { basic: 1, premium: 2, elite: 3 };
+                                    return (order[a.planId] || 99) - (order[b.planId] || 99);
+                                  })
+                                  .map((sub) => {
+                                    const planColors = {
+                                      basic: { gradient: 'from-pink-500 to-pink-600', text: 'text-pink-100' },
+                                      premium: { gradient: 'from-blue-500 to-blue-600', text: 'text-blue-100' },
+                                      elite: { gradient: 'from-purple-500 to-purple-600', text: 'text-purple-100' }
+                                    };
+                                    const colors = planColors[sub.planId] || planColors.premium;
+                                    const daysRemaining = Math.ceil((new Date(sub.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+                                    return (
+                                      <div key={sub.id} className={`bg-gradient-to-r ${colors.gradient} rounded-lg p-4 text-white shadow-md`}>
+                                        <div className="flex items-center justify-between mb-3">
+                                          <div className="flex items-center space-x-2">
+                                            <CreditCard className="h-5 w-5" />
+                                            <div>
+                                              <h5 className="font-bold text-sm">{sub.planName}</h5>
+                                              <p className={`${colors.text} text-xs`}>Active Plan</p>
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="text-2xl font-bold">{sub.creditsRemaining}</p>
+                                            <p className={`text-xs ${colors.text}`}>Available</p>
+                                          </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                                          <div>
+                                            <p className={colors.text}>Total</p>
+                                            <p className="font-semibold">{sub.creditsTotal}</p>
+                                          </div>
+                                          <div>
+                                            <p className={colors.text}>Used</p>
+                                            <p className="font-semibold">{sub.creditsUsed}</p>
+                                          </div>
+                                          <div>
+                                            <p className={colors.text}>Expires</p>
+                                            <p className="font-semibold">{daysRemaining}d</p>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                          <p className={`text-xs ${colors.text} font-medium`}>Progress</p>
+                                          <p className={`text-xs ${colors.text} font-semibold`}>
+                                            {Math.round((sub.creditsRemaining / sub.creditsTotal) * 100)}%
+                                          </p>
+                                        </div>
+                                        <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                                          <div
+                                            className={`bg-gradient-to-r from-white ${sub.planId === 'basic' ? 'to-pink-100' : sub.planId === 'premium' ? 'to-blue-100' : 'to-purple-100'} h-full transition-all duration-700 ease-out rounded-full shadow-lg`}
+                                            style={{ width: `${(sub.creditsRemaining / sub.creditsTotal) * 100}%` }}
+                                          ></div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                              </div>
+                            ) : (
+                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                                <CreditCard className="h-8 w-8 text-orange-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-600">No active subscriptions</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mx-auto mb-2"></div>
+                            <p className="text-sm text-gray-500">Loading subscription details...</p>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
             </tbody>
           </table>
@@ -455,55 +633,163 @@ const BuyersContent = () => {
                   </div>
                 </div>
 
-                {/* Subscription Details */}
-                <div className="md:col-span-2 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4">
+                {/* Subscription Cards - Full Width */}
+                <div className="md:col-span-2 space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                     <CreditCard className="w-5 h-5 mr-2 text-purple-600" />
-                    Subscription Details
+                    Active Subscriptions & Credits
                   </h3>
-                  {selectedBuyer.subscription ? (
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="bg-white rounded-lg p-3">
-                        <p className="text-xs text-gray-500 uppercase mb-1">Plan</p>
-                        <p className="text-lg font-bold text-gray-900">{selectedBuyer.subscription.planName}</p>
-                        <p className={`text-xs mt-1 ${
-                          selectedBuyer.subscription.daysRemaining > 7 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {selectedBuyer.subscription.daysRemaining} days remaining
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3">
-                        <p className="text-xs text-gray-500 uppercase mb-1">Credits Remaining</p>
-                        <p className="text-2xl font-bold text-blue-600">{selectedBuyer.subscription.creditsRemaining}</p>
-                        <p className="text-xs text-gray-500 mt-1">of {selectedBuyer.subscription.creditsTotal}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3">
-                        <p className="text-xs text-gray-500 uppercase mb-1">Credits Used</p>
-                        <p className="text-2xl font-bold text-orange-600">{selectedBuyer.subscription.creditsUsed}</p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3">
-                        <p className="text-xs text-gray-500 uppercase mb-1">Status</p>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          selectedBuyer.subscription.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {selectedBuyer.subscription.status}
-                        </span>
-                        <p className="text-xs text-gray-500 mt-2">
-                          Expires: {new Date(selectedBuyer.subscription.expiryDate).toLocaleDateString('en-IN')}
-                        </p>
-                      </div>
+
+                  {loadingBuyerSubscription ? (
+                    <div className="bg-white rounded-lg p-8 text-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-2"></div>
+                      <p className="text-sm text-gray-500">Loading subscription details...</p>
+                    </div>
+                  ) : buyerSubscriptionDetails && (buyerSubscriptionDetails.subscription?.allSubscriptions?.length > 0 || buyerSubscriptionDetails.subscription?.adminCredits) ? (
+                    <div className="space-y-4">
+                      {/* Admin Credits Card - Emerald Green */}
+                      {buyerSubscriptionDetails.subscription?.adminCredits && buyerSubscriptionDetails.subscription.adminCredits.remaining > 0 && (
+                        <div className="bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-xl p-5 text-white shadow-lg border-2 border-emerald-300">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                                <Calendar className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-bold">Admin Credits</h4>
+                                <p className="text-emerald-100 text-xs">Bonus Credits Added</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                                <p className="text-2xl font-bold">{buyerSubscriptionDetails.subscription.adminCredits.remaining}</p>
+                                <p className="text-xs text-emerald-100">Available</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/20">
+                            <div>
+                              <p className="text-emerald-100 text-xs mb-1">Total</p>
+                              <p className="text-base font-semibold">{buyerSubscriptionDetails.subscription.adminCredits.total}</p>
+                            </div>
+                            <div>
+                              <p className="text-emerald-100 text-xs mb-1">Used</p>
+                              <p className="text-base font-semibold">{buyerSubscriptionDetails.subscription.adminCredits.used}</p>
+                            </div>
+                            <div>
+                              <p className="text-emerald-100 text-xs mb-1">Status</p>
+                              <p className="text-base font-semibold capitalize">{buyerSubscriptionDetails.subscription.adminCredits.status}</p>
+                            </div>
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-white/20">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="text-xs text-emerald-100 font-medium">Progress</p>
+                              <p className="text-xs text-emerald-100 font-semibold">
+                                {Math.round((buyerSubscriptionDetails.subscription.adminCredits.remaining / buyerSubscriptionDetails.subscription.adminCredits.total) * 100)}%
+                              </p>
+                            </div>
+                            <div className="relative">
+                              <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                                <div
+                                  className="bg-gradient-to-r from-white to-emerald-100 h-full transition-all duration-700 ease-out rounded-full shadow-lg"
+                                  style={{
+                                    width: `${(buyerSubscriptionDetails.subscription.adminCredits.remaining / buyerSubscriptionDetails.subscription.adminCredits.total) * 100}%`
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Sort subscriptions by plan order: basic, premium, elite */}
+                      {buyerSubscriptionDetails.subscription?.allSubscriptions
+                        ?.sort((a, b) => {
+                          const order = { basic: 1, premium: 2, elite: 3 };
+                          return (order[a.planId] || 99) - (order[b.planId] || 99);
+                        })
+                        .map((sub) => {
+                          const planColors = {
+                            basic: { gradient: 'from-pink-500 via-rose-500 to-pink-600', border: 'border-pink-300', text: 'text-pink-100' },
+                            premium: { gradient: 'from-blue-500 via-indigo-500 to-blue-600', border: 'border-blue-300', text: 'text-blue-100' },
+                            elite: { gradient: 'from-purple-500 via-violet-500 to-purple-600', border: 'border-purple-300', text: 'text-purple-100' }
+                          };
+                          const colors = planColors[sub.planId] || planColors.premium;
+                          const daysRemaining = Math.ceil((new Date(sub.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+
+                          return (
+                            <div key={sub.id} className={`bg-gradient-to-r ${colors.gradient} rounded-xl p-5 text-white shadow-lg border-2 ${colors.border}`}>
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-2">
+                                    <Calendar className="h-5 w-5 text-white" />
+                                  </div>
+                                  <div>
+                                    <h4 className="text-lg font-bold">{sub.planName} Plan</h4>
+                                    <p className={`${colors.text} text-xs`}>Active Subscription</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                                    <p className="text-2xl font-bold">{sub.creditsRemaining}</p>
+                                    <p className={`text-xs ${colors.text}`}>Available</p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/20">
+                                <div>
+                                  <p className={`${colors.text} text-xs mb-1`}>Total Credits</p>
+                                  <p className="text-base font-semibold">{sub.creditsTotal}</p>
+                                </div>
+                                <div>
+                                  <p className={`${colors.text} text-xs mb-1`}>Used</p>
+                                  <p className="text-base font-semibold">{sub.creditsUsed}</p>
+                                </div>
+                                <div>
+                                  <p className={`${colors.text} text-xs mb-1 flex items-center`}>
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Expires in
+                                  </p>
+                                  <p className="text-base font-semibold">{daysRemaining} days</p>
+                                </div>
+                              </div>
+                              <div className="mt-3 pt-3 border-t border-white/20">
+                                <div className="flex items-center justify-between mb-2">
+                                  <p className={`text-xs ${colors.text} font-medium`}>Progress</p>
+                                  <p className={`text-xs ${colors.text} font-semibold`}>
+                                    {Math.round((sub.creditsRemaining / sub.creditsTotal) * 100)}%
+                                  </p>
+                                </div>
+                                <div className="relative">
+                                  <div className="bg-white/10 backdrop-blur-sm rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                      className={`bg-gradient-to-r from-white ${sub.planId === 'basic' ? 'to-pink-100' : sub.planId === 'premium' ? 'to-blue-100' : 'to-purple-100'} h-full transition-all duration-700 ease-out rounded-full shadow-lg`}
+                                      style={{
+                                        width: `${(sub.creditsRemaining / sub.creditsTotal) * 100}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-xs">
+                                  <p className={colors.text}>Payment: ₹{sub.amountPaid?.toLocaleString()} • ID: {sub.paymentId?.slice(-8)}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
                   ) : (
-                    <div className="bg-white rounded-lg p-6 text-center">
-                      <p className="text-gray-500">No active subscription</p>
+                    <div className="bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl p-5 shadow-lg border-2 border-orange-200">
+                      <div className="flex items-center justify-center space-x-3">
+                        <div className="bg-orange-500 rounded-full p-3">
+                          <CreditCard className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="text-center">
+                          <h4 className="text-lg font-bold text-gray-900">No Active Subscription</h4>
+                          <p className="text-gray-600 text-sm">This buyer has no active subscriptions or credits</p>
+                        </div>
+                      </div>
                     </div>
-                  )}
-                  {selectedBuyer.subscriptionCount > 0 && (
-                    <p className="text-xs text-gray-600 mt-3">
-                      Total subscriptions: {selectedBuyer.subscriptionCount}
-                    </p>
                   )}
                 </div>
 
@@ -566,7 +852,7 @@ const BuyersContent = () => {
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-gray-600 mb-2">Buyer: <span className="font-medium text-gray-900">{selectedBuyer?.fullName}</span></p>
-                <p className="text-sm text-gray-600">Current Credits: <span className="font-bold text-green-600">{selectedBuyer?.subscription?.creditsRemaining || 0}</span></p>
+                {/* <p className="text-sm text-gray-600">Current Credits: <span className="font-bold text-green-600">{selectedBuyer?.subscription?.creditsRemaining || 0}</span></p> */}
               </div>
 
               <div>

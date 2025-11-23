@@ -1,5 +1,6 @@
 "use client"
 import { useRouter, usePathname } from "next/navigation"
+import { useState, useEffect } from "react"
 import {
   X,
   Home,
@@ -17,11 +18,34 @@ import {
   TrendingUp,
   Heart,
   Download,
+  Image as ImageIcon,
+  Layers,
 } from "lucide-react"
 
 const Sidebar = ({ user, isOpen, onClose }) => {
   const router = useRouter()
   const pathname = usePathname()
+  const [profilePicture, setProfilePicture] = useState(null)
+
+  // Fetch profile picture on mount
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const response = await fetch('/api/upload/profile-pic', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        
+        if (data.success && data.profilePicture) {
+          setProfilePicture(data.profilePicture.imageUrl)
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
 
   const handleLogout = async () => {
     try {
@@ -63,6 +87,8 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           { name: "Orders", href: "/dashboard/orders", icon: Package },
           { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
           { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+          { name: "Hero Sliders", href: "/dashboard/hero-sliders", icon: Layers },
+          { name: "Add Slider", href: "/dashboard/slider-addition", icon: ImageIcon },
           { name: "System Settings", href: "/dashboard/settings", icon: Settings },
         ]
 
@@ -158,9 +184,9 @@ const Sidebar = ({ user, isOpen, onClose }) => {
             <div className="flex-shrink-0 border-t border-orange-100 p-4">
               <div className="flex items-center bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3 mb-3">
                 <img
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+                  src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
                   alt="Profile"
-                  className="h-8 w-8 rounded-full ring-2 ring-orange-200"
+                  className="h-8 w-8 rounded-full ring-2 ring-orange-200 object-cover"
                 />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700">
@@ -234,9 +260,9 @@ const Sidebar = ({ user, isOpen, onClose }) => {
             <div className="flex-shrink-0 border-t border-orange-100 p-4">
               <div className="flex items-center bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl p-3 mb-3">
                 <img
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+                  src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
                   alt="Profile"
-                  className="h-8 w-8 rounded-full ring-2 ring-orange-200"
+                  className="h-8 w-8 rounded-full ring-2 ring-orange-200 object-cover"
                 />
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700">
