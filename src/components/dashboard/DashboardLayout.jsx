@@ -7,8 +7,29 @@ import Sidebar from "./Sidebar"
 const DashboardLayout = ({ children, user }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
+  const [profilePicture, setProfilePicture] = useState(null)
   const router = useRouter()
   const userDropdownRef = useRef(null)
+
+  // Fetch profile picture on mount
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const response = await fetch('/api/upload/profile-pic', {
+          credentials: 'include'
+        })
+        const data = await response.json()
+        
+        if (data.success && data.profilePicture) {
+          setProfilePicture(data.profilePicture.imageUrl)
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error)
+      }
+    }
+
+    fetchProfilePicture()
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -59,9 +80,9 @@ const DashboardLayout = ({ children, user }) => {
       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50 mx-2 rounded-lg">
         <div className="flex items-center gap-3">
           <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
             alt="Profile"
-            className="h-10 w-10 rounded-full ring-2 ring-orange-200"
+            className="h-10 w-10 rounded-full ring-2 ring-orange-200 object-cover"
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-900 truncate">{user.profile?.fullName || user.name || user.email}</p>
@@ -199,9 +220,9 @@ const DashboardLayout = ({ children, user }) => {
                       <p className="text-xs text-orange-600">{getUserRole()}</p>
                     </div>
                     <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
+                      src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.profile?.fullName || user.name || user.email)}&background=f97316&color=fff`}
                       alt="Profile"
-                      className="h-8 w-8 rounded-full ring-2 ring-orange-200"
+                      className="h-8 w-8 rounded-full ring-2 ring-orange-200 object-cover"
                     />
                     <ChevronDown size={14} className="text-gray-400" />
                   </button>

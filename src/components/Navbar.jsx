@@ -29,6 +29,7 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const [internalIsAuthenticated, setInternalIsAuthenticated] = useState(false)
   const [internalUser, setInternalUser] = useState(null)
   const [subscription, setSubscription] = useState(null)
+  const [profilePicture, setProfilePicture] = useState(null)
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
   const [designerAccessModalOpen, setDesignerAccessModalOpen] = useState(false)
@@ -90,6 +91,21 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       }
     } catch (error) {
       console.error("Failed to fetch subscription:", error)
+    }
+  }
+
+  const fetchProfilePicture = async () => {
+    try {
+      const response = await fetch('/api/upload/profile-pic', {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      
+      if (data.success && data.profilePicture) {
+        setProfilePicture(data.profilePicture.imageUrl)
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture:', error)
     }
   }
 
@@ -196,9 +212,11 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     if (isAuthenticated) {
       fetchCartCount()
       fetchWishlistCount()
+      fetchProfilePicture()
     } else {
       setCartCount(0)
       setWishlistCount(0)
+      setProfilePicture(null)
     }
   }, [isAuthenticated])
 
@@ -354,9 +372,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-amber-50">
         <div className="flex items-center gap-3">
           <img
-            src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+            src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
             alt="Profile"
-            className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+            className="w-10 h-10 rounded-full ring-2 ring-orange-200 object-cover"
           />
           <div>
             <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>
@@ -797,9 +815,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
               <div className="space-y-2">
                 <div className="flex items-center gap-3 p-3 bg-white rounded-lg">
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
+                    src={profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(getUserDisplayName())}&background=f97316&color=fff`}
                     alt="Profile"
-                    className="w-10 h-10 rounded-full ring-2 ring-orange-200"
+                    className="w-10 h-10 rounded-full ring-2 ring-orange-200 object-cover"
                   />
                   <div>
                     <p className="text-sm font-semibold text-gray-900">{getUserDisplayName()}</p>

@@ -16,7 +16,9 @@ import {
   Eye,
   EyeOff,
   Save,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  X
 } from "lucide-react"
 
 const DesignerSettingsContent = () => {
@@ -26,12 +28,17 @@ const DesignerSettingsContent = () => {
   const [message, setMessage] = useState({ type: '', text: '' })
   const [showOldPassword, setShowOldPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+  const [profilePicPreview, setProfilePicPreview] = useState(null)
+  const [profilePicFile, setProfilePicFile] = useState(null)
+  const [uploadingPic, setUploadingPic] = useState(false)
+  const [userType, setUserType] = useState(null)
   const [profile, setProfile] = useState({
     fullName: '',
     displayName: '',
     mobileNumber: '',
     alternativeContact: '',
-    email: ''
+    email: '',
+    profile_pic: null
   })
   const [address, setAddress] = useState({
     street: '',
@@ -65,22 +72,66 @@ const DesignerSettingsContent = () => {
     fetchProfile()
   }, [])
 
+  const fetchProfilePicture = async () => {
+    try {
+      const response = await fetch('/api/upload/profile-pic', {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      
+      if (data.success && data.profilePicture) {
+        setProfile(prev => ({ ...prev, profile_pic: data.profilePicture.imageUrl }))
+        setProfilePicPreview(data.profilePicture.imageUrl)
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture:', error)
+    }
+  }
+
   const fetchProfile = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/designer/profile', {
+      // First get user type
+      const userResponse = await fetch('/api/user/profile', {
+        credentials: 'include'
+      })
+      const userData = await userResponse.json()
+      
+      if (!userData.user) {
+        return
+      }
+
+      const currentUserType = userData.user.userType
+      setUserType(currentUserType)
+
+      // Then fetch the specific profile based on user type
+      let profileEndpoint = '/api/designer/profile'
+      if (currentUserType === 'buyer') {
+        profileEndpoint = '/api/buyer/profile'
+      } else if (currentUserType === 'admin') {
+        profileEndpoint = '/api/admin/profile'
+      }
+      
+      const response = await fetch(profileEndpoint, {
         credentials: 'include'
       })
       const data = await response.json()
 
       if (data.success) {
         setProfile({
-          fullName: data.profile.fullName || '',
-          displayName: data.profile.displayName || '',
+          fullName: data.profile.fullName || data.profile.name || '',
+          displayName: data.profile.displayName || data.profile.name || '',
           mobileNumber: data.profile.mobileNumber || '',
           alternativeContact: data.profile.alternativeContact || '',
-          email: data.profile.email || ''
+          email: data.profile.email || userData.user.email || '',
+          profile_pic: data.profile.profile_pic || null
         })
+        if (data.profile.profile_pic) {
+          setProfilePicPreview(data.profile.profile_pic)
+        } else {
+          // If no profile pic in main profile, try fetching from ProfilePicture collection
+          fetchProfilePicture()
+        }
         setAddress(data.profile.address || {
           street: '',
           city: '',
@@ -104,23 +155,106 @@ const DesignerSettingsContent = () => {
     }
   }
 
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png']
+      if (!validTypes.includes(file.type)) {
+        setMessage({ type: 'error', text: 'Only JPG, JPEG, and PNG files are allowed' })
+        return
+      }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: 'error', text: 'File size must be less than 5MB' })
+        return
+      }
+
+      setProfilePicFile(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicPreview(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveProfilePic = () => {
+    setProfilePicFile(null)
+    setProfilePicPreview(profile.profile_pic)
+  }
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault()
     try {
       setSaving(true)
-      // TODO: Implement API call
-      // const response = await fetch('/api/designer/profile/update', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ profile, address })
-      // })
+      
+      let profilePicUrl = profile.profile_pic
 
-      setMessage({ type: 'success', text: 'Profile updated successfully! (Feature coming soon)' })
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+      // Upload profile picture if new file selected
+      if (profilePicFile) {
+        setUploadingPic(true)
+        const formData = new FormData()
+        formData.append('file', profilePicFile)
+        
+        const uploadResponse = await fetch('/api/upload/profile-pic', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include'
+        })
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json()
+          profilePicUrl = uploadData.url
+        } else {
+          const errorData = await uploadResponse.json()
+          throw new Error(errorData.error || 'Failed to upload profile picture')
+        }
+        setUploadingPic(false)
+      }
+
+      // Determine API endpoint based on user type
+      let updateEndpoint = '/api/designer/profile'
+      if (userType === 'buyer') {
+        updateEndpoint = '/api/buyer/profile'
+      } else if (userType === 'admin') {
+        updateEndpoint = '/api/admin/profile'
+      }
+
+      // Update profile with new data
+      const response = await fetch(updateEndpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          profile: { 
+            fullName: profile.fullName,
+            name: profile.fullName, // For admin
+            displayName: profile.displayName,
+            mobileNumber: profile.mobileNumber,
+            alternativeContact: profile.alternativeContact,
+            profile_pic: profilePicUrl 
+          }, 
+          address 
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setProfile({ ...profile, profile_pic: profilePicUrl })
+        setProfilePicFile(null)
+        setMessage({ type: 'success', text: 'Profile updated successfully!' })
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000)
+      } else {
+        throw new Error(data.message || 'Failed to update profile')
+      }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update profile' })
+      setMessage({ type: 'error', text: error.message || 'Failed to update profile' })
     } finally {
       setSaving(false)
+      setUploadingPic(false)
     }
   }
 
@@ -246,6 +380,61 @@ const DesignerSettingsContent = () => {
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <form onSubmit={handleProfileUpdate} className="space-y-6">
+              {/* Profile Picture Section */}
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Profile Picture</h2>
+                <div className="flex items-center space-x-6">
+                  <div className="relative">
+                    <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 border-4 border-white shadow-lg">
+                      {profilePicPreview ? (
+                        <img
+                          src={profilePicPreview}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-16 h-16 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept=".jpg,.jpeg,.png"
+                          onChange={handleProfilePicChange}
+                          className="hidden"
+                          disabled={uploadingPic}
+                        />
+                        <div className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          <Upload className="w-4 h-4" />
+                          Upload Photo
+                        </div>
+                      </label>
+                      {profilePicFile && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveProfilePic}
+                          className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          <X className="w-4 h-4" />
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-2">
+                      JPG, JPEG or PNG. Max size 5MB.
+                    </p>
+                    {uploadingPic && (
+                      <p className="text-sm text-blue-600 mt-1">Uploading...</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Personal Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
