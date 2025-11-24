@@ -5,6 +5,7 @@ import {
   Palette,
   Eye,
   Download,
+  Heart,
   Clock,
   CheckCircle,
   XCircle,
@@ -444,6 +445,10 @@ const MyDesignsContent = () => {
                         <div className="flex items-center">
                           <Download className="w-4 h-4 mr-1" />
                           {design.downloads}
+                        </div>
+                        <div className="flex items-center">
+                          <Heart className="w-4 h-4 mr-1" />
+                          {design.likes || 0}
                         </div>
                       </div>
                       {design.featured && <Star className="w-4 h-4 text-yellow-400 fill-current" />}

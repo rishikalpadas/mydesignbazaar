@@ -87,6 +87,7 @@ const ProductViewSkeleton = () => {
 const ProductView = ({ productData, isLoading = false }) => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
   const [baseUrl, setBaseUrl] = useState('');
   const [showNonBuyerPopup, setShowNonBuyerPopup] = useState(false);
   const [showNoSubscriptionPopup, setShowNoSubscriptionPopup] = useState(false);
@@ -195,6 +196,26 @@ const ProductView = ({ productData, isLoading = false }) => {
       checkWishlist();
     }
   }, [productData?._id, user?.userType]);
+
+  // Fetch like status and count
+  useEffect(() => {
+    if (productData?._id) {
+      const fetchLikes = async () => {
+        try {
+          const response = await axios.get(`/api/designs/like?designId=${productData._id}`, {
+            withCredentials: true
+          });
+          if (response.data.success) {
+            setLikeCount(response.data.likeCount);
+            setIsLiked(response.data.isLiked);
+          }
+        } catch (error) {
+          console.log('Failed to fetch likes:', error);
+        }
+      };
+      fetchLikes();
+    }
+  }, [productData?._id]);
 
 
   // Show skeleton if loading, no product data, or baseUrl not set
@@ -309,6 +330,35 @@ const ProductView = ({ productData, isLoading = false }) => {
     } catch (error) {
       console.error('Wishlist error:', error);
       alert('Failed to update wishlist');
+    }
+  };
+
+  // Handle like toggle
+  const handleLikeToggle = async () => {
+    // Check if user is logged in
+    if (!user) {
+      alert('Please log in to like designs');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        '/api/designs/like',
+        { designId: product._id },
+        { withCredentials: true }
+      );
+      
+      if (response.data.success) {
+        setIsLiked(response.data.isLiked);
+        setLikeCount(response.data.likeCount);
+      }
+    } catch (error) {
+      console.error('Like error:', error);
+      if (error.response?.status === 401) {
+        alert('Please log in to like designs');
+      } else {
+        alert('Failed to update like');
+      }
     }
   };
 
@@ -456,6 +506,13 @@ const ProductView = ({ productData, isLoading = false }) => {
                 </div>
                 <span className="font-semibold text-gray-900">{product?.downloads?.toLocaleString() || '0'}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5 text-pink-500" />
+                  <span className="text-sm text-gray-600">Likes</span>
+                </div>
+                <span className="font-semibold text-gray-900">{likeCount?.toLocaleString() || '0'}</span>
+              </div>
             </div>
 
             {/* Tags */}
@@ -559,6 +616,20 @@ const ProductView = ({ productData, isLoading = false }) => {
 
             {/* Social Actions */}
             <div className="flex items-center space-x-4 pt-4 border-t">
+              {/* Like button - for all logged-in users */}
+              <button
+                onClick={handleLikeToggle}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                  isLiked
+                    ? 'bg-pink-50 border-pink-200 text-pink-600'
+                    : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                <span className="text-sm">{isLiked ? 'Liked' : 'Like'}</span>
+                <span className="text-sm font-semibold">({likeCount})</span>
+              </button>
+
               {/* Wishlist button - only for buyers */}
               {(user?.userType === 'buyer'|| user?.userType === 'admin') && (
                 <button

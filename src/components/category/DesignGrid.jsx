@@ -1,8 +1,10 @@
 // Also includes robust preview URL fallback.
 "use client"
 import { useState, useMemo, useCallback, useEffect, useRef } from "react"
+import { Heart } from "lucide-react"
 import ImageLightbox from "../../components/ImageLightbox"
 import { useRouter } from "next/navigation"
+import axios from "axios"
 
 function getPreviewUrl(d) {
   // Try new multiple preview images first
@@ -37,6 +39,8 @@ function DesignCard({ d, categoryLabel, onImageClick, router }) {
   const allUrls = getAllPreviewUrls(d)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
+  const [isLiked, setIsLiked] = useState(false)
+  const [likeCount, setLikeCount] = useState(d?.likes || 0)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -58,6 +62,49 @@ function DesignCard({ d, categoryLabel, onImageClick, router }) {
     }
   }, [isHovered, allUrls.length])
 
+  // Fetch like status when component mounts
+  useEffect(() => {
+    if (d?._id) {
+      const fetchLikeStatus = async () => {
+        try {
+          const response = await axios.get(`/api/designs/like?designId=${d._id}`, {
+            withCredentials: true
+          })
+          if (response.data.success) {
+            setIsLiked(response.data.isLiked)
+            setLikeCount(response.data.likeCount)
+          }
+        } catch (error) {
+          console.log('Failed to fetch like status:', error)
+        }
+      }
+      fetchLikeStatus()
+    }
+  }, [d?._id])
+
+  const handleLikeClick = async (e) => {
+    e.stopPropagation() // Prevent navigation when clicking like button
+    e.preventDefault() // Prevent any default behavior
+    
+    try {
+      const response = await axios.post(
+        '/api/designs/like',
+        { designId: d._id },
+        { withCredentials: true }
+      )
+      
+      if (response.data.success) {
+        setIsLiked(response.data.isLiked)
+        setLikeCount(response.data.likeCount)
+      }
+    } catch (error) {
+      console.error('Like error:', error)
+      if (error.response?.status === 401) {
+        alert('Please log in to like designs')
+      }
+    }
+  }
+
   const currentUrl = allUrls.length > 0 ? allUrls[currentImageIndex] : getPreviewUrl(d)
 
   return (
@@ -67,6 +114,20 @@ function DesignCard({ d, categoryLabel, onImageClick, router }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Like Button - positioned at article level for better clickability */}
+      <button
+        onClick={handleLikeClick}
+        className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-md hover:bg-white transition-all duration-200 hover:scale-110 z-30"
+        style={{ pointerEvents: 'auto' }}
+        aria-label={isLiked ? 'Unlike' : 'Like'}
+      >
+        <Heart 
+          className={`w-4 h-4 transition-colors ${
+            isLiked ? 'fill-pink-500 text-pink-500' : 'text-gray-700'
+          }`}
+        />
+      </button>
+
       {/* Image Container with Slideshow */}
       <div className="relative overflow-hidden block w-full h-48 sm:h-52 md:h-56">
         {allUrls.map((url, index) => (
@@ -87,7 +148,7 @@ function DesignCard({ d, categoryLabel, onImageClick, router }) {
           />
         ))}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
         {/* Category Badge */}
         {/* <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 px-2 sm:px-3 py-1 rounded-full text-xs font-medium shadow-sm">
@@ -154,6 +215,10 @@ function DesignCard({ d, categoryLabel, onImageClick, router }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v8m4-4H8" />
               </svg>
               {d.downloads ?? 0}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Heart className="w-4 h-4" />
+              {likeCount ?? 0}
             </span>
           </div>
           {/* <span className="px-2 py-1 bg-gradient-to-r from-orange-100 to-amber-100 text-amber-700 rounded-full font-medium">
