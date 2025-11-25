@@ -136,6 +136,14 @@ const designSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isExclusive: {
+      type: Boolean,
+      default: false,
+    },
+    exclusiveRequest: {
+      type: Boolean,
+      default: false,
+    },
     uploadDate: {
       type: Date,
       default: Date.now,

@@ -8,7 +8,7 @@ async function handler(request) {
   try {
     await connectDB()
 
-    const { designId } = await request.json()
+    const { designId, isExclusive } = await request.json()
     if (!designId) {
       return NextResponse.json({ error: "designId is required" }, { status: 400 })
     }
@@ -22,6 +22,10 @@ async function handler(request) {
     design.rejectionReason = undefined
     design.approvalDate = new Date()
     design.approvedBy = request.user._id
+    
+    // Handle exclusive design - admin can mark any design as exclusive
+    design.isExclusive = isExclusive === true
+    
     await design.save()
 
     // Increment designer's approved designs count

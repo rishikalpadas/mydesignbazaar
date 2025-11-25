@@ -150,6 +150,7 @@ export async function POST(request) {
     const description = formData.get('description')
     const category = formData.get('category')
     const tagsString = formData.get('tags')
+    const exclusiveRequest = formData.get('exclusiveRequest') === 'true'
     const designIndex = formData.get('designIndex') || '0'
     const totalDesigns = parseInt(formData.get('totalDesigns') || '1')
     const isFirstTimeUpload = formData.get('isFirstTimeUpload') === 'true'
@@ -280,6 +281,7 @@ export async function POST(request) {
       description: description.trim(),
       category,
       tags: tags.slice(0, 10), // Limit to 10 tags
+      exclusiveRequest: exclusiveRequest,
       uploadedBy: user._id,
       status: "pending",
       uploadMetadata,

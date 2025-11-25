@@ -50,12 +50,12 @@ const UploadContent = ({ user }) => {
     description: '',
     category: '',
     tags: '',
+    exclusiveRequest: false,
     previewImages: [],
     previewImageUrls: [],
     rawFile: null,
     errors: {}
   }])
-
   const [globalErrors, setGlobalErrors] = useState({})
   const [expandedDesigns, setExpandedDesigns] = useState(new Set([0])) // First design expanded by default
   const [checkingDuplicates, setCheckingDuplicates] = useState(false)
@@ -88,6 +88,7 @@ const UploadContent = ({ user }) => {
                   description: '',
                   category: '',
                   tags: '',
+                  exclusiveRequest: false,
                   previewImages: [],
                   previewImageUrls: [],
                   rawFile: null,
@@ -442,6 +443,7 @@ const UploadContent = ({ user }) => {
     formData.append('description', design.description.trim())
     formData.append('category', design.category)
     formData.append('tags', design.tags.trim())
+    formData.append('exclusiveRequest', design.exclusiveRequest ? 'true' : 'false')
     formData.append('designIndex', designIndex.toString())
     formData.append('totalDesigns', totalDesigns.toString())
     formData.append('isFirstTimeUpload', isFirstTimeUpload.toString())
@@ -1336,6 +1338,28 @@ const DesignForm = ({
             placeholder="modern, elegant, creative..."
             className="w-full px-4 py-3 border border-orange-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:border-transparent bg-white/80 backdrop-blur-sm"
           />
+        </div>
+
+        {/* Exclusive Request */}
+        <div className="flex items-start space-x-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
+          <input
+            type="checkbox"
+            id={`exclusive-${designIndex}`}
+            checked={design.exclusiveRequest}
+            onChange={(e) => onUpdate(designIndex, 'exclusiveRequest', e.target.checked)}
+            className="mt-1 w-5 h-5 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
+          />
+          <label htmlFor={`exclusive-${designIndex}`} className="flex-1 cursor-pointer">
+            <span className="text-sm font-medium text-gray-900 flex items-center">
+              <svg className="w-4 h-4 mr-1.5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Request to mark as exclusive design
+            </span>
+            <p className="text-xs text-gray-600 mt-1">
+              Exclusive designs are unique and will be marked with a crown icon. The admin will review and approve your request.
+            </p>
+          </label>
         </div>
 
         {/* Preview Images */}
