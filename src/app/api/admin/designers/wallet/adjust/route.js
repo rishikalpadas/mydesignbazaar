@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../../../lib/mongodb';
-import { Wallet, WalletTransaction } from '../../../../../../../models/Wallet';
-import { Designer } from '../../../../../../../models/User';
-import { verifyToken } from '../../../../../../../middleware/auth';
+import connectDB from '../../../../../../lib/mongodb';
+import { Wallet, WalletTransaction } from '../../../../../../models/Wallet';
+import { Designer } from '../../../../../../models/User';
+import { verifyToken } from '../../../../../../middleware/auth';
 
 // POST - Admin endpoint to adjust designer wallet (credit or debit)
 export async function POST(request) {

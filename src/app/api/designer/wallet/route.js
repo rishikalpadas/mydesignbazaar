@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../lib/mongodb';
-import { Wallet } from '../../../../../models/Wallet';
-import { Designer } from '../../../../../models/User';
-import { verifyToken } from '../../../../../middleware/auth';
+import connectDB from '../../../../lib/mongodb';
+import { Wallet } from '../../../../models/Wallet';
+import { Designer } from '../../../../models/User';
+import { verifyToken } from '../../../../middleware/auth';
 
 // GET - Fetch designer's wallet information
 export async function GET(request) {

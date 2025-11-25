@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../../lib/mongodb';
-import { Wallet, WalletTransaction } from '../../../../../../models/Wallet';
-import { verifyToken } from '../../../../../../middleware/auth';
+import connectDB from '../../../../../lib/mongodb';
+import { Wallet, WalletTransaction } from '../../../../../models/Wallet';
+import { verifyToken } from '../../../../../middleware/auth';
 
 // GET - Fetch designer's wallet transactions
 export async function GET(request) {
