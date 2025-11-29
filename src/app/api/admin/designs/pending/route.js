@@ -12,7 +12,7 @@ async function handler() {
 
     const designs = await Design.find({ status: "pending" })
       .sort({ createdAt: -1 })
-      .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy rawFileValidation")
+      .select("_id designId title category createdAt previewImage previewImages rawFile rawFiles uploadedBy rawFileValidation exclusiveRequest")
       .populate("uploadedBy", "email")
       .lean()
 
@@ -24,6 +24,7 @@ async function handler() {
         designId: d.designId,
         title: d.title,
         status: 'pending',
+        exclusiveRequest: d.exclusiveRequest || false,
         uploadedBy: d.uploadedBy?.email
       })))
     }
@@ -49,6 +50,7 @@ async function handler() {
       return {
         id: d._id,
         designId: designIdToUse,
+        exclusiveRequest: d.exclusiveRequest || false,
         title: d.title,
         category: d.category,
         createdAt: d.createdAt,
