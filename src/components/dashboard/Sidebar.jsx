@@ -20,6 +20,7 @@ import {
   Download,
   Image as ImageIcon,
   Layers,
+  Bell,
 } from "lucide-react"
 
 const Sidebar = ({ user, isOpen, onClose }) => {
@@ -86,6 +87,7 @@ const Sidebar = ({ user, isOpen, onClose }) => {
           { name: "Pending Designs", href: "/dashboard/designs/pending", icon: FileText },
           { name: "Orders", href: "/dashboard/orders", icon: Package },
           { name: "Payments", href: "/dashboard/payments", icon: CreditCard },
+          { name: "Send Notifications", href: "/dashboard/admin/notifications", icon: Bell },
           { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
           { name: "Hero Sliders", href: "/dashboard/hero-sliders", icon: Layers },
           { name: "Add Slider", href: "/dashboard/slider-addition", icon: ImageIcon },

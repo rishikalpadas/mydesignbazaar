@@ -14,7 +14,8 @@ import {
   Package,
   LayoutDashboard,
   UserCircle,
-  DollarSign 
+  DollarSign,
+  Bell
 } from "lucide-react"
 import { getSlugFromCategory } from "../lib/category-map"
 import NoContextMenu from "../components/NoContextMenu"
@@ -32,6 +33,11 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const [profilePicture, setProfilePicture] = useState(null)
   const [cartCount, setCartCount] = useState(0)
   const [wishlistCount, setWishlistCount] = useState(0)
+  const [notificationCount, setNotificationCount] = useState(0)
+  const [notifications, setNotifications] = useState([])
+  const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [notificationModalOpen, setNotificationModalOpen] = useState(false)
   const [designerAccessModalOpen, setDesignerAccessModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState([])
@@ -40,6 +46,7 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
 
   const mobileSearchRef = useRef(null)
   const userDropdownRef = useRef(null)
+  const notificationDropdownRef = useRef(null)
   const [authChecked, setAuthChecked] = useState(false)
 
   // Determine if we should use external auth (when callback is provided)
@@ -137,6 +144,22 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     }
   }
 
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch("/api/notifications?unreadOnly=true&limit=10", {
+        credentials: "include",
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setNotificationCount(data.unreadCount || 0)
+        setNotifications(data.notifications || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error)
+    }
+  }
+
   // Handle search query
   const handleSearchChange = async (query) => {
     setSearchQuery(query)
@@ -213,10 +236,13 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
       fetchCartCount()
       fetchWishlistCount()
       fetchProfilePicture()
+      fetchNotifications()
     } else {
       setCartCount(0)
       setWishlistCount(0)
       setProfilePicture(null)
+      setNotificationCount(0)
+      setNotifications([])
     }
   }, [isAuthenticated])
 
@@ -233,6 +259,9 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     const handleClickOutside = (event) => {
       if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
         setUserDropdownOpen(false)
+      }
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setNotificationDropdownOpen(false)
       }
     }
 
@@ -363,6 +392,258 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
   const categories = ["Infantwear", "Kidswear", "Menswear", "Womenswear", "Typography", "Floral", "AI-Generated"]
 
   const titleToSlug = (title) => getSlugFromCategory(title)
+
+  const NotificationDropdown = () => {
+    const handleNotificationClick = async (notification) => {
+      // Mark as read
+      if (!notification.isRead) {
+        await handleMarkAsRead(notification._id);
+      }
+      // Open modal
+      setSelectedNotification(notification);
+      setNotificationModalOpen(true);
+      setNotificationDropdownOpen(false);
+    };
+
+    const handleMarkAsRead = async (notificationId) => {
+      try {
+        const response = await fetch(`/api/notifications`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ notificationId }),
+        });
+
+        if (response.ok) {
+          // Update local state
+          setNotifications(prev => prev.map(notif => 
+            notif._id === notificationId ? { ...notif, isRead: true } : notif
+          ));
+          // Refresh unread count
+          fetchNotifications();
+        }
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+    };
+
+    const handleMarkAllAsRead = async () => {
+      try {
+        const response = await fetch(`/api/notifications`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ markAllAsRead: true }),
+        });
+
+        if (response.ok) {
+          setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+          setNotificationCount(0);
+        }
+      } catch (error) {
+        console.error('Error marking all as read:', error);
+      }
+    };
+
+    const formatTimeAgo = (date) => {
+      const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 7) return `${days}d ago`;
+      return new Date(date).toLocaleDateString();
+    };
+
+    return (
+      <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+          {notifications.length > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="text-xs text-orange-600 hover:text-orange-700 font-medium"
+            >
+              Mark all as read
+            </button>
+          )}
+        </div>
+
+        {/* Notifications List */}
+        <div className="max-h-96 overflow-y-auto">
+          {notifications.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <Bell className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-500">No notifications yet</p>
+            </div>
+          ) : (
+            notifications.map((notification) => (
+              <div
+                key={notification._id}
+                onClick={() => handleNotificationClick(notification)}
+                className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
+                  !notification.isRead ? 'bg-orange-50' : ''
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      {!notification.isRead && (
+                        <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                      )}
+                      <h4 className="text-sm font-medium text-gray-900">
+                        {notification.title}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                      {notification.message}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {formatTimeAgo(notification.createdAt)}
+                    </p>
+                  </div>
+                  {!notification.isRead && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(notification._id);
+                      }}
+                      className="text-xs text-orange-600 hover:text-orange-700 font-medium whitespace-nowrap"
+                    >
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const NotificationModal = () => {
+    if (!notificationModalOpen || !selectedNotification) return null;
+
+    const getNotificationTypeColor = (type) => {
+      switch (type) {
+        case 'success':
+          return 'bg-green-100 text-green-800';
+        case 'warning':
+          return 'bg-yellow-100 text-yellow-800';
+        case 'error':
+          return 'bg-red-100 text-red-800';
+        case 'info':
+        default:
+          return 'bg-blue-100 text-blue-800';
+      }
+    };
+
+    const formatFullDate = (date) => {
+      return new Date(date).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
+
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-pink-500 px-6 py-4 rounded-t-2xl">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Bell className="w-6 h-6 text-white" />
+                  <h2 className="text-xl font-bold text-white">
+                    {selectedNotification.title}
+                  </h2>
+                </div>
+                <p className="text-sm text-white/90">
+                  {formatFullDate(selectedNotification.createdAt)}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setNotificationModalOpen(false);
+                  setSelectedNotification(null);
+                }}
+                className="text-white hover:bg-white/20 rounded-full p-2 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div className="px-6 py-6 space-y-4">
+            {/* Type Badge */}
+            {selectedNotification.type && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Type:</span>
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getNotificationTypeColor(selectedNotification.type)}`}>
+                  {selectedNotification.type}
+                </span>
+              </div>
+            )}
+
+            {/* Message */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {selectedNotification.message}
+              </p>
+            </div>
+
+            {/* Link */}
+            {selectedNotification.link && (
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  onClick={() => {
+                    router.push(selectedNotification.link);
+                    setNotificationModalOpen(false);
+                    setSelectedNotification(null);
+                  }}
+                  className="text-orange-600 hover:text-orange-700 font-medium text-sm flex items-center gap-1"
+                >
+                  View Details →
+                </button>
+              </div>
+            )}
+
+            {/* Sender Info */}
+            {selectedNotification.senderName && (
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <p className="text-xs text-gray-500">
+                  Sent by: <span className="font-medium text-gray-700">{selectedNotification.senderName}</span>
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+            <button
+              onClick={() => {
+                setNotificationModalOpen(false);
+                setSelectedNotification(null);
+              }}
+              className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const UserDropdown = () => {
     console.log("Rendering UserDropdown - user.userType:", user?.userType, "subscription:", subscription)
@@ -661,6 +942,25 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
                 </span>
               )}
             </button>
+
+            {/* Notifications */}
+            {isAuthenticated && (
+              <div className="relative" ref={notificationDropdownRef}>
+                <button
+                  onClick={() => setNotificationDropdownOpen(!notificationDropdownOpen)}
+                  className="text-gray-700 hover:text-amber-500 transition-colors p-2 relative"
+                  aria-label="Notifications"
+                >
+                  <Bell size={20} />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 text-xs bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full w-5 h-5 flex items-center justify-center font-medium animate-pulse">
+                      {notificationCount > 99 ? '99+' : notificationCount}
+                    </span>
+                  )}
+                </button>
+                {notificationDropdownOpen && <NotificationDropdown />}
+              </div>
+            )}
            
 
             {/* User account with dropdown */}
@@ -892,6 +1192,8 @@ const Navbar = ({ onAuthClick: externalOnAuthClick, isAuthenticated: externalIsA
     )}
     {/* Designer Access Modal */}
     {designerAccessModalOpen && <DesignerAccessModal />}
+    {/* Notification Modal */}
+    <NotificationModal />
   </>
   )
 }
