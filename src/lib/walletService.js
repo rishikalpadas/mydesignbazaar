@@ -4,7 +4,9 @@ import Design from '../models/Design';
 
 /**
  * Credit designer wallet when their design is purchased
- * Only credits if designer has 10+ approved designs
+ * Credits based on tier system:
+ * - 50-99 approved designs: 10 points per download
+ * - 100+ approved designs: 25 points per download
  * 
  * @param {string} designId - The ID of the design that was purchased
  * @param {string} buyerId - The ID of the buyer who purchased the design
@@ -29,19 +31,30 @@ export async function creditDesignerWallet(designId, buyerId, downloadId = null)
       return { success: false, error: 'Designer not found' };
     }
 
-    // Check eligibility: Designer must have 10+ approved designs
-    if (designer.approvedDesigns < 10) {
-      console.log(`[WALLET] Designer has ${designer.approvedDesigns} approved designs. Minimum 10 required for earnings.`);
+    // Check eligibility: Designer must have 50+ approved designs
+    const approvedCount = designer.approvedDesigns;
+    if (approvedCount < 50) {
+      console.log(`[WALLET] Designer has ${approvedCount} approved designs. Minimum 50 required for earnings.`);
       return { 
         success: true, 
         eligible: false, 
-        approvedDesigns: designer.approvedDesigns,
-        message: 'Designer not eligible for earnings yet'
+        approvedDesigns: approvedCount,
+        message: 'Designer not eligible for earnings yet (minimum 50 approved designs required)'
       };
     }
 
-    // Amount to credit (₹10 per purchase)
-    const creditAmount = 10;
+    // Determine credit amount based on tier
+    let creditAmount;
+    let tier;
+    if (approvedCount >= 100) {
+      creditAmount = 25;
+      tier = 'premium'; // 100+ designs
+    } else if (approvedCount >= 50) {
+      creditAmount = 10;
+      tier = 'standard'; // 50-99 designs
+    }
+
+    console.log(`[WALLET] Designer tier: ${tier}, Approved designs: ${approvedCount}, Credit: ₹${creditAmount}`);
 
     // Find or create wallet for the designer
     let wallet = await Wallet.findOne({ userId: designerId });
@@ -85,11 +98,13 @@ export async function creditDesignerWallet(designId, buyerId, downloadId = null)
       designId: designId,
       downloadId: downloadId,
       buyerId: buyerId,
-      description: `Earned ₹${creditAmount} from design purchase: ${design.title}`,
+      description: `Earned ₹${creditAmount} from design purchase: ${design.title} (Tier: ${tier})`,
       metadata: {
         designTitle: design.title,
         designCategory: design.category,
-        approvedDesignsCount: designer.approvedDesigns
+        approvedDesignsCount: designer.approvedDesigns,
+        tier: tier,
+        creditAmount: creditAmount
       },
       status: 'completed'
     });
@@ -101,9 +116,10 @@ export async function creditDesignerWallet(designId, buyerId, downloadId = null)
       eligible: true,
       credited: true,
       amount: creditAmount,
+      tier: tier,
       newBalance: wallet.balance,
       transactionId: transaction._id,
-      message: `Designer earned ₹${creditAmount}`
+      message: `Designer earned ₹${creditAmount} (${tier} tier)`
     };
 
   } catch (error) {
@@ -129,8 +145,12 @@ export async function getDesignerWalletSummary(userId) {
         balance: 0,
         totalEarnings: 0,
         totalWithdrawn: 0,
-        eligible: designer ? designer.approvedDesigns >= 10 : false,
-        approvedDesigns: designer ? designer.approvedDesigns : 0
+        eligible: designer ? designer.approvedDesigns >= 50 : false,
+        approvedDesigns: designer ? designer.approvedDesigns : 0,
+        tier: designer && designer.approvedDesigns >= 100 ? 'premium' : 
+              designer && designer.approvedDesigns >= 50 ? 'standard' : 'not_eligible',
+        earningRate: designer && designer.approvedDesigns >= 100 ? 25 : 
+                     designer && designer.approvedDesigns >= 50 ? 10 : 0
       };
     }
 
@@ -140,8 +160,12 @@ export async function getDesignerWalletSummary(userId) {
       totalEarnings: wallet.totalEarnings,
       totalWithdrawn: wallet.totalWithdrawn,
       status: wallet.status,
-      eligible: designer ? designer.approvedDesigns >= 10 : false,
-      approvedDesigns: designer ? designer.approvedDesigns : 0
+      eligible: designer ? designer.approvedDesigns >= 50 : false,
+      approvedDesigns: designer ? designer.approvedDesigns : 0,
+      tier: designer && designer.approvedDesigns >= 100 ? 'premium' : 
+            designer && designer.approvedDesigns >= 50 ? 'standard' : 'not_eligible',
+      earningRate: designer && designer.approvedDesigns >= 100 ? 25 : 
+                   designer && designer.approvedDesigns >= 50 ? 10 : 0
     };
 
   } catch (error) {

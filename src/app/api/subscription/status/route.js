@@ -38,22 +38,31 @@ export async function GET(request) {
       );
     }
 
-    // Get all user subscription credits (from paid plans) - can have multiple records
+    // Get all user subscription credits (from paid plans) - sorted by expiry date (earliest first)
     const allSubscriptionCredits = await User_Subscription_Credits.find({ 
       userId,
       status: 'active',
-      expiryDate: { $gt: new Date() }
-    });
+      expiryDate: { $gt: new Date() },
+      creditsRemaining: { $gt: 0 }
+    }).sort({ expiryDate: 1 }); // Sort by expiry date ascending
     
     // Get user credits (admin added)
     const adminCredits = await User_Credits.findOne({ userId });
+
+    // Get the active plan that will be used next (earliest expiry with credits)
+    const activePlan = allSubscriptionCredits.length > 0 ? allSubscriptionCredits[0] : null;
 
     // Calculate total from all subscription purchases
     const subscriptionCreditsTotal = allSubscriptionCredits.reduce((sum, sub) => sum + sub.creditsTotal, 0);
     const subscriptionCreditsRemaining = allSubscriptionCredits.reduce((sum, sub) => sum + sub.creditsRemaining, 0);
     const subscriptionCreditsUsed = allSubscriptionCredits.reduce((sum, sub) => sum + sub.creditsUsed, 0);
 
-    // Combine both credit sources
+    // For display, show only the active plan's credits (the one that will be used next)
+    // Priority: Active purchased plan > Admin credits
+    const displayCreditsRemaining = activePlan ? activePlan.creditsRemaining : (adminCredits?.creditsRemaining || 0);
+    const displayCreditsTotal = activePlan ? activePlan.creditsTotal : (adminCredits?.creditsTotal || 0);
+
+    // Combine both credit sources for total available
     const totalCreditsRemaining = subscriptionCreditsRemaining + (adminCredits?.creditsRemaining || 0);
     const totalCreditsTotal = subscriptionCreditsTotal + (adminCredits?.creditsTotal || 0);
     const totalCreditsUsed = subscriptionCreditsUsed + (adminCredits?.creditsUsed || 0);
@@ -68,7 +77,7 @@ export async function GET(request) {
     const hasAnyCredits = allSubscriptionCredits.length > 0 || adminCredits;
     const hasValidCredits = hasValidSubscriptionCredits || hasValidAdminCredits;
 
-    // Get the latest subscription for display
+    // Get the latest subscription for additional info
     const latestSubscription = allSubscriptionCredits.length > 0 
       ? allSubscriptionCredits.sort((a, b) => b.createdAt - a.createdAt)[0]
       : null;
@@ -78,12 +87,15 @@ export async function GET(request) {
       hasSubscription: hasAnyCredits,
       isValid: hasValidCredits,
       subscription: hasAnyCredits ? {
-        id: latestSubscription?._id || adminCredits?._id,
-        planId: latestSubscription?.planId || adminCredits?.planId,
-        planName: latestSubscription?.planName || adminCredits?.planName,
-        creditsTotal: totalCreditsTotal,
-        creditsRemaining: totalCreditsRemaining,
-        creditsUsed: totalCreditsUsed,
+        id: activePlan?._id || latestSubscription?._id || adminCredits?._id,
+        planId: activePlan?.planId || latestSubscription?.planId || adminCredits?.planId,
+        planName: activePlan?.planName || latestSubscription?.planName || (adminCredits ? 'Admin Credits' : null),
+        creditsTotal: displayCreditsTotal,
+        creditsRemaining: displayCreditsRemaining,
+        creditsUsed: activePlan?.creditsUsed || latestSubscription?.creditsUsed || adminCredits?.creditsUsed || 0,
+        // Include total credits info for reference
+        totalCreditsAvailable: totalCreditsRemaining,
+        totalCreditsAcrossAllPlans: totalCreditsTotal,
         allSubscriptions: allSubscriptionCredits.map(sub => ({
           id: sub._id,
           planId: sub.planId,
@@ -104,10 +116,11 @@ export async function GET(request) {
           expiryDate: adminCredits.expiryDate,
           status: adminCredits.status
         } : null,
-        startDate: latestSubscription?.startDate || adminCredits?.startDate,
-        expiryDate: latestSubscription?.expiryDate || adminCredits?.expiryDate,
+        startDate: activePlan?.startDate || latestSubscription?.startDate || adminCredits?.startDate,
+        expiryDate: activePlan?.expiryDate || latestSubscription?.expiryDate || adminCredits?.expiryDate,
         status: hasValidCredits ? 'active' : 'expired',
-        daysRemaining: latestSubscription?.expiryDate ? Math.ceil((latestSubscription.expiryDate - new Date()) / (1000 * 60 * 60 * 24)) : 
+        daysRemaining: activePlan?.expiryDate ? Math.ceil((activePlan.expiryDate - new Date()) / (1000 * 60 * 60 * 24)) : 
+                      latestSubscription?.expiryDate ? Math.ceil((latestSubscription.expiryDate - new Date()) / (1000 * 60 * 60 * 24)) : 
                       adminCredits?.expiryDate ? Math.ceil((adminCredits.expiryDate - new Date()) / (1000 * 60 * 60 * 24)) : null,
       } : null
     }, { status: 200 });

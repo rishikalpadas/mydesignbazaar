@@ -98,7 +98,9 @@ export async function POST(request, { params }) {
         alreadyDownloaded: true,
         message: 'Design already downloaded with this subscription',
         downloadUrl: getDownloadUrl(design),
-        fileName: design.rawFile?.originalName || 'design.pdf'
+        fileName: design.rawFile?.originalName || 'design.pdf',
+        creditSource: creditSource,
+        creditsRemaining: subscriptionRecord.creditsRemaining
       }, { status: 200 });
     }
 
@@ -169,15 +171,17 @@ export async function POST(request, { params }) {
       $inc: { downloads: 1 }
     });
 
-    // Credit designer wallet (₹10 if designer has 10+ approved designs)
+    // Credit designer wallet based on tier system
+    // - 50-99 approved designs: ₹10 per download (Standard)
+    // - 100+ approved designs: ₹25 per download (Premium)
     try {
       console.log(`[DOWNLOAD] Attempting to credit designer wallet for design: ${designId}`);
       const walletResult = await creditDesignerWallet(designId, userId, downloadRecord._id);
       console.log(`[DOWNLOAD] Wallet result:`, walletResult);
       if (walletResult.success && walletResult.credited) {
-        console.log(`[DOWNLOAD] ✓ Designer wallet credited: ₹${walletResult.amount}, new balance: ₹${walletResult.newBalance}`);
+        console.log(`[DOWNLOAD] ✓ Designer wallet credited: ₹${walletResult.amount} (${walletResult.tier} tier), new balance: ₹${walletResult.newBalance}`);
       } else if (walletResult.success && !walletResult.eligible) {
-        console.log(`[DOWNLOAD] Designer not yet eligible for wallet earnings (${walletResult.approvedDesigns}/10 approved designs)`);
+        console.log(`[DOWNLOAD] Designer not yet eligible for wallet earnings (${walletResult.approvedDesigns}/50 approved designs)`);
       } else if (!walletResult.success) {
         console.error(`[DOWNLOAD] Wallet credit failed: ${walletResult.error}`);
       }
@@ -193,7 +197,7 @@ export async function POST(request, { params }) {
       downloadUrl: getDownloadUrl(design),
       fileName: design.rawFile?.originalName || 'design.pdf',
       creditSource: creditSource,
-      creditsRemaining: creditSource === 'purchased_plan' ? subscriptionRecord.creditsRemaining : subscriptionRecord.adminCredits
+      creditsRemaining: subscriptionRecord.creditsRemaining // Use creditsRemaining for both sources
     };
 
     // Add subscription details if from purchased plan
@@ -205,7 +209,8 @@ export async function POST(request, { params }) {
         expiryDate: subscriptionRecord.expiryDate
       };
     } else {
-      responseData.adminCreditsRemaining = subscriptionRecord.adminCredits;
+      // For admin credits, also return the creditsRemaining field
+      responseData.adminCreditsRemaining = subscriptionRecord.creditsRemaining;
     }
 
     return NextResponse.json(responseData, { status: 200 });

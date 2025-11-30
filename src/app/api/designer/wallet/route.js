@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import connectDB from '../../../../../lib/mongodb';
-import { Wallet } from '../../../../../models/Wallet';
-import { Designer } from '../../../../../models/User';
-import { verifyToken } from '../../../../../middleware/auth';
+import connectDB from '../../../../lib/mongodb';
+import { Wallet } from '../../../../models/Wallet';
+import { Designer } from '../../../../models/User';
+import { verifyToken } from '../../../../middleware/auth';
 
 // GET - Fetch designer's wallet information
 export async function GET(request) {
@@ -53,8 +53,12 @@ export async function GET(request) {
       });
     }
 
-    // Check if designer is eligible for earnings (10+ approved designs)
-    const isEligible = designer.approvedDesigns >= 10;
+    // Check if designer is eligible for earnings (50+ approved designs)
+    const isEligible = designer.approvedDesigns >= 50;
+    const tier = designer.approvedDesigns >= 100 ? 'premium' : 
+                 designer.approvedDesigns >= 50 ? 'standard' : 'not_eligible';
+    const earningRate = designer.approvedDesigns >= 100 ? 25 : 
+                        designer.approvedDesigns >= 50 ? 10 : 0;
 
     return NextResponse.json({
       success: true,
@@ -70,8 +74,10 @@ export async function GET(request) {
       eligibility: {
         isEligible,
         approvedDesigns: designer.approvedDesigns,
-        requiredDesigns: 10,
-        remainingDesigns: isEligible ? 0 : 10 - designer.approvedDesigns
+        requiredDesigns: 50,
+        remainingDesigns: isEligible ? 0 : 50 - designer.approvedDesigns,
+        tier,
+        earningRate
       }
     }, { status: 200 });
 

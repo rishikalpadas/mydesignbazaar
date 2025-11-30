@@ -271,12 +271,19 @@ const ProductView = ({ productData, isLoading = false }) => {
       );
 
       if (response.data.success) {
+        // Get credits remaining from the response (now consistently returned)
+        const creditsRemaining = response.data.creditsRemaining;
+
+        console.log('Download response:', response.data);
+        console.log('Credits remaining:', creditsRemaining);
+        console.log('Already downloaded:', response.data.alreadyDownloaded);
+
         // Update local subscription state
         setSubscription(prev => ({
           ...prev,
           subscription: {
             ...prev.subscription,
-            creditsRemaining: response.data.creditsRemaining
+            creditsRemaining: creditsRemaining
           }
         }));
 
@@ -291,8 +298,23 @@ const ProductView = ({ productData, isLoading = false }) => {
         link.click();
         document.body.removeChild(link);
 
-        // Show success message
-        alert(`Download started! Credits remaining: ${response.data.creditsRemaining}`);
+        // Refresh subscription status to get latest credits
+        try {
+          const subResponse = await axios.get('/api/subscription/status', {
+            withCredentials: true,
+          });
+          setSubscription(subResponse.data);
+          
+          // Show success message with the refreshed credits
+          const message = response.data.alreadyDownloaded
+            ? `Re-downloaded! Credits remaining: ${subResponse.data.subscription?.creditsRemaining || creditsRemaining}`
+            : `Download started! Credits remaining: ${subResponse.data.subscription?.creditsRemaining || creditsRemaining}`;
+          alert(message);
+        } catch (error) {
+          console.error('Failed to refresh subscription:', error);
+          // Fallback to response credits
+          alert(`Download started! Credits remaining: ${creditsRemaining}`);
+        }
       }
     } catch (error) {
       console.error('Download error:', error);
